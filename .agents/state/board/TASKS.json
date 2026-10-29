@@ -24,11 +24,19 @@
   "tasks": [
     {
       "chantier": "socle-graffard",
+      "done_at": "2026-10-29T12:49:29.835Z",
       "id": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
       "owner": "dev-multi",
       "pas_un_defaut": "fonctionnalité : création du socle applicatif mission 2",
-      "stage": "",
-      "state": "pending",
+      "stage": "parent de découpe : racine, api, web et smoke clos, porte verte @ fd553b7 [SANS BINÔME : parent de coordination sans code] [SANS CIBLE : parent de découpe sans plan (cadrage)]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
       "task": "Socle technique Graffard Racing : monorepo npm (api Fastify + PGlite/Drizzle chargeant le MCD, web PWA React), /api/health 49 tables",
       "updated": "2026-10-29"
     },
