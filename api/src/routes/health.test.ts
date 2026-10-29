@@ -1,4 +1,5 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -10,6 +11,7 @@ let handle: DbHandle | undefined;
 
 afterEach(async () => {
   await handle?.client.close();
+  handle?.release();
   handle = undefined;
 });
 
@@ -65,6 +67,19 @@ describe('GET /api/health', () => {
     expect(res.body).toEqual({ status: 'ok', tables: 0 });
     const tracked = await handle.client.query<{ id: string }>('SELECT id FROM meta.migrations');
     expect(tracked.rows).toEqual([]);
+  });
+});
+
+describe('createDb on disk', () => {
+  it('locks its data dir: a second open of the same dir is refused, then allowed once released', async () => {
+    const dir = join(mkdtempSync(join(tmpdir(), 'gr-')), 'pglite');
+    handle = createDb(dir);
+    expect(existsSync(`${dir}.lock`)).toBe(true);
+    expect(() => createDb(dir)).toThrow(/déjà ouvert/);
+    await handle.client.close();
+    handle.release();
+    expect(existsSync(`${dir}.lock`)).toBe(false);
+    handle = createDb(dir);
   });
 });
 

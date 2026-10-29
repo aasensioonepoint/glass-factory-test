@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "test": "npm test --workspaces",
-    "build": "npm run build --workspaces"
+    "build": "npm run build --workspaces",
+    "smoke": "node scripts/smoke.mjs"
   }
 }

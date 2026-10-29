@@ -10,7 +10,14 @@ if (rawPort !== undefined && (!/^\d+$/.test(rawPort) || port < 1 || port > 65535
 }
 const host = '127.0.0.1';
 
-const { client, db } = createDb(DATA_DIR);
+let handle: ReturnType<typeof createDb>;
+try {
+  handle = createDb(DATA_DIR);
+} catch (err) {
+  console.error(`api: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(1);
+}
+const { client, db, release } = handle;
 await migrate(client);
 
 const app = buildApp({ db });
@@ -18,6 +25,7 @@ const app = buildApp({ db });
 async function shutdown(): Promise<void> {
   await app.close();
   await client.close();
+  release();
   process.exit(0);
 }
 process.once('SIGINT', () => void shutdown());

@@ -19,6 +19,10 @@ if (!npmCli) {
   process.stderr.write("dev.mjs : lancer par « npm run dev »\n");
   process.exit(1);
 }
+if (process.env.PORT !== undefined && process.env.PORT !== "3000") {
+  process.stderr.write(`dev.mjs : PORT=${process.env.PORT} refusé — le proxy Vite vise 127.0.0.1:3000\n`);
+  process.exit(1);
+}
 
 const children = [];
 const ended = new Set();
@@ -46,8 +50,16 @@ function stopChild(child) {
       maybeExit();
     };
     const killer = spawn(TASKKILL, ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" });
-    killer.on("exit", settle);
-    killer.on("error", settle);
+    killer.on("exit", (code) => {
+      if (code !== 0 && code !== 128) {
+        process.stderr.write(`dev.mjs : taskkill ${child.pid} code ${code} — ports peut-être tenus\n`);
+      }
+      settle();
+    });
+    killer.on("error", (err) => {
+      process.stderr.write(`dev.mjs : ${err.message}\n`);
+      settle();
+    });
   } else {
     child.kill("SIGTERM");
   }
