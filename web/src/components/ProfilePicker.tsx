@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties, Ref } from 'react';
-import { api } from '../api';
-import type { ApiClient, Compte, CompteId, Persona, Role } from '../api';
+import type { ComponentPropsWithRef, CSSProperties, ReactNode, Ref } from 'react';
+import { api, memeCompte } from '../api';
+import type { ApiClient, Compte, CompteId, ErreurApi, Persona, Role } from '../api';
 import type { Lang } from '../i18n';
 
 /*
@@ -14,7 +14,9 @@ import type { Lang } from '../i18n';
  * hors du write-set. Les styles sont donc des objets en ligne qui ne lisent QUE
  * les jetons (--color-navy, --color-ivory, --target-min) : bleu nuit sur ivoire,
  * 12,66:1 ; l'or n'est pas employé. L'anneau de focus est celui de styles.css
- * (button:focus-visible, double anneau ivoire puis bleu nuit).
+ * (button:focus-visible, double anneau ivoire puis bleu nuit) : aucun style en
+ * ligne ne pose `box-shadow` ni `outline`, qui l'écraseraient. Le survol
+ * (soulignement, comme .nav__item:hover) est un état React, faute de classe.
  */
 
 const TEXTES = {
@@ -22,12 +24,17 @@ const TEXTES = {
     titre: 'Profil de démonstration',
     intro: 'Choisissez un compte fictif pour explorer l’application.',
     chargement: 'Chargement des profils…',
+    chargementCourt: 'Chargement…',
     vide: 'Aucun profil de démonstration n’est disponible.',
-    erreur: 'Les profils n’ont pas pu être chargés. Vérifiez la connexion.',
+    erreurReseau: 'Les profils n’ont pas pu être chargés. Vérifiez la connexion.',
+    erreurServeur: 'Le serveur n’a pas répondu. Réessayez.',
     reessayer: 'Réessayer',
     connexion: 'Connexion…',
     erreurConnexion: 'La connexion a échoué. Choisissez de nouveau un profil.',
+    sessionExpiree: 'Votre session a expiré, choisissez un profil.',
     connecte: 'Connecté en tant que',
+    profilSansNom: 'Profil {role}',
+    sansRole: 'sans rôle',
     changer: 'Changer de profil',
     listeLabel: 'Profils disponibles',
   },
@@ -35,12 +42,17 @@ const TEXTES = {
     titre: 'Demo profile',
     intro: 'Choose a fictitious account to explore the app.',
     chargement: 'Loading profiles…',
+    chargementCourt: 'Loading…',
     vide: 'No demo profile is available.',
-    erreur: 'Profiles could not be loaded. Check your connection.',
+    erreurReseau: 'Profiles could not be loaded. Check your connection.',
+    erreurServeur: 'The server did not respond. Try again.',
     reessayer: 'Try again',
     connexion: 'Signing in…',
     erreurConnexion: 'Sign-in failed. Choose a profile again.',
+    sessionExpiree: 'Your session has expired, choose a profile.',
     connecte: 'Signed in as',
+    profilSansNom: '{role} profile',
+    sansRole: 'no role',
     changer: 'Switch profile',
     listeLabel: 'Available profiles',
   },
@@ -74,18 +86,31 @@ export function personaLabel(lang: Lang, persona: Persona): string {
   return `${persona.nom}, ${roleLabel(lang, persona.role)}`;
 }
 
+/** Un échec de chargement : le réseau n'a rien rendu, ou le serveur a mal répondu. */
+export type CauseErreur = 'reseau' | 'serveur';
+
+export function causeErreur(erreur: ErreurApi): CauseErreur {
+  return erreur === 'reseau' ? 'reseau' : 'serveur';
+}
+
 /** Ce que le panneau montre ; un seul état à la fois. */
 export type VueProfil =
   /** `reessai` : rechargement demandé par « Réessayer », qui reste monté et garde le focus. */
   | { etat: 'chargement'; reessai: boolean }
-  | { etat: 'erreur' }
+  | { etat: 'erreur'; cause: CauseErreur }
   | { etat: 'vide' }
-  | { etat: 'liste'; personas: Persona[]; enCours: CompteId | null; erreurConnexion: boolean }
+  | {
+      etat: 'liste';
+      personas: Persona[];
+      enCours: CompteId | null;
+      erreurConnexion: boolean;
+      sessionExpiree: boolean;
+    }
   | { etat: 'connecte'; nom: string | null; roles: Role[] };
 
 export type EtatPersonas =
   | { statut: 'chargement'; reessai: boolean }
-  | { statut: 'erreur' }
+  | { statut: 'erreur'; cause: CauseErreur }
   | { statut: 'pret'; liste: Persona[] };
 
 /** Dérive la vue de l'état du conteneur (pas de seconde source de vérité). */
@@ -95,27 +120,80 @@ export function vueProfil(etat: {
   personas: EtatPersonas;
   enCours: CompteId | null;
   erreurConnexion: boolean;
+  sessionExpiree: boolean;
 }): VueProfil {
   if (etat.verification) return { etat: 'chargement', reessai: false };
   if (etat.compte !== null) {
     const { compteId, roles, nom } = etat.compte;
+    // L'identifiant arrive en chaîne ou en nombre selon la route : comparé en chaîne.
     const persona =
       etat.personas.statut === 'pret'
-        ? etat.personas.liste.find((p) => p.compteId === compteId)
+        ? etat.personas.liste.find((p) => memeCompte(p.compteId, compteId))
         : undefined;
     return { etat: 'connecte', nom: nom ?? persona?.nom ?? null, roles };
   }
   if (etat.personas.statut === 'chargement') {
     return { etat: 'chargement', reessai: etat.personas.reessai };
   }
-  if (etat.personas.statut === 'erreur') return { etat: 'erreur' };
+  if (etat.personas.statut === 'erreur') return { etat: 'erreur', cause: etat.personas.cause };
   if (etat.personas.liste.length === 0) return { etat: 'vide' };
   return {
     etat: 'liste',
     personas: etat.personas.liste,
     enCours: etat.enCours,
     erreurConnexion: etat.erreurConnexion,
+    sessionExpiree: etat.sessionExpiree,
   };
+}
+
+/*
+ * Focus (INTERACTION focus=) : un déplacement attendu, jamais un vol.
+ *   ouverture — premier chargement : le premier persona, si personne n'a encore
+ *               pris le focus ;
+ *   retour    — après « Changer de profil » : le premier persona quand la liste
+ *               est là, « Réessayer » en erreur ou à vide, le titre du panneau
+ *               pendant le chargement (puis le premier persona) ;
+ *   reessai   — après « Réessayer » : le premier persona si la liste arrive ;
+ *   connexion — après un profil choisi : « Changer de profil ».
+ */
+export type FocusAttendu = 'ouverture' | 'retour' | 'reessai' | 'connexion';
+
+export type CibleFocus = 'premier' | 'changer' | 'reessayer' | 'titre';
+
+/** Cible du focus attendu dans cet état ; `garder` : l'attente survit à ce déplacement. */
+export function cibleFocus(
+  attendu: FocusAttendu,
+  etat: VueProfil['etat'],
+): { cible: CibleFocus | null; garder: boolean } {
+  switch (attendu) {
+    case 'ouverture':
+      if (etat === 'liste') return { cible: 'premier', garder: false };
+      return { cible: null, garder: etat === 'chargement' };
+    case 'retour':
+      if (etat === 'liste') return { cible: 'premier', garder: false };
+      if (etat === 'erreur' || etat === 'vide') return { cible: 'reessayer', garder: false };
+      if (etat === 'chargement') return { cible: 'titre', garder: true };
+      return { cible: null, garder: false };
+    case 'reessai':
+      if (etat === 'liste') return { cible: 'premier', garder: false };
+      if (etat === 'erreur' || etat === 'vide') return { cible: 'reessayer', garder: false };
+      return { cible: null, garder: etat === 'chargement' };
+    case 'connexion':
+      return { cible: etat === 'connecte' ? 'changer' : null, garder: false };
+  }
+}
+
+/**
+ * Le focus est-il libre ? Oui s'il n'est nulle part (`null`, `<body>`) ou sur un
+ * élément que le panneau y a lui-même posé ; sinon quelqu'un l'a pris, et le
+ * déplacer serait le voler.
+ */
+export function focusLibre(
+  actif: Element | null | undefined,
+  libres: readonly (Element | null | undefined)[],
+): boolean {
+  if (actif === null || actif === undefined) return true;
+  return libres.some((el) => el !== null && el !== undefined && el === actif);
 }
 
 const sectionStyle: CSSProperties = { marginTop: '1.5rem', maxWidth: '60rem' };
@@ -123,6 +201,9 @@ const sectionStyle: CSSProperties = { marginTop: '1.5rem', maxWidth: '60rem' };
 const titreStyle: CSSProperties = { margin: 0, fontSize: '1.25rem', lineHeight: 1.3 };
 
 const texteStyle: CSSProperties = { margin: '0.25rem 0 0', overflowWrap: 'anywhere' };
+
+/** Une ligne réservée même vide : un message qui arrive ne pousse pas la grille. */
+export const statutStyle: CSSProperties = { ...texteStyle, minHeight: '1lh' };
 
 const listeStyle: CSSProperties = {
   display: 'grid',
@@ -141,13 +222,28 @@ export const boutonStyle: CSSProperties = {
   minHeight: 'var(--target-min)',
   minWidth: 'var(--target-min)',
   padding: '0.625rem 1rem',
-  border: '2px solid var(--color-navy)',
+  // Bordure en trois propriétés, jamais le raccourci `border` : les variantes
+  // changent `borderStyle`, et React ne sait pas retirer une longhand sous un
+  // raccourci (mesuré : avertissement « don't mix shorthand and non-shorthand »).
+  borderWidth: '2px',
+  borderStyle: 'solid',
+  borderColor: 'var(--color-navy)',
   borderRadius: '0.75rem',
   background: 'var(--color-ivory)',
   color: 'var(--color-navy)',
   textAlign: 'start',
   overflowWrap: 'anywhere',
 };
+
+/** Carte choisie, connexion en cours : contour tireté, curseur d'attente. */
+export const carteEnCoursStyle: CSSProperties = {
+  ...boutonStyle,
+  borderStyle: 'dashed',
+  cursor: 'progress',
+};
+
+/** Autre carte pendant la connexion : inerte. */
+export const carteInerteStyle: CSSProperties = { ...boutonStyle, cursor: 'not-allowed' };
 
 const boutonActionStyle: CSSProperties = {
   ...boutonStyle,
@@ -158,9 +254,45 @@ const boutonActionStyle: CSSProperties = {
   fontWeight: 600,
 };
 
+/*
+ * « Réessayer » pendant le rechargement : inerte et vu comme tel — contour
+ * tireté, curseur interdit, libellé « Chargement… ». Pas d'opacité : aucun
+ * jeton n'en définit, et le texte garde son contraste de 12,66:1.
+ */
+export const boutonActionInerteStyle: CSSProperties = {
+  ...boutonActionStyle,
+  borderStyle: 'dashed',
+  cursor: 'not-allowed',
+};
+
+/** Survol : le soulignement de la coque (.nav__item:hover, .lang__item:hover, .add:hover). */
+export const survolStyle: CSSProperties = {
+  textDecoration: 'underline',
+  textUnderlineOffset: '0.25em',
+};
+
 const nomStyle: CSSProperties = { display: 'block', fontWeight: 700 };
 
 const roleStyle: CSSProperties = { display: 'block', fontSize: '0.875rem' };
+
+type BoutonSurvolProps = Omit<ComponentPropsWithRef<'button'>, 'type'> & {
+  /** Inerte (aria-disabled) : pas de survol. */
+  inerte?: boolean;
+};
+
+/** Bouton qui souligne son texte au survol du pointeur. */
+function BoutonSurvol({ style, inerte = false, ...props }: BoutonSurvolProps) {
+  const [survol, setSurvol] = useState(false);
+  return (
+    <button
+      type="button"
+      {...props}
+      style={survol && !inerte ? { ...style, ...survolStyle } : style}
+      onPointerEnter={() => setSurvol(true)}
+      onPointerLeave={() => setSurvol(false)}
+    />
+  );
+}
 
 export interface ProfilePickerViewProps {
   lang: Lang;
@@ -168,28 +300,56 @@ export interface ProfilePickerViewProps {
   onChoisir: (persona: Persona) => void;
   onChanger: () => void;
   onReessayer: () => void;
-  /** Reçoit le premier persona : il prend le focus à l'ouverture de la liste. */
+  /** Reçoit le premier persona. */
   premierRef?: Ref<HTMLButtonElement>;
   /** Reçoit « Changer de profil ». */
   changerRef?: Ref<HTMLButtonElement>;
+  /** Reçoit « Réessayer ». */
+  reessayerRef?: Ref<HTMLButtonElement>;
+  /** Reçoit le titre du panneau (focalisable par script seulement). */
+  titreRef?: Ref<HTMLHeadingElement>;
 }
 
-function message(lang: Lang, vue: VueProfil): string {
+/** Phrase de connexion : le nom en gras ; sans nom, « Profil <rôle> », jamais le rôle seul. */
+function phraseConnecte(lang: Lang, nom: string | null, roles: Role[]): ReactNode {
+  const textes = TEXTES[lang];
+  const libelleRoles =
+    roles.length > 0 ? roles.map((role) => roleLabel(lang, role)).join(', ') : textes.sansRole;
+  if (nom === null) {
+    return (
+      <>
+        {textes.connecte} <strong>{textes.profilSansNom.replace('{role}', libelleRoles)}</strong>
+      </>
+    );
+  }
+  return (
+    <>
+      {textes.connecte} <strong>{nom}</strong>
+      {roles.length > 0 && ` — ${libelleRoles}`}
+    </>
+  );
+}
+
+/** Contenu de la région vivante : tout changement d'état y est annoncé, connexion comprise. */
+function statut(lang: Lang, vue: VueProfil): ReactNode {
   const textes = TEXTES[lang];
   switch (vue.etat) {
     case 'chargement':
       return textes.chargement;
     case 'erreur':
-      return textes.erreur;
+      return vue.cause === 'reseau' ? textes.erreurReseau : textes.erreurServeur;
     case 'vide':
       return textes.vide;
     case 'liste':
       if (vue.enCours !== null) return textes.connexion;
-      return vue.erreurConnexion ? textes.erreurConnexion : '';
+      if (vue.erreurConnexion) return textes.erreurConnexion;
+      return vue.sessionExpiree ? textes.sessionExpiree : '';
     case 'connecte':
-      return '';
+      return phraseConnecte(lang, vue.nom, vue.roles);
   }
 }
+
+const STATUT_ID = 'profile-statut';
 
 /** Vue pure : props → rendu. */
 export function ProfilePickerView({
@@ -200,65 +360,76 @@ export function ProfilePickerView({
   onReessayer,
   premierRef,
   changerRef,
+  reessayerRef,
+  titreRef,
 }: ProfilePickerViewProps) {
   const textes = TEXTES[lang];
+  const intro = vue.etat === 'liste' || (vue.etat === 'chargement' && !vue.reessai);
+  const reessai = vue.etat === 'chargement' && vue.reessai;
+  const avecReessayer = vue.etat === 'erreur' || vue.etat === 'vide' || reessai;
   return (
     <section
       aria-labelledby="profile-titre"
       aria-busy={vue.etat === 'chargement'}
       style={sectionStyle}
     >
-      <h2 id="profile-titre" style={titreStyle}>
+      <h2 id="profile-titre" ref={titreRef} tabIndex={-1} style={titreStyle}>
         {textes.titre}
       </h2>
-      {vue.etat === 'connecte' ? (
-        <>
-          <p style={texteStyle}>
-            {textes.connecte}{' '}
-            {vue.nom !== null && <strong>{vue.nom}</strong>}
-            {vue.nom !== null && vue.roles.length > 0 && ' — '}
-            {vue.roles.map((role) => roleLabel(lang, role)).join(', ')}
-          </p>
-          <button type="button" ref={changerRef} style={boutonActionStyle} onClick={onChanger}>
-            {textes.changer}
-          </button>
-        </>
-      ) : (
-        <p style={texteStyle}>{textes.intro}</p>
-      )}
+      {intro && <p style={texteStyle}>{textes.intro}</p>}
       {/* Région vivante permanente : un message qui change y est annoncé. */}
-      <p role="status" style={texteStyle}>
-        {message(lang, vue)}
+      <p id={STATUT_ID} role="status" style={statutStyle}>
+        {statut(lang, vue)}
       </p>
-      {(vue.etat === 'erreur' || (vue.etat === 'chargement' && vue.reessai)) && (
-        <button
-          type="button"
+      {vue.etat === 'connecte' && (
+        <BoutonSurvol
+          ref={changerRef}
           style={boutonActionStyle}
-          aria-disabled={vue.etat === 'chargement' ? true : undefined}
-          onClick={vue.etat === 'erreur' ? onReessayer : undefined}
+          aria-describedby={STATUT_ID}
+          onClick={onChanger}
         >
-          {textes.reessayer}
-        </button>
+          {textes.changer}
+        </BoutonSurvol>
+      )}
+      {avecReessayer && (
+        <BoutonSurvol
+          ref={reessayerRef}
+          style={reessai ? boutonActionInerteStyle : boutonActionStyle}
+          inerte={reessai}
+          aria-disabled={reessai ? true : undefined}
+          onClick={reessai ? undefined : onReessayer}
+        >
+          {reessai ? textes.chargementCourt : textes.reessayer}
+        </BoutonSurvol>
       )}
       {vue.etat === 'liste' && (
         <ul style={listeStyle} aria-label={textes.listeLabel}>
-          {vue.personas.map((persona, index) => (
-            <li key={String(persona.compteId)}>
-              {/* Nom accessible = « nom, rôle » : explicite, il reprend le texte visible
-               * dans son ordre (WCAG 2.5.3) ; la virgule marque une pause à la lecture. */}
-              <button
-                type="button"
-                ref={index === 0 ? premierRef : undefined}
-                style={boutonStyle}
-                aria-label={personaLabel(lang, persona)}
-                data-compte={String(persona.compteId)}
-                onClick={() => onChoisir(persona)}
-              >
-                <span style={nomStyle}>{persona.nom}</span>{' '}
-                <span style={roleStyle}>{roleLabel(lang, persona.role)}</span>
-              </button>
-            </li>
-          ))}
+          {vue.personas.map((persona, index) => {
+            const choisi = vue.enCours !== null && memeCompte(vue.enCours, persona.compteId);
+            const inerte = vue.enCours !== null && !choisi;
+            return (
+              <li key={String(persona.compteId)}>
+                {/* Nom accessible = « nom, rôle » : explicite, il reprend le texte visible
+                 * dans son ordre (WCAG 2.5.3) ; la virgule marque une pause à la lecture. */}
+                <BoutonSurvol
+                  ref={index === 0 ? premierRef : undefined}
+                  style={choisi ? carteEnCoursStyle : inerte ? carteInerteStyle : boutonStyle}
+                  inerte={vue.enCours !== null}
+                  aria-label={personaLabel(lang, persona)}
+                  aria-busy={choisi ? true : undefined}
+                  aria-disabled={inerte ? true : undefined}
+                  data-compte={String(persona.compteId)}
+                  onClick={() => onChoisir(persona)}
+                >
+                  <span style={nomStyle}>{persona.nom}</span>{' '}
+                  <span style={roleStyle}>
+                    {roleLabel(lang, persona.role)}
+                    {choisi && <span aria-hidden="true"> · {textes.connexion}</span>}
+                  </span>
+                </BoutonSurvol>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
@@ -285,53 +456,69 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
   const [compte, setCompte] = useState<Compte | null>(null);
   const [enCours, setEnCours] = useState<CompteId | null>(null);
   const [erreurConnexion, setErreurConnexion] = useState(false);
-  const [connexionChoisie, setConnexionChoisie] = useState(false);
+  const [sessionExpiree, setSessionExpiree] = useState(false);
+  const [attendu, setAttendu] = useState<FocusAttendu | null>('ouverture');
   const [premier, setPremier] = useState<HTMLButtonElement | null>(null);
   const [changer, setChanger] = useState<HTMLButtonElement | null>(null);
+  const [reessayerEl, setReessayerEl] = useState<HTMLButtonElement | null>(null);
+  const [titre, setTitre] = useState<HTMLHeadingElement | null>(null);
 
+  // Le démontage (ou le double montage de StrictMode) abandonne la requête.
   useEffect(() => {
-    let actif = true;
-    void client.personas().then((r) => {
-      if (actif) setPersonas(r.ok ? { statut: 'pret', liste: r.valeur } : { statut: 'erreur' });
+    const controle = new AbortController();
+    void client.personas(controle.signal).then((r) => {
+      if (controle.signal.aborted) return;
+      setPersonas(
+        r.ok ? { statut: 'pret', liste: r.valeur } : { statut: 'erreur', cause: causeErreur(r.erreur) },
+      );
     });
-    return () => {
-      actif = false;
-    };
+    return () => controle.abort();
   }, [client, tentative]);
 
   // Session reprise de sessionStorage : relue auprès du serveur ; un 401 la vide.
   useEffect(() => {
     if (client.jeton() === null) return;
-    let actif = true;
-    void client.moi().then((r) => {
-      if (!actif) return;
+    const controle = new AbortController();
+    void client.moi(controle.signal).then((r) => {
+      if (controle.signal.aborted) return;
       if (r.ok) setCompte(r.valeur);
+      else if (r.erreur === 'non_autorise') setSessionExpiree(true);
       setVerification(false);
     });
-    return () => {
-      actif = false;
-    };
+    return () => controle.abort();
   }, [client]);
 
-  // INTERACTION focus= : le premier persona prend le focus à l'ouverture de la liste.
-  useEffect(() => {
-    premier?.focus();
-  }, [premier]);
+  const vue = vueProfil({ verification, compte, personas, enCours, erreurConnexion, sessionExpiree });
 
-  // Après une connexion choisie, la liste disparaît : le focus va à « Changer de profil ».
+  // Focus attendu : déplacé seulement s'il est libre, sinon l'attente est abandonnée.
   useEffect(() => {
-    if (connexionChoisie) changer?.focus();
-  }, [changer, connexionChoisie]);
+    if (attendu === null) return;
+    const { cible, garder } = cibleFocus(attendu, vue.etat);
+    if (cible !== null) {
+      const elements = { premier, changer, reessayer: reessayerEl, titre };
+      const element = elements[cible];
+      if (element === null) return; // ref pas encore attachée : le rendu suivant la porte
+      const doc = typeof document === 'undefined' ? undefined : document;
+      const poses = attendu === 'retour' ? [titre] : attendu === 'reessai' ? [reessayerEl] : [];
+      if (!focusLibre(doc?.activeElement, [doc?.body, ...poses])) {
+        setAttendu(null);
+        return;
+      }
+      element.focus();
+    }
+    if (!garder) setAttendu(null);
+  }, [attendu, vue.etat, premier, changer, reessayerEl, titre]);
 
   function choisir(persona: Persona): void {
-    if (enCours !== null) return;
+    if (enCours !== null) return; // une seconde activation pendant la requête est ignorée
     setEnCours(persona.compteId);
     setErreurConnexion(false);
+    setSessionExpiree(false);
     void client.connecter(persona.compteId).then((r) => {
       setEnCours(null);
       if (r.ok) {
         setCompte(r.valeur);
-        setConnexionChoisie(true);
+        setAttendu('connexion');
       } else {
         setErreurConnexion(true);
       }
@@ -341,16 +528,15 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
   function changerDeProfil(): void {
     client.deconnecter();
     setCompte(null);
-    setConnexionChoisie(false);
     setErreurConnexion(false);
+    setAttendu('retour');
   }
 
   function reessayer(): void {
     setPersonas({ statut: 'chargement', reessai: true });
     setTentative((n) => n + 1);
+    setAttendu('reessai');
   }
-
-  const vue = vueProfil({ verification, compte, personas, enCours, erreurConnexion });
 
   return (
     <ProfilePickerView
@@ -361,6 +547,8 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
       onReessayer={reessayer}
       premierRef={setPremier}
       changerRef={setChanger}
+      reessayerRef={setReessayerEl}
+      titreRef={setTitre}
     />
   );
 }
