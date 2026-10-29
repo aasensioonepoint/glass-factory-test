@@ -18,6 +18,9 @@ export interface DbHandle {
   release: () => void;
 }
 
+/** Windows (EDR, indexer) can briefly hold the lock file: EPERM/EBUSY are retried. */
+const LOCK_RM = { force: true, maxRetries: 5, retryDelay: 100 } as const;
+
 function isAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
@@ -49,7 +52,7 @@ function acquireLock(dataDir: string): () => void {
       if (Number.isInteger(owner) && owner > 0 && isAlive(owner)) {
         throw new Error(`${dataDir} déjà ouvert par le processus ${owner} : arrêter l'autre API d'abord`);
       }
-      rmSync(lockPath, { force: true });
+      rmSync(lockPath, LOCK_RM);
       continue;
     }
     writeSync(fd, String(process.pid));
@@ -58,7 +61,7 @@ function acquireLock(dataDir: string): () => void {
     const release = (): void => {
       if (released) return;
       released = true;
-      rmSync(lockPath, { force: true });
+      rmSync(lockPath, LOCK_RM);
     };
     process.once('exit', release);
     return release;
