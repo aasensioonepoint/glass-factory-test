@@ -305,6 +305,73 @@
       "task": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
       "text": "SAST cité : gate3.log l.21-25 'semgrep : propre (racine)', seuls Navigation.test.tsx et ProfilePicker.test.tsx partiellement lus, 'VERIFY OK @ 36b8691' (relu dans le log). Manuel : fonction plpgsql sans SQL dynamique, RAISE avec TG_OP seul en paramètre, TG_OP testé avant OLD, triggers ligne+TRUNCATE ; aucun secret, aucune entrée externe. Borne : le propriétaire de la table peut DROP TRIGGER/DISABLE (déjà borné au DATA_MODEL).",
       "title": "security-code-review CLEAN — diff 3e71649..edf2b17 (correction, 2 fichiers, +45 lignes) : 0 critical / 0 high / 0 medium ; 0 advisory nouvelle ; SAST = porte de clôture @36b8691 (semgrep propre sur l'arbre, 2 fichiers 0002 lus en entier ; mon semgrep inexécutable en sous-agent : socketpair), revue manuelle complète"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M6430Q7J0MBM65HXX85HCADS",
+      "kind": "verdict",
+      "task": "T-01M642G99WH3THPGJPHSAQG912",
+      "text": "Diff 3 fichiers (seed.ts, seed.test.ts, server.ts). Aucun secret/mot de passe/clé : comptes = login seul. SQL : littéraux constants + paramètres $n ; seule interpolation = fragment SQL constant interne (RETURNING id) et une date calculée côté code (annee-04-0i), non issue d'une entrée externe. Données fictives, aucune donnée réelle. Garde d'idempotence : count(*) FROM compte dans la même transaction, appelée au seul démarrage serveur, sans entrée utilisateur ni endpoint. Aucune finding. Semgrep : jambe SAST en attente de la porte (semgrep-core socketpair KO en sandbox), non absente.",
+      "title": "security-code-review CLEAN (T2 seed démo, diff accf30b..383aaf9) — SAST en attente de la porte"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [
+        "api/src/auth/session.ts",
+        "api/src/routes/session.ts",
+        "api/src/app.ts"
+      ],
+      "id": "S-01M643HPAR5Z8ZD6FKJJAF7ARD",
+      "kind": "verdict",
+      "task": "T-01M642G9VMRZZ747JGBA7KV38S",
+      "text": "diff accf30b..7d875e3, 5 fichiers, ~680 lignes. 0 critical/0 high. Jeton HMAC-SHA256 : MAC recalcule sur le payload recu, compare en texte base64url canonique apres controle de longueur via timingSafeEqual ; split strict a 2 parties ; payload JSON parse APRES verif MAC ; exp entier sur, rejet a exp<=now ; id normalise (regex + borne bigint) ; SQL parametre (sql template + CAST) ; roles relus en base a chaque requete ; cle env >=32 octets sinon refus, sinon randomBytes(32). Advisory : login sans mot de passe (D4-A accepte), pas de revocation avant 12 h, cle aleatoire non partagee entre instances, 404/400 distincts (enumeration deja publique via /api/personas), erreurs 500 DB non masquees (defaut Fastify). Branche SAST semgrep EN ATTENTE de la porte (socketpair en sandbox) : coverage DEGRADED.",
+      "title": "security-code-review CLEAN (T3 diff accf30b..7d875e3) - findings aucun, coverage DEGRADED (semgrep en attente de la porte)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M643WVT8NHK8NAB6BHW2XAD4",
+      "kind": "verdict",
+      "task": "T-01M642GAXFFFX4MG3JCSNS8JWG",
+      "text": "diff accf30b..9402d37, 4 fichiers web (Horses.tsx, Horses.test.tsx, App.tsx, ProfilePicker.tsx). Aucun sink XSS (pas de dangerouslySetInnerHTML/innerHTML/eval ; <style> à contenu constant, aucune donnée injectée), id encodé par encodeURIComponent vers un chemin relatif fixe, jeton Bearer lu du client et jamais journalisé/stocké, aucun filtrage de périmètre côté client (liste et restrictions affichées telles que reçues, 404=hors périmètre). Axe findings: aucun. Axe couverture: DEGRADED, jambe SAST semgrep en attente de la porte (socketpair en sandbox).",
+      "title": "security-code-review CLEAN (findings aucun ; couverture DEGRADED, SAST en attente de la porte)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M644DNX60R0STAMM8GXZT2K9",
+      "kind": "verdict",
+      "task": "T-01M642G9VMRZZ747JGBA7KV38S",
+      "text": "diff 25a1a22..5852788 (api/src/routes/session.ts, session.test.ts). findings=aucun ; coverage=DEGRADED (SAST semgrep en attente de la porte, semgrep-core socketpair). compteId schema {} -> normaliserId (number safe-integer ou string ^[1-9][0-9]{0,18}$ <= BIGINT_MAX, sinon null->400) -> CAST($1 AS bigint) parametre. 9007199254740993 -> 9007199254740992 non safe -> 400.",
+      "title": "security-code-review CLEAN (findings aucun, coverage DEGRADED: SAST en attente de la porte)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M644NQFW305BN10P5TR89KQ9",
+      "kind": "verdict",
+      "task": "T-01M642G99WH3THPGJPHSAQG912",
+      "text": "Diff seed.ts/seed.test.ts/server.ts. SQL: INSERT role ON CONFLICT et SELECT min(date) en requetes constantes ou parametrees ($1), aucune concatenation. server.ts: cleDeSignature() valide avant createDb; message d'erreur = nom de variable + taille minimale, la valeur de la cle n'est jamais journalisee; warn cle aleatoire sans valeur. Echec cle courte: console.error + exit(1) avant ouverture de la base. SAST: gate6.log ligne 'semgrep : propre (racine)' sur c7fba97 (VERIFY OK pas encore dans le log au moment de la revue); COVERAGE DEGRADED partielle: web/src/screens/Horses.test.tsx non lu, Navigation.test.tsx et ProfilePicker.test.tsx lus en partie (hors diff). gitleaks propre. Advisory: ON CONFLICT DO UPDATE no-op (DO NOTHING + SELECT serait plus clair); message de peremption affiche une date de donnees fictives, sans PII.",
+      "title": "security-code-review CLEAN (findings: aucun ; couverture: DEGRADED) — diff 25a1a22..50d35f3"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M644TMP6GNSA07XY9DYPDG2W",
+      "kind": "verdict",
+      "task": "T-01M642G99WH3THPGJPHSAQG912",
+      "text": "Remplace S-01M644NQFW305BN10P5TR89KQ9 (couverture DEGRADED, gate incomplet). Revue manuelle: SQL parametre/constant (INSERT role ON CONFLICT $1, SELECT min(date) constant), aucune valeur de cle journalisee (message = nom de variable + taille min), cle courte => exit(1) avant createDb, aucun secret dans seed.test.ts. SAST = gate7.log @ c7fba97 (contient 25a1a22..50d35f3): ligne 20 gitleaks propre, ligne 24 semgrep : propre (racine), ligne 114 VERIFY OK @ c7fba97. Ligne 25 COVERAGE DEGRADED du gate: seul web/src/screens/Horses.test.tsx lu en partie (derogation pilote *.test.tsx): aucun des 3 fichiers du diff (api/src/db/seed.ts, api/src/db/seed.test.ts, api/src/server.ts) n'est concerne; la degradation du gate reste visible mais hors perimetre de ce diff. Advisory: ON CONFLICT DO UPDATE no-op (lisibilite).",
+      "title": "security-code-review CLEAN (findings: aucun ; couverture: CLEAN pour ce diff) — diff 25a1a22..50d35f3"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M644TVKZD4BRR2SYFQK1E2E4",
+      "kind": "verdict",
+      "task": "T-01M642G9VMRZZ747JGBA7KV38S",
+      "text": "diff 25a1a22..5852788 (api/src/routes/session.ts, session.test.ts) ; findings=aucun ; coverage=CLEAN pour ce diff. Jambe SAST = semgrep de la porte @ c7fba97 (gate7.log l.24 'semgrep : propre (racine)', l.114 'VERIFY OK @ c7fba97'; 5852788 ancetre de c7fba97, les 2 fichiers inchanges depuis). Base --baseline-commit accf30bd (ancetre de 25a1a22) : les 2 fichiers sont NEUFS depuis la base (+297 lignes), donc scannes. Seul fichier lu en partie : web/src/screens/Horses.test.tsx, hors de ce diff (derogation pilote *.test.tsx). Revue manuelle : compteId schema {} -> normaliserId (safe-integer ou ^[1-9][0-9]{0,18}$ <= 2^63-1, sinon 400) -> CAST($1 AS bigint) parametre ; 9007199254740993 -> non safe -> 400.",
+      "title": "security-code-review CLEAN (findings aucun, coverage CLEAN: SAST porte @ c7fba97 propre, fichiers du diff lus en entier)"
     }
   ]
 }

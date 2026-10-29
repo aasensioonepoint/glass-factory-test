@@ -4,6 +4,14 @@
       "board_task_id": "T-01M63K36QN0S5WJE7VETZR5GX3",
       "tombstoned": false
     },
+    "1971a442-4003-43ec-8c7b-af1b0f6630ba": {
+      "board_task_id": "T-01M642G9VMRZZ747JGBA7KV38S",
+      "tombstoned": false
+    },
+    "2044a089-0165-4a9a-bb6e-4f001f7a4b7c": {
+      "board_task_id": "T-01M642G99WH3THPGJPHSAQG912",
+      "tombstoned": false
+    },
     "20e73299-fd03-43ea-8b76-e84334b895cf": {
       "board_task_id": "T-01M63VC74JJN4J71TYR9GRXDR6",
       "tombstoned": false
@@ -20,12 +28,20 @@
       "board_task_id": "T-01M63K37YX42JH0T9JERBBDY0G",
       "tombstoned": false
     },
+    "7c3daf12-2e1c-4fb5-ba8f-8d4d68a2c678": {
+      "board_task_id": "T-01M642GAXFFFX4MG3JCSNS8JWG",
+      "tombstoned": false
+    },
     "86e0bbca-03b9-4720-a85c-00a20b100d97": {
       "board_task_id": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
       "tombstoned": false
     },
     "d7209e34-c021-423b-864f-fcc53353503d": {
       "board_task_id": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "tombstoned": false
+    },
+    "e440adb0-28c0-4ce8-956c-6ce21a993f4e": {
+      "board_task_id": "T-01M642GACNAVTQ0RWDMKRHQ0RJ",
       "tombstoned": false
     }
   },
@@ -416,6 +432,220 @@
         "web/src/components/ProfilePicker.tsx",
         "web/src/components/ProfilePicker.test.tsx",
         "web/src/App.tsx"
+      ]
+    },
+    {
+      "chantier": "metier-graffard",
+      "direct": {
+        "chaine_franchie": "2026-10-29",
+        "le": "2026-10-29",
+        "writeset": [
+          "api/src/db/seed.ts",
+          "api/src/db/seed.test.ts",
+          "api/src/server.ts"
+        ]
+      },
+      "done_at": "2026-10-29T15:35:59.461Z",
+      "id": "T-01M642G99WH3THPGJPHSAQG912",
+      "owner": "dev-multi",
+      "parallel_group": "PG-0003",
+      "pas_un_defaut": "fonctionnalité : T2, seed de démonstration",
+      "retour": {
+        "base": "25a1a22e2a554a59891e4d57db43c8f2efe9f89a",
+        "branche": "worktree-agent-a26791ddd639a74cf",
+        "causes": [],
+        "fichiers": [
+          "api/src/db/seed.test.ts",
+          "api/src/db/seed.ts",
+          "api/src/server.ts"
+        ],
+        "le": "2026-10-29T15:30:42Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-a26791ddd639a74cf"
+        ],
+        "specs_borne": "S-01M644DNX60R0STAMM8GXZT2K9",
+        "taches": [
+          "T-01M642G99WH3THPGJPHSAQG912"
+        ],
+        "tip": "50d35f3d6679393f32e968c4de4b3d6d23d851ae",
+        "verdict": "ok"
+      },
+      "stage": "T2 livré : seed de démo fictif ; revue de clôture critic-opus, constats 1, 3, 4, 6 corrigés ; sécurité CLEAN S-01M644TMP6GNSA07XY9DYPDG2W ; VERIFY OK @ c7fba97 [DIRECT SANS PLAN : 3 fichier(s), 3 validé(s) par direct] [revue de sécurité empruntée au slot T-01M642G9VMRZZ747JGBA7KV38S : S-01M644TVKZD4BRR2SYFQK1E2E4]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Données de démonstration fictives (T2)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "api/src/db/seed.ts",
+        "api/src/db/seed.test.ts",
+        "api/src/server.ts"
+      ]
+    },
+    {
+      "chantier": "metier-graffard",
+      "direct": {
+        "chaine_franchie": "2026-10-29",
+        "le": "2026-10-29",
+        "writeset": [
+          "api/src/auth/session.ts",
+          "api/src/auth/session.test.ts",
+          "api/src/routes/session.ts",
+          "api/src/routes/session.test.ts",
+          "api/src/app.ts"
+        ]
+      },
+      "done_at": "2026-10-29T15:36:01.215Z",
+      "id": "T-01M642G9VMRZZ747JGBA7KV38S",
+      "owner": "dev-multi",
+      "parallel_group": "PG-0003",
+      "pas_un_defaut": "fonctionnalité : T3, connexion par persona (D4-A)",
+      "retour": {
+        "base": "25a1a22e2a554a59891e4d57db43c8f2efe9f89a",
+        "branche": "worktree-agent-a51f400f3d7479388",
+        "causes": [],
+        "fichiers": [
+          "api/src/routes/session.test.ts",
+          "api/src/routes/session.ts"
+        ],
+        "le": "2026-10-29T15:27:33Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-a51f400f3d7479388"
+        ],
+        "specs_borne": "S-01M643WVT8NHK8NAB6BHW2XAD4",
+        "taches": [
+          "T-01M642G9VMRZZ747JGBA7KV38S"
+        ],
+        "tip": "5852788ab539774ad546887f2debdfe4cfc59782",
+        "verdict": "ok"
+      },
+      "stage": "T3 livré : connexion par persona D4-A ; revue de clôture critic-opus, constat 5 corrigé (compteId sans coercion Ajv) ; sécurité CLEAN S-01M644TVKZD4BRR2SYFQK1E2E4 ; VERIFY OK @ c7fba97 [DIRECT SANS PLAN : 5 fichier(s), 5 validé(s) par direct]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Connexion par persona de démonstration (T3)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "api/src/auth/session.ts",
+        "api/src/auth/session.test.ts",
+        "api/src/routes/session.ts",
+        "api/src/routes/session.test.ts",
+        "api/src/app.ts"
+      ]
+    },
+    {
+      "chantier": "metier-graffard",
+      "depends_motif": {
+        "T-01M642G9VMRZZ747JGBA7KV38S": "T7 utilise requireRole et request.compte de T3, et branche dans app.ts après T3"
+      },
+      "depends_on": [
+        "T-01M642G9VMRZZ747JGBA7KV38S"
+      ],
+      "direct": {
+        "le": "2026-10-29",
+        "writeset": [
+          "api/src/routes/chevaux.ts",
+          "api/src/routes/chevaux.test.ts",
+          "api/src/app.ts"
+        ]
+      },
+      "id": "T-01M642GACNAVTQ0RWDMKRHQ0RJ",
+      "owner": "dev-multi",
+      "pas_un_defaut": "fonctionnalité : T7, dossier cheval",
+      "stage": "",
+      "state": "pending",
+      "task": "Dossier cheval filtré par rôle, branché dans l'API (T7)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "api/src/routes/chevaux.ts",
+        "api/src/routes/chevaux.test.ts",
+        "api/src/app.ts"
+      ]
+    },
+    {
+      "chantier": "metier-graffard",
+      "direct": {
+        "chaine_franchie": "2026-10-29",
+        "le": "2026-10-29",
+        "writeset": [
+          "web/src/screens/Horses.tsx",
+          "web/src/screens/Horses.test.tsx",
+          "web/src/App.tsx",
+          "web/src/components/ProfilePicker.tsx"
+        ]
+      },
+      "id": "T-01M642GAXFFFX4MG3JCSNS8JWG",
+      "owner": "frontend-fidelity",
+      "parallel_group": "PG-0003",
+      "pas_un_defaut": "fonctionnalité : W3, écran Chevaux",
+      "retour": {
+        "base": "accf30bd60fdedc51c508abf0f3904497906fa72",
+        "branche": "worktree-agent-af22da75b50e53940",
+        "causes": [],
+        "fichiers": [
+          "web/src/App.tsx",
+          "web/src/components/ProfilePicker.tsx",
+          "web/src/screens/Horses.test.tsx",
+          "web/src/screens/Horses.tsx"
+        ],
+        "le": "2026-10-29T15:18:29Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-af22da75b50e53940"
+        ],
+        "specs_borne": "S-01M643HPAR5Z8ZD6FKJJAF7ARD",
+        "taches": [
+          "T-01M642GAXFFFX4MG3JCSNS8JWG"
+        ],
+        "tip": "9402d3719ce7f83c45a6b85ba4342ab6b7fa4f42",
+        "verdict": "ok"
+      },
+      "stage": "[DIRECT SANS PLAN : 3 fichier(s), 3 validé(s) par direct]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "running",
+      "task": "Écran dossier cheval, branché dans le site (W3)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "web/src/screens/Horses.tsx",
+        "web/src/screens/Horses.test.tsx",
+        "web/src/App.tsx",
+        "web/src/components/ProfilePicker.tsx"
       ]
     }
   ]
