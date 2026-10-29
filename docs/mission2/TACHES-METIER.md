@@ -256,6 +256,11 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 >   - autres rôles : tout l'effectif.
 > - `GET /api/chevaux/:id` → dossier : identité, séjour courant, régime spécial, dernières mesures, restrictions. Champs masqués selon le rôle : le propriétaire ne voit pas les restrictions détaillées.
 >
+> - **Contrat** (consommé par W3 ; tous les identifiants en chaîne) :
+>   - `GET /api/chevaux` → `[{id, nom, sexe: string|null, dateNaissance: string|null (AAAA-MM-JJ), statut: string|null, cour: string|null}]` ;
+>   - `GET /api/chevaux/:id` → `{id, nom, sexe, dateNaissance, statut, sire: string|null, sejour: {cour, depuis}|null, regime: {description}|null, mesures: [{nature, valeur, date}], restrictions?: [{source, debut, finPrevue: string|null, statut: 'active'|'levee'}]}` ; `restrictions` est **absent** pour le propriétaire.
+> - Brancher `registerChevaux` dans `buildApp` (`app.ts`, ajouté au write-set : l'écran W3 en a besoin sans attendre TA).
+>
 > **Hors périmètre** — Mouvements, documents, édition.
 >
 > **Contraintes** — Un id hors périmètre → 404 (pas 403), pour ne pas révéler l'existence du cheval.
