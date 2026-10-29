@@ -1,6 +1,7 @@
 import { buildApp } from './app.ts';
 import { createDb, DATA_DIR } from './db/client.ts';
 import { migrate } from './db/migrate.ts';
+import { seed } from './db/seed.ts';
 
 const rawPort = process.env.PORT;
 const port = rawPort === undefined ? 3000 : Number(rawPort);
@@ -19,6 +20,8 @@ try {
 }
 const { client, db, release } = handle;
 await migrate(client);
+// Fictional demo data, inserted only while table `compte` is empty (seed checks it).
+if (await seed(client)) console.log('api: données de démonstration fictives insérées');
 
 const app = buildApp({ db });
 
