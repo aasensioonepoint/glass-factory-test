@@ -75,6 +75,25 @@ CREATE TABLE restriction (
 );
 CREATE INDEX restriction_active_cheval_idx ON restriction (cheval_id) WHERE statut = 'active';
 
+-- D10: lifting is always explicit. No DELETE or TRUNCATE (an untraced lifting), and a
+-- lifted row is frozen (no way back to active wiping leve_*). TG_OP is tested before
+-- OLD, so the statement-level TRUNCATE trigger never reads OLD.
+CREATE FUNCTION restriction_tracee() RETURNS trigger LANGUAGE plpgsql AS $fn$
+BEGIN
+    IF TG_OP IN ('DELETE', 'TRUNCATE') THEN
+        RAISE EXCEPTION 'restriction : suppression refusée (%), lever avec motif', TG_OP;
+    END IF;
+    IF OLD.statut = 'levee' THEN
+        RAISE EXCEPTION 'restriction levée : non modifiable';
+    END IF;
+    RETURN NEW;
+END;
+$fn$;
+CREATE TRIGGER restriction_sans_effacement BEFORE UPDATE OR DELETE ON restriction
+    FOR EACH ROW EXECUTE FUNCTION restriction_tracee();
+CREATE TRIGGER restriction_sans_truncate BEFORE TRUNCATE ON restriction
+    FOR EACH STATEMENT EXECUTE FUNCTION restriction_tracee();
+
 CREATE TABLE mesure (
     id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cheval_id       bigint NOT NULL REFERENCES cheval (id),

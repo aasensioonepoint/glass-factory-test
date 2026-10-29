@@ -106,6 +106,32 @@ describe('migration 0002_schema_mission2', () => {
     expect(row.rows).toEqual([{ statut: 'active' }]);
   });
 
+  it('D10: a restriction is never deleted nor reopened; lifting is explicit and then frozen', async () => {
+    const { acteur, cheval } = await migrated();
+    const id = await one("INSERT INTO restriction (cheval_id, source, debut) VALUES ($1, 'manuel', current_date) RETURNING id", [
+      cheval,
+    ]);
+    await expect(handle!.client.query('DELETE FROM restriction WHERE id = $1', [id])).rejects.toThrow(/suppression refusée \(DELETE\)/);
+    await expect(handle!.client.query('TRUNCATE restriction')).rejects.toThrow(/suppression refusée \(TRUNCATE\)/);
+    await handle!.client.query('UPDATE restriction SET fin_prevue = current_date + 7 WHERE id = $1', [id]);
+    await handle!.client.query(
+      "UPDATE restriction SET statut = 'levee', leve_par_id = $2, leve_le = now(), motif_levee = 'Contrôle négatif' WHERE id = $1",
+      [id, acteur],
+    );
+    await expect(
+      handle!.client.query(
+        "UPDATE restriction SET statut = 'active', leve_par_id = NULL, leve_le = NULL, motif_levee = NULL WHERE id = $1",
+        [id],
+      ),
+    ).rejects.toThrow(/levée : non modifiable/);
+    await expect(handle!.client.query('DELETE FROM restriction WHERE id = $1', [id])).rejects.toThrow(/suppression refusée/);
+    const row = await handle!.client.query<{ statut: string; motif_levee: string }>(
+      'SELECT statut, motif_levee FROM restriction WHERE id = $1',
+      [id],
+    );
+    expect(row.rows).toEqual([{ statut: 'levee', motif_levee: 'Contrôle négatif' }]);
+  });
+
   it('D6: mesure and regime_special accept valid rows and refuse an unknown type or an inverted period', async () => {
     const { acteur, cheval } = await migrated();
     await handle!.client.query(
