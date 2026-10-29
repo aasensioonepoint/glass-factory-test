@@ -2,7 +2,12 @@ import { buildApp } from './app.ts';
 import { createDb, DATA_DIR } from './db/client.ts';
 import { migrate } from './db/migrate.ts';
 
-const port = Number(process.env.PORT ?? 3000);
+const rawPort = process.env.PORT;
+const port = rawPort === undefined ? 3000 : Number(rawPort);
+if (rawPort !== undefined && (!/^\d+$/.test(rawPort) || port < 1 || port > 65535)) {
+  console.error(`api: PORT invalide « ${rawPort} » — attendu un entier de 1 à 65535`);
+  process.exit(1);
+}
 const host = '127.0.0.1';
 
 const { client, db } = createDb(DATA_DIR);
