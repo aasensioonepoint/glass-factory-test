@@ -1,3 +1,279 @@
 {
-  "tasks": []
+  "sync_correlations": {
+    "122a196a-a522-4f08-b93c-36f0298da89e": {
+      "board_task_id": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "tombstoned": false
+    },
+    "2db2ed1d-fab3-413f-9b36-bf405ce34b0b": {
+      "board_task_id": "T-01M63PPZVJBC15V86TYCXD6KJ7",
+      "tombstoned": false
+    },
+    "493222f6-7a49-48cb-b6de-0cc1a5533f95": {
+      "board_task_id": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
+      "tombstoned": false
+    },
+    "6c63b010-189f-4e63-a8ef-8abc37bf33ba": {
+      "board_task_id": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "tombstoned": false
+    },
+    "d7209e34-c021-423b-864f-fcc53353503d": {
+      "board_task_id": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "tombstoned": false
+    }
+  },
+  "tasks": [
+    {
+      "chantier": "socle-graffard",
+      "id": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
+      "owner": "dev-multi",
+      "pas_un_defaut": "fonctionnalité : création du socle applicatif mission 2",
+      "stage": "",
+      "state": "pending",
+      "task": "Socle technique Graffard Racing : monorepo npm (api Fastify + PGlite/Drizzle chargeant le MCD, web PWA React), /api/health 49 tables",
+      "updated": "2026-10-29"
+    },
+    {
+      "chantier": "socle-graffard",
+      "done_at": "2026-10-29T12:49:02.345Z",
+      "fournee": {
+        "lots": [],
+        "plan": "docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-plan.md",
+        "sha256": "a85364e8c036ec88d6dba773c314e2db48704a7f22a77be7650e947effe3a81d",
+        "trace": "S-01M63MDGFQH2J6JBG9PHKQHNDN"
+      },
+      "id": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "lancee_le": "2026-10-29T10:49:04.157Z",
+      "lancee_sous": "S-01M63MDGFQH2J6JBG9PHKQHNDN",
+      "owner": "dev-multi",
+      "pas_un_defaut": "fonctionnalité : enfant racine de la découpe de cadrage du socle",
+      "plan_chain_consumed": true,
+      "retour": {
+        "base": "ce2edf35cd115604ebc32aaa9709c58f87b1b4eb",
+        "branche": "worktree-agent-a26efafd825be0de1",
+        "causes": [],
+        "fichiers": [
+          "api/src/db/client.ts",
+          "api/src/routes/health.test.ts",
+          "api/src/server.ts",
+          "api/tsconfig.json",
+          "package.json",
+          "scripts/dev.mjs",
+          "scripts/smoke.mjs"
+        ],
+        "le": "2026-10-29T12:20:14Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-a26efafd825be0de1"
+        ],
+        "specs_borne": "S-01M63QDBGVJ5D1X0J6EHH0GHAR",
+        "taches": [
+          "T-01M63K36QN0S5WJE7VETZR5GX3",
+          "T-01M63K37AZMYHPH0AKH4FRNEVW"
+        ],
+        "tip": "6b259ebbdc97df879265217d8bf658d8354def4c",
+        "verdict": "ok"
+      },
+      "stage": "socle livré : revue de clôture critic-opus corrigée, porte verte VERIFY OK @ fd553b7",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Socle Graffard — partie racine (découpe de cadrage de T-01M63JFCXK2ST7VBGJRFJ2RGTT)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "package.json",
+        "package-lock.json",
+        ".gitignore",
+        "tsconfig.base.json",
+        "scripts/dev.mjs",
+        "scripts/smoke.mjs"
+      ]
+    },
+    {
+      "chantier": "socle-graffard",
+      "done_at": "2026-10-29T12:49:04.002Z",
+      "fournee": {
+        "lots": [],
+        "plan": "docs/tasks/T-01M63K37AZMYHPH0AKH4FRNEVW-plan.md",
+        "sha256": "a8000db1c05d5ead636d5f951c1184e00ad14e0b9aa63880e6ae91f6ea5bee17",
+        "trace": "S-01M63MDGR9K73E3C2KGNBY8432"
+      },
+      "id": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "lancee_le": "2026-10-29T10:49:31.586Z",
+      "lancee_sous": "S-01M63MDGR9K73E3C2KGNBY8432",
+      "owner": "dev-multi",
+      "pas_un_defaut": "fonctionnalité : enfant api de la découpe de cadrage du socle",
+      "retour": {
+        "base": "ce2edf35cd115604ebc32aaa9709c58f87b1b4eb",
+        "branche": "worktree-agent-a26efafd825be0de1",
+        "causes": [],
+        "fichiers": [
+          "api/src/db/client.ts",
+          "api/src/routes/health.test.ts",
+          "api/src/server.ts",
+          "api/tsconfig.json",
+          "package.json",
+          "scripts/dev.mjs",
+          "scripts/smoke.mjs"
+        ],
+        "le": "2026-10-29T12:20:14Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-a26efafd825be0de1"
+        ],
+        "specs_borne": "S-01M63QDBGVJ5D1X0J6EHH0GHAR",
+        "taches": [
+          "T-01M63K36QN0S5WJE7VETZR5GX3",
+          "T-01M63K37AZMYHPH0AKH4FRNEVW"
+        ],
+        "tip": "6b259ebbdc97df879265217d8bf658d8354def4c",
+        "verdict": "ok"
+      },
+      "sans_chaine": "chaîne jouée (planner + plan-critic GO_AVEC_RESERVES S-01M63M3XBV2WCJSZQXM1J068RR) mais ses traces d'hôte @c013e93, non rattachées à une tâche, ont été consommées par le start de la racine T-01M63K36QN0S5WJE7VETZR5GX3 (plan-chain-consommations.log 10:49:04Z)",
+      "stage": "socle livré : revue de clôture critic-opus corrigée, porte verte VERIFY OK @ fd553b7 [SANS CHAÎNE DE PLAN : chaîne jouée (planner + plan-critic GO_AVEC_RESERVES S-01M63M3XBV2WCJSZQXM1J068RR) mais ses traces d'hôte @c013e93, non rattachées à une tâche, ont été consommées par le start de la racine T-01M63K36QN0S5WJE7VETZR5GX3 (plan-chain-consommations.log 10:49:04Z)]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Socle Graffard — partie api (découpe de cadrage de T-01M63JFCXK2ST7VBGJRFJ2RGTT)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "api/package.json",
+        "api/tsconfig.json",
+        "api/vitest.config.ts",
+        "api/src/server.ts",
+        "api/src/app.ts",
+        "api/src/routes/health.ts",
+        "api/src/routes/health.test.ts",
+        "api/src/db/client.ts",
+        "api/src/db/migrate.ts",
+        "api/src/db/migrations/0001_mcd_v0.ts"
+      ]
+    },
+    {
+      "chantier": "socle-graffard",
+      "done_at": "2026-10-29T12:49:05.640Z",
+      "fournee": {
+        "lots": [],
+        "plan": "docs/tasks/T-01M63K37YX42JH0T9JERBBDY0G-plan.md",
+        "sha256": "9217d4d7c6f2c32d8dc2aa81a21bbac1a858a3c1677a81f6de03954d083ca48b",
+        "trace": "S-01M63MHEEVHF3PNZGX7Q80DP8Y"
+      },
+      "id": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "lancee_le": "2026-10-29T10:51:02.771Z",
+      "lancee_sous": "S-01M63MHEEVHF3PNZGX7Q80DP8Y",
+      "owner": "dev-multi",
+      "pas_un_defaut": "fonctionnalité : enfant web de la découpe de cadrage du socle",
+      "retour": {
+        "base": "de413704dceaed5ff7e2f1d3960fe193d4f67c1a",
+        "branche": "worktree-agent-a95606e0c39478bde",
+        "causes": [],
+        "fichiers": [
+          "web/src/App.tsx",
+          "web/src/components/Navigation.test.tsx",
+          "web/src/components/Navigation.tsx",
+          "web/src/main.tsx",
+          "web/src/styles.css",
+          "web/vite.config.ts"
+        ],
+        "le": "2026-10-29T11:53:07Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-a95606e0c39478bde"
+        ],
+        "specs_borne": "S-01M63QDBGVJ5D1X0J6EHH0GHAR",
+        "taches": [
+          "T-01M63K37YX42JH0T9JERBBDY0G"
+        ],
+        "tip": "306f34a51e86ec5c3044547d13a068f1f49aaf98",
+        "verdict": "ok"
+      },
+      "sans_chaine": "chaîne jouée (planner r1+r2, plan-critic NO_GO S-01M63M88Y9WBPR47KYH149S5GN, r2 approuvée par le pilote S-01M63MHE6XRK81FEAZG5WPZ6KW) ; traces d'hôte non rattachées à une tâche, consommées par le start de la racine T-01M63K36QN0S5WJE7VETZR5GX3",
+      "stage": "socle livré : revue de clôture critic-opus corrigée, porte verte VERIFY OK @ fd553b7 [SANS CHAÎNE DE PLAN : chaîne jouée (planner r1+r2, plan-critic NO_GO S-01M63M88Y9WBPR47KYH149S5GN, r2 approuvée par le pilote S-01M63MHE6XRK81FEAZG5WPZ6KW) ; traces d'hôte non rattachées à une tâche, consommées par le start de la racine T-01M63K36QN0S5WJE7VETZR5GX3]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Socle Graffard — partie web (découpe de cadrage de T-01M63JFCXK2ST7VBGJRFJ2RGTT)",
+      "updated": "2026-10-29",
+      "writeset": [
+        "web/package.json",
+        "web/tsconfig.json",
+        "web/vite.config.ts",
+        "web/index.html",
+        "web/src/main.tsx",
+        "web/src/App.tsx",
+        "web/src/i18n.ts",
+        "web/src/styles.css",
+        "web/src/components/Navigation.tsx",
+        "web/src/components/Navigation.test.tsx",
+        "web/public/icon-192.png",
+        "web/public/icon-512.png"
+      ]
+    },
+    {
+      "chantier": "socle-graffard",
+      "direct": {
+        "chaine_franchie": "2026-10-29",
+        "le": "2026-10-29",
+        "writeset": [
+          "scripts/smoke.mjs"
+        ]
+      },
+      "id": "T-01M63PPZVJBC15V86TYCXD6KJ7",
+      "owner": "dev-mono",
+      "pas_un_defaut": "fonctionnalité : témoin d'intégration du socle",
+      "stage": "[DIRECT SANS PLAN : 1 fichier(s), 1 validé(s) par direct]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "running",
+      "task": "Smoke de bout en bout du socle : tests, build et /api/health sur la racine fusionnée",
+      "updated": "2026-10-29",
+      "writeset": [
+        "scripts/smoke.mjs"
+      ]
+    }
+  ]
 }

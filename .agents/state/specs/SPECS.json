@@ -1,0 +1,211 @@
+{
+  "entries": [
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63K3VPZ0S8VQK9FE0VA35F0",
+      "kind": "decision",
+      "task": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
+      "text": "Pilote, 2026-10-29 : suivre le cadrage, trois enfants T-01M63K36QN0S5WJE7VETZR5GX3 (racine), T-01M63K37AZMYHPH0AKH4FRNEVW (api), T-01M63K37YX42JH0T9JERBBDY0G (web), sans arête. SUGGESTION: ordre racine, api, web.",
+      "title": "découpe de cadrage : option A (racine, api, web)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63KX4JSCTYJQW5KTAVQFM2V",
+      "kind": "verdict",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "plan=docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-plan.md ; 2 bloquants (C1 orphelin Windows dans dev.mjs, C2 lockfile sans SCA ni place avant la porte), 5 réserves ; critic=docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-critic-1.md (NO_GO) ; chrono: planner=3m15s/64.5k plan-critic=7m55s/125.3k",
+      "title": "plan-critic NO_GO (iteration 1/2)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63M3XBV2WCJSZQXM1J068RR",
+      "kind": "verdict",
+      "task": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "text": "plan=docs/tasks/T-01M63K37AZMYHPH0AKH4FRNEVW-plan.md sha256=a8000db1c05d5ead636d5f951c1184e00ad14e0b9aa63880e6ae91f6ea5bee17 — 0 bloquant, 7 réserves pour la passe de correction du dev (tx du callback de transaction, versions épinglées, cible de l'étape 3, témoin DATA_DIR, testTimeout 30000, critère npm test -w api, rollback du lockfile) ; critic=docs/tasks/T-01M63K37AZMYHPH0AKH4FRNEVW-critic-1.md ; chrono: voir --chrono-aid ; chrono: planner=5m32s/76.1k plan-critic=8m16s/90.8k",
+      "title": "plan-critic GO_AVEC_RESERVES (iteration 1/2)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63M88Y9WBPR47KYH149S5GN",
+      "kind": "verdict",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "plan=docs/tasks/T-01M63K37YX42JH0T9JERBBDY0G-plan.md ; 2 bloquants (C1 build rouge sous TS 7 : import CSS sans vite/client, C2 états aria et FR par défaut non témoignés), 6 réserves ; critic=docs/tasks/T-01M63K37YX42JH0T9JERBBDY0G-critic-1.md (NO_GO) ; chrono: planner=43s/89.8k plan-critic=8m42s/116.3k",
+      "title": "plan-critic NO_GO (iteration 1/2)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63MC34T92P11RBYM7500T7H",
+      "kind": "verdict",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "plan=docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-plan.md ; 1 bloquant (C8 dev.mjs sort avant la fin de taskkill : orphelin mesuré), 2 réserves ; C2–C7 fermés ; critic=docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-critic-2.md (NO_GO) ; chrono: planner=1m40s/81k plan-critic=4m19s/78.8k",
+      "title": "plan-critic NO_GO (iteration 2/2)"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63MDFJGKGAW6HVFS66MGE2N",
+      "kind": "decision",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "Pilote, 2026-10-29 : « approuve les trois et lance le dev ». Au plafond 2/2 (NO_GO, C8 seul bloquant), la ligne correctrice écrite par plan-critic pour C8 est reportée telle quelle à l'étape 4 et au témoin (iv) (C9 rattaché) ; plan=docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-plan.md sha256=a85364e8c036ec88d6dba773c314e2db48704a7f22a77be7650e947effe3a81d",
+      "title": "plafond critique : pilote approuve avec la ligne correctrice de C8"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63MDGFQH2J6JBG9PHKQHNDN",
+      "kind": "decision",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "plan=docs/tasks/T-01M63K36QN0S5WJE7VETZR5GX3-plan.md sha256=a85364e8c036ec88d6dba773c314e2db48704a7f22a77be7650e947effe3a81d verdict=S-01M63MC34T92P11RBYM7500T7H approved=2026-10-29",
+      "title": "plan approuvé"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63MDGR9K73E3C2KGNBY8432",
+      "kind": "decision",
+      "task": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "text": "plan=docs/tasks/T-01M63K37AZMYHPH0AKH4FRNEVW-plan.md sha256=a8000db1c05d5ead636d5f951c1184e00ad14e0b9aa63880e6ae91f6ea5bee17 verdict=S-01M63M3XBV2WCJSZQXM1J068RR approved=2026-10-29",
+      "title": "plan approuvé"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63MHE6XRK81FEAZG5WPZ6KW",
+      "kind": "decision",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "Pilote, 2026-10-29 : « approuve les trois et lance le dev ». Révision 2 fermant C1 et C2 par mesure (tsc rc 0 sous TS 7.0.2, Tests 3 passed, build PWA rc 0, mutants rouges), C3 « no mockup » confirmé par cette approbation ; plan=docs/tasks/T-01M63K37YX42JH0T9JERBBDY0G-plan.md sha256=9217d4d7c6f2c32d8dc2aa81a21bbac1a858a3c1677a81f6de03954d083ca48b",
+      "title": "plafond critique : pilote approuve la révision 2 sans 2e passage du critique"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63MHEEVHF3PNZGX7Q80DP8Y",
+      "kind": "decision",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "plan=docs/tasks/T-01M63K37YX42JH0T9JERBBDY0G-plan.md sha256=9217d4d7c6f2c32d8dc2aa81a21bbac1a858a3c1677a81f6de03954d083ca48b verdict=S-01M63M88Y9WBPR47KYH149S5GN approved=2026-10-29",
+      "title": "plan approuvé"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63N6TDX5VDT74CPGK97DCF3",
+      "kind": "verdict",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "diff f84914d..b91ba92 (4 fichiers) : 0 critical / 0 high / 0 medium ; 1 advisory (dev.mjs:38 taskkill résolu par nom, durcissement SystemRoot\\System32\\taskkill.exe → passe de correction) ; coverage DEGRADED (semgrep non installé, revue manuelle complète)",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63N91AJM4QR5Z55ASM952T1",
+      "kind": "verdict",
+      "task": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "text": "diff f84914d..b50935d (10 fichiers api/) : 0 critical / 0 high / 0 medium ; 2 advisory (server.ts:5 PORT NaN ; app.ts:11 setErrorHandler à prévoir avec les routes métier) ; coverage DEGRADED (semgrep non installé, revue manuelle complète)",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63P1P95X9S9ZE5RCQ61X9WM",
+      "kind": "verdict",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "diff f84914d..b40119a (12 fichiers web/) : 0 critical / 0 high ; 3 advisory (navigateFallbackDenylist /api → passe de correction ; CSP à prévoir côté serveur de prod ; manifeste → security-orchestrator) ; coverage DEGRADED (semgrep absent, revue manuelle)",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63PBHN6K9V0BX3DEZM3HFFA",
+      "kind": "verdict",
+      "task": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "text": "fd82682 : build, serveur x2 (49 tables), persistance, schema/, deps, C1 C2 C5 GO ; bloquant : health.test.ts:57 endsWith('api/data/pglite') non borné (rouge si le dossier de checkout finit par « api ») → path.relative ; critères l.39-40 à rejouer après fusion web ; angle mort : atomicité de la migration non testée",
+      "title": "exec-critic NO_GO"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63PCEFH9YFDTQ73FR3SRAXF",
+      "kind": "verdict",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "étapes 1-4 : package.json, check-ignore, node --check, (i) rc1, (ii) rc3, (iv) 0 orphelin, 2 mutants rouges, Set ended conforme ; 2 mineurs (pas de critère pour tsconfig.base, @(…).Count sous PS 5.1) ; (iii) Ctrl+C console et branche POSIX non mesurés",
+      "title": "exec-critic GO_AVEC_RESERVES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63PDVH9JSR08E3VDDWNG71R",
+      "kind": "verdict",
+      "task": "T-01M63K36QN0S5WJE7VETZR5GX3",
+      "text": "sca-scan.sh sur package-lock.json @de41370 : npm audit --package-lock-only --omit=dev ; SUMMARY active=0 accepted=0 pending=0 ; SCA GATE (effective, waivers applied): GO ; COVERAGE DEGRADED (socket et trivy non installés ; périmètre production seul, les 4 low de npm install sont hors périmètre prod)",
+      "title": "security-orchestrator SCA GO"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63PMDNZWBSEBNXDAF3ZX673",
+      "kind": "decision",
+      "task": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
+      "text": "Pilote, 2026-10-29 (confirmé en chat) : D2 = A puis C si le temps ; D4 = A, comptes persona ; D5–D9 = toutes les recommandations (LOT.heure → ordre_passage + unicité (numéro, cour, date) ; RESTRICTION, MESURE, REGIME_SPECIAL ; PROGRAMME si D2-C ; AUDIT + clé d'idempotence COMMANDE_SYNC dès le palier 1, CONFLIT si hors ligne ; énumération de statuts unique, « en retard » calculé) ; D10 = propositions (levée par vétérinaire ou entraîneur avec motif, fin = administration + delai_retrait_jours, bloque l'engagement, avertit pour un lot, statut inconnu = produit sans délai ou rien depuis N jours). Trace : docs/mission2/DECISIONS.md",
+      "title": "décisions mission 2 : D2, D4, D5–D9, D10"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63PMF2CAHAYCQNDRHJ70ES5",
+      "kind": "decision",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "Pilote, 2026-10-29 : sélecteur FR/EN en pastille fixe en haut à droite sur mobile (gardé) ; « + Ajouter » en bas à droite à toutes les largeurs (gardé) ; dépôt distant fourni vers 15h30",
+      "title": "arbitrages d'interaction du socle web"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63Q32EVAREG6FZZKZB2WMC9",
+      "kind": "verdict",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "0 bloquant ; High : barre basse sans stratégie de débordement à 200 % de texte (styles.css:76-103), aucun scroll-padding face au chrome fixe (2.4.11) ; Medium : marge nulle de la barre haute, langue non persistée (à trancher), arbitrages FR/EN et + Ajouter (gardés par le pilote S-01M63PMF2CAHAYCQNDRHJ70ES5) ; 8 nits ; mesures de l'implémenteur reproduites ; axe, lecteurs d'écran, SW réel non vérifiés",
+      "title": "design-review GO_AVEC_RESERVES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63Q6GCS7BKN2514WY3ZFP9Y",
+      "kind": "decision",
+      "task": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
+      "text": "Pilote, 2026-10-29 : Q1 = ajouter produit.delai_retrait_jours (nullable, NULL = délai inconnu ; acte_sante garde la copie figée) ; Q2 = N_JOURS_STATUT_INCONNU = 30 ; langue FR/EN persistée dans le socle (localStorage, FR par défaut). Trace : docs/mission2/TACHES-METIER.md § 0",
+      "title": "tâches métier : Q1, Q2, langue persistée"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63QDBGVJ5D1X0J6EHH0GHAR",
+      "kind": "verdict",
+      "task": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "text": "5f17bae : 3 tests, build PWA, dev :5173, proxy sans réécriture, strictPort, focus/Échap/largeurs, PNG, 5 mutants rouges, racine npm test + build rc 0 ; MAJEUR : SW sans navigateFallbackDenylist détourne les navigations /api (correctif dans la passe de correction web) ; mineur : ajouts hors plan (preview, autoUpdate, DOM.Iterable, apple-touch-icon) ; angle mort : interactions non témoignées",
+      "title": "exec-critic GO_AVEC_RESERVES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63V2Q5P5WRJZ1YFJZA7MS3H",
+      "kind": "decision",
+      "task": "T-01M63JFCXK2ST7VBGJRFJ2RGTT",
+      "text": "Pilote, 2026-10-29 : porte @e23b8b6 rouge sur un seul point, semgrep lit en partie web/src/components/Navigation.test.tsx (fichier de test TSX, poste Windows) ; gitleaks propre, semgrep propre sur le reste, tests et build verts. Porte rejouée avec CADRE_GARDES_DEGRADEES.",
+      "title": "porte : sortie tracée CADRE_GARDES_DEGRADEES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63V53Q4GAWCNYAE7P20RYGP",
+      "kind": "delta",
+      "task": "T-01M63K37AZMYHPH0AKH4FRNEVW",
+      "text": "@e23b8b6 : health.test.ts verrou rouge (EPERM sur rmSync de pglite.lock sous Windows/EDR, puis « PGlite is closed » en cascade), k=2 échecs ; correctif : rmSync(lockPath, { force: true, maxRetries: 5, retryDelay: 100 }) aux deux sites de client.ts",
+      "title": "porte rouge — tentative 1/3"
+    }
+  ]
+}
