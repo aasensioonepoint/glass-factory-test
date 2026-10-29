@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createDb, type DbHandle } from './client.ts';
 import { migrate } from './migrate.ts';
-import { ROLES_DEMO, seed } from './seed.ts';
+import { jour, jourDesDonnees, ROLES_DEMO, seed } from './seed.ts';
 
 let handle: DbHandle | undefined;
 
@@ -123,5 +123,53 @@ describe('seed (demo data)', () => {
     expect(await count("SELECT 1 FROM engagement WHERE statut = 'brouillon'")).toBe(1);
     expect(await count('SELECT 1 FROM regime_special')).toBe(2);
     expect(await count('SELECT 1 FROM mesure WHERE date_reelle < $1', [now])).toBe(3);
+  });
+
+  it('keeps a care to do later the same day when seeded at 23:59:30', async () => {
+    const now = new Date(2026, 9, 29, 23, 59, 30);
+    await seeded(now);
+    const minuit = new Date(2026, 9, 30);
+    expect(
+      await count("SELECT 1 FROM administration WHERE statut = 'valide' AND date_heure > $1 AND date_heure < $2", [
+        now,
+        minuit,
+      ]),
+    ).toBe(1);
+  });
+
+  it('keeps a care to do in the afternoon when seeded in the morning', async () => {
+    const now = new Date(2026, 9, 29, 10, 0, 0);
+    await seeded(now);
+    const apresMidi = new Date(2026, 9, 29, 16, 0, 0);
+    const minuit = new Date(2026, 9, 30);
+    expect(
+      await count("SELECT 1 FROM administration WHERE statut = 'valide' AND date_heure > $1 AND date_heure < $2", [
+        apresMidi,
+        minuit,
+      ]),
+    ).toBe(1);
+  });
+
+  it('reports the day the demo data is anchored on, stale when seeded yesterday', async () => {
+    const hier = new Date();
+    hier.setDate(hier.getDate() - 1);
+    await seeded(hier);
+    expect(await jourDesDonnees(handle!.client)).toBe(jour(hier));
+    expect(await jourDesDonnees(handle!.client)).not.toBe(jour(new Date()));
+  });
+
+  it('reports no day before any demo data', async () => {
+    handle = createDb();
+    await migrate(handle.client);
+    expect(await jourDesDonnees(handle.client)).toBeNull();
+  });
+
+  it('reuses a pre-existing role instead of failing', async () => {
+    handle = createDb();
+    await migrate(handle.client);
+    await handle.client.query("INSERT INTO role (libelle) VALUES ('cavalier')");
+    expect(await seed(handle.client)).toBe(true);
+    expect(await count('SELECT 1 FROM compte')).toBe(6);
+    expect(await count('SELECT 1 FROM role')).toBe(6);
   });
 });
