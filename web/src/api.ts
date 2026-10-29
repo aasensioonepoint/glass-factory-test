@@ -4,9 +4,11 @@
  *   POST /api/session {compteId}  → {jeton, compte}
  *   GET  /api/moi                 → compte
  * Le jeton vit en mémoire et, quand il est disponible, dans `sessionStorage`
- * (try/catch : navigation privée, politique du site). Toute réponse 401 vide la
- * session. Les réponses sont des DONNÉES non fiables : leur forme est vérifiée
- * avant d'atteindre l'interface, jamais transtypée.
+ * (try/catch : navigation privée, politique du site). Seule `/api/moi` envoie le
+ * jeton ; une réponse 401 à une requête qui l'a envoyé vide la session. Les
+ * réponses sont des DONNÉES non fiables : leur forme est vérifiée avant
+ * d'atteindre l'interface, jamais transtypée. Chaque appel accepte un
+ * `AbortSignal` : une requête abandonnée rend `annule`, jamais `reseau`.
  */
 
 /** Libellés de rôle de T2, à l'identique. */
@@ -37,14 +39,20 @@ export interface Compte {
   nom?: string;
 }
 
-export type ErreurApi = 'reseau' | 'non_autorise' | 'http' | 'reponse_invalide';
+/** `annule` : la requête a été abandonnée par son appelant (signal), pas par le réseau. */
+export type ErreurApi = 'reseau' | 'non_autorise' | 'http' | 'reponse_invalide' | 'annule';
 
 export type Resultat<T> = { ok: true; valeur: T } | { ok: false; erreur: ErreurApi };
 
+/** Deux identifiants désignent le même compte, quel que soit leur type sérialisé. */
+export function memeCompte(a: CompteId, b: CompteId): boolean {
+  return String(a) === String(b);
+}
+
 export interface ApiClient {
-  personas(): Promise<Resultat<Persona[]>>;
-  connecter(compteId: CompteId): Promise<Resultat<Compte>>;
-  moi(): Promise<Resultat<Compte>>;
+  personas(signal?: AbortSignal): Promise<Resultat<Persona[]>>;
+  connecter(compteId: CompteId, signal?: AbortSignal): Promise<Resultat<Compte>>;
+  moi(signal?: AbortSignal): Promise<Resultat<Compte>>;
   /** Oublie le jeton (mémoire et stockage). */
   deconnecter(): void;
   /** Jeton courant, ou `null` sans session. */
@@ -150,36 +158,54 @@ export function creerClient(options: ClientOptions = {}): ApiClient {
     }
   }
 
+  /** Relu après chaque `await` : l'appelant a pu abandonner entre-temps. */
+  function abandonne(signal: AbortSignal | undefined): boolean {
+    return signal?.aborted === true;
+  }
+
+  /** Signal de la requête : celui de l'appelant, borné par le délai quand le moteur le permet. */
+  function signalDe(appelant: AbortSignal | undefined): AbortSignal | undefined {
+    const delai =
+      typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(delaiMs) : undefined;
+    if (appelant === undefined) return delai;
+    if (delai === undefined || typeof AbortSignal.any !== 'function') return appelant;
+    return AbortSignal.any([appelant, delai]);
+  }
+
   async function requete(
     methode: 'GET' | 'POST',
     chemin: string,
-    corps?: unknown,
-    avecJeton = true,
+    options: { corps?: unknown; avecJeton: boolean; signal?: AbortSignal },
   ): Promise<Resultat<unknown>> {
+    const { corps, avecJeton, signal } = options;
+    if (abandonne(signal)) return { ok: false, erreur: 'annule' };
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (avecJeton && jeton !== null) headers.Authorization = `Bearer ${jeton}`;
+    const jetonEnvoye = avecJeton ? jeton : null;
+    if (jetonEnvoye !== null) headers.Authorization = `Bearer ${jetonEnvoye}`;
     const init: RequestInit = { method: methode, headers };
     if (corps !== undefined) {
       headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(corps);
     }
-    if (typeof AbortSignal.timeout === 'function') init.signal = AbortSignal.timeout(delaiMs);
+    const signalRequete = signalDe(signal);
+    if (signalRequete !== undefined) init.signal = signalRequete;
 
     let reponse: Response;
     try {
       reponse = await fetcher(`${base}${chemin}`, init);
     } catch {
-      return { ok: false, erreur: 'reseau' };
+      return { ok: false, erreur: abandonne(signal) ? 'annule' : 'reseau' };
     }
     if (reponse.status === 401) {
-      effacerJeton();
+      // Seul le jeton envoyé est refusé ; un jeton plus récent, posé entre-temps, reste.
+      if (jetonEnvoye !== null && jeton === jetonEnvoye) effacerJeton();
       return { ok: false, erreur: 'non_autorise' };
     }
     if (!reponse.ok) return { ok: false, erreur: 'http' };
     try {
       return { ok: true, valeur: (await reponse.json()) as unknown };
     } catch {
-      return { ok: false, erreur: 'reponse_invalide' };
+      return { ok: false, erreur: abandonne(signal) ? 'annule' : 'reponse_invalide' };
     }
   }
 
@@ -190,13 +216,18 @@ export function creerClient(options: ClientOptions = {}): ApiClient {
   }
 
   return {
-    async personas() {
-      return valider(await requete('GET', '/api/personas'), lirePersonas);
+    async personas(signal) {
+      // Route publique : un jeton, peut-être périmé, n'y est jamais envoyé.
+      return valider(await requete('GET', '/api/personas', { avecJeton: false, signal }), lirePersonas);
     },
 
-    async connecter(compteId) {
+    async connecter(compteId, signal) {
       // Un ancien jeton n'est pas envoyé : la connexion en ouvre une nouvelle.
-      const brut = await requete('POST', '/api/session', { compteId }, false);
+      const brut = await requete('POST', '/api/session', {
+        corps: { compteId },
+        avecJeton: false,
+        signal,
+      });
       const session = valider(brut, (v) => {
         if (!enregistrement(v) || typeof v.jeton !== 'string' || v.jeton === '') return null;
         const compte = lireCompte(v.compte);
@@ -207,9 +238,9 @@ export function creerClient(options: ClientOptions = {}): ApiClient {
       return { ok: true, valeur: session.valeur.compte };
     },
 
-    async moi() {
+    async moi(signal) {
       if (jeton === null) return { ok: false, erreur: 'non_autorise' };
-      return valider(await requete('GET', '/api/moi'), lireCompte);
+      return valider(await requete('GET', '/api/moi', { avecJeton: true, signal }), lireCompte);
     },
 
     deconnecter: effacerJeton,

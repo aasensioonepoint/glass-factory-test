@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { JETON_STORAGE_KEY, creerClient, lireCompte, lirePersonas } from './api';
+import { JETON_STORAGE_KEY, creerClient, lireCompte, lirePersonas, memeCompte } from './api';
 import type { JetonStorage } from './api';
 
 class MemoryStorage implements JetonStorage {
@@ -122,14 +122,17 @@ describe('api — session', () => {
     expect(storage.data.has(JETON_STORAGE_KEY)).toBe(false);
   });
 
-  it('un 401 sur n’importe quelle route vide aussi la session', async () => {
+  it('personas n’envoie jamais le jeton, même périmé ; son 401 ne vide pas la session', async () => {
     const storage = new MemoryStorage();
     storage.setItem(JETON_STORAGE_KEY, 'perime');
-    const { fetch } = fauxFetch(json({}, 401));
+    const { fetch, appels } = fauxFetch(json(PERSONAS), json({}, 401));
     const client = creerClient({ fetch, storage });
+    expect((await client.personas()).ok).toBe(true);
+    expect(entetes(appels[0]).Authorization).toBeUndefined();
     expect(await client.personas()).toEqual({ ok: false, erreur: 'non_autorise' });
-    expect(client.jeton()).toBeNull();
-    expect(storage.data.size).toBe(0);
+    expect(entetes(appels[1]).Authorization).toBeUndefined();
+    // Aucun jeton n'est parti : le 401 ne le juge pas.
+    expect(client.jeton()).toBe('perime');
   });
 
   it('connecter n’envoie pas un ancien jeton et refuse une session hors contrat', async () => {
@@ -141,6 +144,24 @@ describe('api — session', () => {
     expect(entetes(appels[0]).Authorization).toBeUndefined();
     expect(appels[0]?.init.body).toBe('{"compteId":2}');
     expect(client.jeton()).toBe('ancien');
+  });
+
+  it('un 401 tardif n’efface pas le jeton d’une connexion ouverte entre-temps', async () => {
+    const storage = new MemoryStorage();
+    storage.setItem(JETON_STORAGE_KEY, 'ancien');
+    let rendreMoi: (r: Response) => void = () => {};
+    const fetch = vi.fn((url: string) =>
+      url === '/api/moi'
+        ? new Promise<Response>((resolve) => (rendreMoi = resolve))
+        : Promise.resolve(json({ jeton: 'neuf', compte: COMPTE })),
+    );
+    const client = creerClient({ fetch, storage });
+    const enVol = client.moi();
+    expect((await client.connecter('1')).ok).toBe(true);
+    rendreMoi(json({}, 401));
+    expect(await enVol).toEqual({ ok: false, erreur: 'non_autorise' });
+    expect(client.jeton()).toBe('neuf');
+    expect(storage.data.get(JETON_STORAGE_KEY)).toBe('neuf');
   });
 
   it('moi sans jeton ne part pas sur le réseau', async () => {
@@ -168,6 +189,52 @@ describe('api — session', () => {
     expect(client.jeton()).toBe('j');
     expect((await client.moi()).ok).toBe(false);
     expect(client.jeton()).toBeNull();
+  });
+});
+
+describe('api — abandon par l’appelant', () => {
+  it('le signal de l’appelant atteint fetch ; une requête abandonnée rend `annule`, pas `reseau`', async () => {
+    const controle = new AbortController();
+    const appels: RequestInit[] = [];
+    const fetch = vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          appels.push(init);
+          init.signal?.addEventListener('abort', () => reject(new DOMException('abandon', 'AbortError')));
+        }),
+    );
+    const client = creerClient({ fetch });
+    const enVol = client.personas(controle.signal);
+    controle.abort();
+    expect(await enVol).toEqual({ ok: false, erreur: 'annule' });
+    expect(appels[0]?.signal?.aborted).toBe(true);
+  });
+
+  it('un signal déjà abandonné ne part pas sur le réseau', async () => {
+    const { fetch } = fauxFetch();
+    const client = creerClient({ fetch, storage: new MemoryStorage() });
+    const controle = new AbortController();
+    controle.abort();
+    expect(await client.personas(controle.signal)).toEqual({ ok: false, erreur: 'annule' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('signal non abandonné : une panne reste `reseau`', async () => {
+    const { fetch } = fauxFetch(new TypeError('Failed to fetch'));
+    const client = creerClient({ fetch });
+    expect(await client.personas(new AbortController().signal)).toEqual({
+      ok: false,
+      erreur: 'reseau',
+    });
+  });
+});
+
+describe('api — identifiants', () => {
+  it('memeCompte compare un compteId chaîne et nombre par leur valeur', () => {
+    expect(memeCompte('3', 3)).toBe(true);
+    expect(memeCompte(3, 3)).toBe(true);
+    expect(memeCompte('3', '03')).toBe(false);
+    expect(memeCompte(3, 4)).toBe(false);
   });
 });
 
