@@ -146,8 +146,9 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 > - `requireRole(...roles)` : preHandler qui renvoie 401 sans jeton valide et 403 si le rôle manque.
 > - Routes :
 >   - `GET /api/personas` → `[{compteId, nom, role}]`
->   - `POST /api/session {compteId}` → `{jeton, compte}`
->   - `GET /api/moi`
+>   - `POST /api/session {compteId}` → `{jeton, compte: {compteId, acteurId, nom, roles[]}}`
+>   - `GET /api/moi` → `{compteId, acteurId, nom, roles[]}` (la forme que lit `lireCompte` côté web)
+>   - `GET /api/personas` rend **un persona par compte** (`compteId` unique), même quand un compte porte plusieurs habilitations.
 > - Brancher `registerAuth` et `registerSession` dans `app.ts`.
 >
 > **Hors périmètre** — Mots de passe, OIDC (D4-B), les routes métier.
@@ -174,7 +175,7 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 > **Objectif** — Règle D10 et C6.
 >
 > Fonctions pures dans `domain/restriction.ts` :
-> - `finRetrait(dateAdmin, delaiJours) = dateAdmin + delaiJours` ;
+> - `finRetrait(dateAdmin, delaiJours) = dateAdmin + delaiJours`, le jour de `dateAdmin` pris en heure de Paris (`Europe/Paris`) : PGlite lit `date_heure` sous `TimeZone=UTC` (mesuré), et une administration avant 2 h à Paris tomberait sinon la veille ;
 > - `eligibilite(chevalId, maintenant, faits)` → `{eligible: boolean, motifs: [{type: 'restriction_active'|'statut_inconnu', detail, source}]}`.
 >   - Une restriction `active` bloque, **même si `fin_prevue` est dépassée**.
 >   - Statut inconnu = un produit administré sans délai renseigné, OU aucun acte santé depuis `N_JOURS_STATUT_INCONNU` (= valeur de Q2, constante exportée).
@@ -188,7 +189,7 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 >
 > **Hors périmètre** — L'engagement (T5), le branchement dans `app.ts` (TA), l'avertissement sur les lots (D2-C).
 >
-> **Contraintes** — Les tests montent un `Fastify()` nu avec `registerAuth` et `registerSante`. Aucune levée automatique par date. Un second POST avec la même `Idempotency-Key` → même réponse, aucune seconde restriction.
+> **Contraintes** — Les tests montent un `Fastify()` nu avec `registerAuth` et `registerSante`. Aucune levée automatique par date. Un second POST avec la même `Idempotency-Key` → même réponse, aucune seconde restriction. La clé est liée au triplet (compte, opération, empreinte du corps et de `:id`) : la même clé avec un autre triplet → 422, jamais l'accusé stocké. **Préalable à trancher avant le lancement de T4** : `commande_sync` (0002) ne porte ni `compte_id`, ni `operation`, ni `empreinte` ; il faut soit une migration 0003 qui les ajoute (hors write-set de T4), soit une décision d'architecture écrite dans `DECISIONS.md`.
 >
 > **Attendu** — Cavalier qui lève → 403. Levée sans motif → 400. Restriction à `fin_prevue` passée → toujours `eligible:false`. Administration non confirmée et échue → `en_retard`.
 >
@@ -227,9 +228,9 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 **Demande `/kickoff`** :
 > **Objectif** — Défi A et C4, exporté par `registerNourrissage(app, db)` :
 > - `GET /api/nourrissage?date=&repas=&cour=` → chevaux de la cour, avec leur régime spécial actif et leur état (`a_confirmer` | `normal` | `ecart`).
-> - `POST /api/nourrissage/confirmer {date, repas, cour}` → **une seule action** : une `ration` `part_consommee = totale` pour chaque cheval encore `a_confirmer`.
-> - `POST /api/nourrissage/ecart {chevalId, date, repas, part: refus|partielle|anomalie, remarque?}` → la remarque est **facultative**.
-> - Les deux POST exigent `Idempotency-Key`. Auteur, date réelle et réception sont préremplis depuis la session.
+> - `POST /api/nourrissage/confirmer {date, repas, cour}` → **une seule action** : une `ration` `part_consommee = totale` pour chaque cheval encore `a_confirmer`, avec `statut = 'realise'` et `date_reelle` = instant de la confirmation (jamais le défaut `brouillon`).
+> - `POST /api/nourrissage/ecart {chevalId, date, repas, part: refus|partielle|anomalie, remarque?}` → la remarque est **facultative** ; la `ration` écrite porte aussi `statut = 'realise'` et `date_reelle` = instant de la saisie.
+> - Les deux POST exigent `Idempotency-Key`, liée au triplet (compte, opération, empreinte du corps) comme en T4 : même clé, autre triplet → 422. Auteur, date réelle et réception sont préremplis depuis la session.
 >
 > **Hors périmètre** — Hors ligne (D13 non tranché), branchement.
 >
