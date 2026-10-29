@@ -98,17 +98,46 @@ describe('POST /api/session and GET /api/moi', () => {
   it('accepts the compte id as a number too', async () => {
     const { app: a, h } = await demarrer();
     const ids = await peupler(h, { Martin: ['cavalier'] });
-    const res = await a.inject({ method: 'POST', url: '/api/session', payload: { compteId: Number(ids.Martin) } });
+    // Raw JSON body: the id travels as a JSON number, never as a quoted string.
+    const brut = `{"compteId":${ids.Martin}}`;
+    expect(typeof JSON.parse(brut).compteId).toBe('number');
+    const res = await a.inject({
+      method: 'POST',
+      url: '/api/session',
+      headers: { 'content-type': 'application/json' },
+      payload: brut,
+    });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ compte: { compteId: ids.Martin, roles: ['cavalier'] } });
+  });
+
+  it('refuses an unsafe integer instead of letting it round to another compte', async () => {
+    const { app: a } = await demarrer();
+    const res = await a.inject({
+      method: 'POST',
+      url: '/api/session',
+      headers: { 'content-type': 'application/json' },
+      payload: '{"compteId":9007199254740993}',
+    });
+    expect(res.statusCode).toBe(400);
   });
 
   it('answers 404 for an unknown compte, 400 for a malformed id', async () => {
     const { app: a } = await demarrer();
     const poster = (payload: unknown) => a.inject({ method: 'POST', url: '/api/session', payload: payload as object });
     expect((await poster({ compteId: '999999' })).statusCode).toBe(404);
-    for (const mauvais of [{}, { compteId: '0' }, { compteId: 'abc' }, { compteId: '99999999999999999999' }, { compteId: 1.5 }]) {
-      expect((await poster(mauvais)).statusCode, JSON.stringify(mauvais)).toBe(400);
+    const mauvais = [
+      {},
+      { compteId: '0' },
+      { compteId: 'abc' },
+      { compteId: '99999999999999999999' },
+      { compteId: 1.5 },
+      { compteId: true },
+      { compteId: null },
+      { compteId: {} },
+    ];
+    for (const corps of mauvais) {
+      expect((await poster(corps)).statusCode, JSON.stringify(corps)).toBe(400);
     }
   });
 
