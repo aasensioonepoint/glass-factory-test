@@ -1,0 +1,86 @@
+{
+  "built_sha": "0a91980",
+  "backend": "fallback",
+  "max_sym_id": 9,
+  "needs_module_role": [
+    "(root)"
+  ],
+  "counts": {
+    "active": 9,
+    "deleted": 0,
+    "added": 9,
+    "changed": 0,
+    "removed": 0
+  },
+  "sharded": false,
+  "shards": 1,
+  "needs_purpose": [
+    "SYM-001",
+    "SYM-002",
+    "SYM-003",
+    "SYM-004",
+    "SYM-005",
+    "SYM-006",
+    "SYM-007",
+    "SYM-008",
+    "SYM-009"
+  ],
+  "added": [
+    {
+      "id": "SYM-001",
+      "path": "conftest.py",
+      "name": "greffe_email_git_franchissable",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-002",
+      "path": "conftest.py",
+      "name": "_isolation_state_dir_session",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-003",
+      "path": "conftest.py",
+      "name": "git_herite",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-004",
+      "path": "conftest.py",
+      "name": "_portee",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-005",
+      "path": "conftest.py",
+      "name": "_marcher",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-006",
+      "path": "conftest.py",
+      "name": "_refuses",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-007",
+      "path": "conftest.py",
+      "name": "_garde_1188",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-008",
+      "path": "conftest.py",
+      "name": "pytest_terminal_summary",
+      "kind": "function"
+    },
+    {
+      "id": "SYM-009",
+      "path": "conftest.py",
+      "name": "_isolation_git_session",
+      "kind": "function"
+    }
+  ],
+  "changed": [],
+  "removed": []
+}

@@ -21,6 +21,19 @@ reste VISIBLE au board.
 - **« aucun secret au dépôt »** — aucun credential, jeton ni clé n'entre dans le dépôt ; un secret exposé se retire et se fait tourner.
 - **« tests au plus près du code »** — un test vit à côté du code qu'il éprouve, selon la convention de la stack.
 
+## Les cibles métier Graffard Racing
+
+Source : `docs/mission2/specification-fonctionnelle.md` (elle fait foi sur le MCD).
+
+- **« prévu ≠ réalisé »** — planning, prescription et engagement restent distincts de leur exécution ; une absence de confirmation ne devient jamais « réalisé » (spec §2, §7, C6).
+- **« aucun engagement sous restriction »** — une restriction active ou un statut inconnu bloque la validation d'un engagement et affiche la justification ; une date dépassée ne lève jamais une restriction (spec §4.3, §7, C7).
+- **« lot sans heure »** — un lot est identifié par son numéro, sa cour et la date du programme ; aucun écran n'affiche ni ne demande d'heure de lot (spec §7, C13).
+- **« saisie par exception »** — une situation normale se confirme en une action, sans champ texte obligatoire ; contexte prérempli ; trois interactions au plus hors sélection du cheval (spec §2, §2.1, C4, C5).
+- **« IA en brouillon »** — dictée, OCR et synthèse ne produisent que des brouillons à confirmer par un humain ; aucune décision médicale, sportive ou réglementaire autonome (spec §11).
+- **« synchronisation idempotente »** — une saisie hors ligne porte un état visible et ne crée aucun doublon à la reconnexion (spec §10, C9).
+- **« droits côté serveur »** — droits minimaux par rôle, cour et cheval, vérifiés par l'API ; aucun compte partagé (spec §2, §7, C3, C12).
+- **« correction tracée »** — chaque donnée porte auteur, date réelle, date de réception, source et statut ; une correction garde l'avant, l'après et le motif (spec §7, C11).
+
 ## Enrichis ce fichier
 
 Ces sept noms sont un point de départ générique. Un nom ajouté sur le modèle des
