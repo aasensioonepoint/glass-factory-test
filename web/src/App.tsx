@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigation } from './components/Navigation';
+import { ProfilePicker } from './components/ProfilePicker';
 import { LANGS, t } from './i18n';
 import type { Lang, NavKey } from './i18n';
 
@@ -62,6 +63,7 @@ export function App() {
       <Navigation lang={lang} active={active} onNavigate={setActive} onLangChange={changeLang} />
       <main className="main">
         <h1>{t(lang, active)}</h1>
+        <ProfilePicker lang={lang} />
       </main>
     </>
   );
