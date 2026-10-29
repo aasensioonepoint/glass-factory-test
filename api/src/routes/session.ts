@@ -41,8 +41,9 @@ const personasSchema = {
 const sessionSchema = {
   body: {
     type: 'object',
-    // anyOf, not a type union: Fastify's Ajv runs in strict mode and refuses the union.
-    properties: { compteId: { anyOf: [{ type: 'string' }, { type: 'integer' }] } },
+    // validé par normaliserId, sans coercion Ajv : a typed schema lets Ajv turn
+    // 9007199254740993 into "9007199254740992" (another compte) before the check.
+    properties: { compteId: {} },
     required: ['compteId'],
   },
   response: {
@@ -99,7 +100,7 @@ export async function listerPersonas(db: Db): Promise<Persona[]> {
 export function registerSession(app: FastifyInstance, db: Db): void {
   app.get('/api/personas', { schema: personasSchema }, async () => listerPersonas(db));
 
-  app.post<{ Body: { compteId: string | number } }>(
+  app.post<{ Body: { compteId: unknown } }>(
     '/api/session',
     { schema: sessionSchema },
     async (request, reply) => {
