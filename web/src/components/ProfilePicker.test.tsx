@@ -698,6 +698,24 @@ describe('ProfilePicker — conteneur', () => {
     expect(storage.data.has(JETON_STORAGE_KEY)).toBe(false);
   });
 
+  it.each(['reseau', 'http', 'reponse_invalide'] as const)(
+    'session reprise en échec (%s) : jeton retiré, connexion annoncée en échec',
+    async (erreur) => {
+      const client = fauxClient({
+        jeton: 'j',
+        personas: [{ ok: true, valeur: PERSONAS }],
+        moi: [{ ok: false, erreur }],
+      });
+      rendre(client);
+      await flush();
+      const tree = rendre(client);
+      expect(cartes(tree)).toHaveLength(3);
+      expect(statut(tree)).toBe('La connexion a échoué. Choisissez de nouveau un profil.');
+      expect(client.deconnecter).toHaveBeenCalledOnce();
+      expect(client.jeton()).toBeNull();
+    },
+  );
+
   it('session reprise acceptée : connecté, nom retrouvé dans la liste malgré un compteId de type différent', async () => {
     const fetch = vi.fn(async (url: string) =>
       url === '/api/moi'

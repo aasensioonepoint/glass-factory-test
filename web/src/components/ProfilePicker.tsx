@@ -475,14 +475,19 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
     return () => controle.abort();
   }, [client, tentative]);
 
-  // Session reprise de sessionStorage : relue auprès du serveur ; un 401 la vide.
+  // Session reprise de sessionStorage : relue auprès du serveur ; tout échec la vide,
+  // jamais un jeton gardé en silence (401 : session expirée ; sinon : connexion échouée).
   useEffect(() => {
     if (client.jeton() === null) return;
     const controle = new AbortController();
     void client.moi(controle.signal).then((r) => {
       if (controle.signal.aborted) return;
       if (r.ok) setCompte(r.valeur);
-      else if (r.erreur === 'non_autorise') setSessionExpiree(true);
+      else {
+        client.deconnecter();
+        if (r.erreur === 'non_autorise') setSessionExpiree(true);
+        else setErreurConnexion(true);
+      }
       setVerification(false);
     });
     return () => controle.abort();
