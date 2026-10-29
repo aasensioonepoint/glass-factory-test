@@ -38,7 +38,7 @@ Ensuite, nommer chaque image selon sa section (§6.2, §6.3, §6.5) et remplacer
 | T4 | api | Restriction de retrait et soins à confirmer | 4 | T1, T3 (Q2) | non | 40 min |
 | T5 | api | Engagement bloqué sous restriction | 2 | T4 | non | 25 min |
 | T6 | api | Checklist de nourrissage par exception | 2 | T1, T3 | non | 30 min |
-| T7 | api | Dossier cheval filtré par rôle | 2 | T1, T3 | non | 30 min |
+| T7 | api | Dossier cheval filtré par rôle | 3 | T1, T3 | non | 30 min |
 | TA | api | Branchement des routes métier et parcours de démo | 2 | T2, T4, T5, T6, T7 | non | 25 min |
 | W1 | web | Sélecteur de profil de démonstration | 5 | — | **oui** | 35 min |
 | W2 | web | Écran nourrissage | 2 | W1 | **oui** | 30 min |
@@ -61,7 +61,7 @@ Ensuite, nommer chaque image selon sa section (§6.2, §6.3, §6.5) et remplacer
 
 **Pourquoi ce découpage.** Trois fichiers sont partagés :
 - `api/src/routes/health.test.ts` (compte de tables) et `api/src/db/migrate.ts` (liste des migrations) : toute migration les touche, donc les migrations sont **sérialisées** ;
-- `api/src/app.ts` : seuls T3 et TA le touchent ;
+- `api/src/app.ts` : seuls T3, T7 et TA le touchent, en série ;
 - `web/src/App.tsx` : seuls W1 et TW le touchent.
 
 Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `renderToString` pour le web.
@@ -245,6 +245,7 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 - **Write-set** :
   - `api/src/routes/chevaux.ts`
   - `api/src/routes/chevaux.test.ts`
+  - `api/src/app.ts`
 - **Cibles** : « droits côté serveur », « contrat déclaré »
 - **depends_on** : T1, T3 · **UI** : non · **Estim.** 30 min · **Parallèle** avec T4, T6
 
@@ -278,7 +279,7 @@ Chaque route ou écran se teste seul : une instance Fastify nue pour l'API, `ren
 - **depends_on** : T2, T4, T5, T6, T7 · **UI** : non · **Estim.** 25 min · **Parallèle** avec TW
 
 **Demande `/kickoff`** :
-> **Objectif** — Enregistrer `registerSante`, `registerCourses`, `registerNourrissage` et `registerChevaux` dans `buildApp`. `app.test.ts` joue le parcours de démo de bout en bout sur une base en mémoire, avec `migrate` puis `seed` :
+> **Objectif** — Enregistrer `registerSante`, `registerCourses`, `registerNourrissage` dans `buildApp` (`registerChevaux` y est déjà, posé par T7 : l'enregistrer deux fois lève `FST_ERR_DUPLICATED_ROUTE`). `app.test.ts` joue le parcours de démo de bout en bout sur une base en mémoire, avec `migrate` puis `seed` :
 > 1. le vétérinaire confirme l'administration → restriction ;
 > 2. le chargé des engagements valide → 409 avec justification ;
 > 3. le vétérinaire lève avec motif → ligne d'audit ;
