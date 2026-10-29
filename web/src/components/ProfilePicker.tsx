@@ -439,6 +439,12 @@ export function ProfilePickerView({
 export interface ProfilePickerProps {
   lang: Lang;
   client?: ApiClient;
+  /**
+   * Compte connecté qui change : connexion, « Changer de profil », session
+   * reprise relue (acceptée ou refusée). Lu au moment de l'appel depuis le rendu
+   * qui a lancé la requête : passer une fonction stable (un setter d'état).
+   */
+  onCompteChange?: (compte: Compte | null) => void;
 }
 
 /**
@@ -446,7 +452,7 @@ export interface ProfilePickerProps {
  * et useEffect (les éléments à focaliser arrivent par un setter d'état servant
  * de ref de rappel) : `Navigation.test.tsx` déplie <App /> hors de React.
  */
-export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
+export function ProfilePicker({ lang, client = api, onCompteChange }: ProfilePickerProps) {
   const [personas, setPersonas] = useState<EtatPersonas>({
     statut: 'chargement',
     reessai: false,
@@ -482,15 +488,20 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
     const controle = new AbortController();
     void client.moi(controle.signal).then((r) => {
       if (controle.signal.aborted) return;
-      if (r.ok) setCompte(r.valeur);
-      else {
+      if (r.ok) {
+        setCompte(r.valeur);
+        onCompteChange?.(r.valeur);
+      } else {
         client.deconnecter();
+        onCompteChange?.(null);
         if (r.erreur === 'non_autorise') setSessionExpiree(true);
         else setErreurConnexion(true);
       }
       setVerification(false);
     });
     return () => controle.abort();
+    // `onCompteChange` n'est pas une dépendance : une fonction en ligne relancerait
+    // /api/moi à chaque rendu (voir ProfilePickerProps).
   }, [client]);
 
   const vue = vueProfil({ verification, compte, personas, enCours, erreurConnexion, sessionExpiree });
@@ -524,6 +535,7 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
       if (r.ok) {
         setCompte(r.valeur);
         setAttendu('connexion');
+        onCompteChange?.(r.valeur);
       } else {
         setErreurConnexion(true);
       }
@@ -535,6 +547,7 @@ export function ProfilePicker({ lang, client = api }: ProfilePickerProps) {
     setCompte(null);
     setErreurConnexion(false);
     setAttendu('retour');
+    onCompteChange?.(null);
   }
 
   function reessayer(): void {
