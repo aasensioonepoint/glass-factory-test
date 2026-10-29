@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Navigation } from './components/Navigation';
 import { ProfilePicker } from './components/ProfilePicker';
+import { Horses } from './screens/Horses';
+import type { Compte } from './api';
 import { LANGS, t } from './i18n';
 import type { Lang, NavKey } from './i18n';
 
@@ -44,26 +46,62 @@ export function syncDocumentLang(root: Pick<HTMLElement, 'lang'>, lang: Lang): v
   root.lang = lang;
 }
 
+/*
+ * Écrans branchés : « horses » rend le dossier cheval ; les autres entrées
+ * gardent le sélecteur de profil (inchangé, en attendant leurs écrans). Le
+ * compte connecté vit ici, rapporté par ProfilePicker, lu par Horses.
+ * Focus (INTERACTION de TW) : au changement d'entrée, le h1 de l'écran ; il ne
+ * devient focalisable (tabindex -1) qu'à la première navigation, pour que le
+ * premier rendu reste tel quel et que l'ouverture ne vole aucun focus.
+ */
 export function App() {
   const [lang, setLang] = useState<Lang>(() => readStoredLang(localStore()));
   const [active, setActive] = useState<NavKey>('today');
+  const [compte, setCompte] = useState<Compte | null>(null);
+  const [titre, setTitre] = useState<HTMLHeadingElement | null>(null);
+  const [navigue, setNavigue] = useState(false);
+  const [focusTitre, setFocusTitre] = useState(false);
 
   // <html> est hors de la racine React : l'effet synchronise un système externe.
   useEffect(() => {
     syncDocumentLang(document.documentElement, lang);
   }, [lang]);
 
+  // Le focus est un système externe : déplacé une fois par navigation, quand le h1 est attaché.
+  useEffect(() => {
+    if (!focusTitre || titre === null) return;
+    titre.focus();
+    setFocusTitre(false);
+  }, [focusTitre, titre]);
+
   function changeLang(next: Lang): void {
     setLang(next);
     storeLang(localStore(), next);
   }
 
+  function naviguer(key: NavKey): void {
+    setActive(key);
+    setNavigue(true);
+    setFocusTitre(true);
+  }
+
   return (
     <>
-      <Navigation lang={lang} active={active} onNavigate={setActive} onLangChange={changeLang} />
+      <Navigation lang={lang} active={active} onNavigate={naviguer} onLangChange={changeLang} />
       <main className="main">
-        <h1>{t(lang, active)}</h1>
-        <ProfilePicker lang={lang} />
+        <h1 ref={setTitre} tabIndex={navigue ? -1 : undefined}>
+          {t(lang, active)}
+        </h1>
+        {active === 'horses' ? (
+          <Horses
+            lang={lang}
+            compte={compte}
+            onConnexion={() => naviguer('today')}
+            onSessionPerdue={() => setCompte(null)}
+          />
+        ) : (
+          <ProfilePicker lang={lang} onCompteChange={setCompte} />
+        )}
       </main>
     </>
   );
