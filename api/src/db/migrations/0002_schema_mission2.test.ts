@@ -180,6 +180,30 @@ describe('migration 0002_schema_mission2', () => {
     );
     await expect(handle!.client.query("UPDATE audit SET motif = 'autre' WHERE id = $1", [id])).rejects.toThrow(/ajout seul/);
     await expect(handle!.client.query('DELETE FROM audit WHERE id = $1', [id])).rejects.toThrow(/ajout seul/);
+    await expect(handle!.client.query('TRUNCATE audit')).rejects.toThrow(/ajout seul : TRUNCATE/);
+    const left = await handle!.client.query<{ n: number }>('SELECT count(*)::int AS n FROM audit');
+    expect(left.rows).toEqual([{ n: 1 }]);
+  });
+
+  it('D9: the six statut columns default to brouillon', async () => {
+    await migrated();
+    const defaults = await handle!.client.query<{ table_name: string; column_default: string | null }>(
+      `SELECT table_name, column_default FROM information_schema.columns
+        WHERE table_schema = 'public' AND column_name = 'statut' AND udt_name = 'statut_enregistrement' ORDER BY table_name`,
+    );
+    expect(defaults.rows).toEqual(
+      ['acte_sante', 'administration', 'engagement', 'mesure', 'ration', 'regime_special'].map((table_name) => ({
+        table_name,
+        column_default: "'brouillon'::statut_enregistrement",
+      })),
+    );
+  });
+
+  it('D5: a lot refuses ordre_passage 0 and a NULL libelle', async () => {
+    const { acteur, lieu } = await migrated();
+    const insert = 'INSERT INTO lot (lieu_id, responsable_id, date, libelle, ordre_passage) VALUES ($1, $2, current_date, $3, $4)';
+    await expect(handle!.client.query(insert, [lieu, acteur, '1', 0])).rejects.toMatchObject({ code: '23514' });
+    await expect(handle!.client.query(insert, [lieu, acteur, null, 1])).rejects.toMatchObject({ code: '23502' });
   });
 
   it('D8: commande_sync refuses a second command with the same idempotency key', async () => {
