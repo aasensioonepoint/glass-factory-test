@@ -255,3 +255,10 @@ crash.*.log
 # docs/governance.html sont SUIVIS et doivent le rester (meme raison que l'entree
 # litterale du store V3 : un motif large atteindrait un fichier qu'on veut garder).
 /docs/interne/architecture-vivante.html
+
+# T-01M63K36QN0S5WJE7VETZR5GX3 — socle Graffard. `/data/` est ANCRÉ à la racine :
+# la base PGlite locale vit sous `<repo>/data/pglite`, et `.agents/vendor/cadre/data/`
+# est SUIVI — un motif flottant `data/` le masquerait. `dist/` (sorties de build
+# des workspaces) est flottant, à toute profondeur.
+/data/
+dist/
