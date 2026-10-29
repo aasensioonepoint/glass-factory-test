@@ -1,5 +1,6 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { migration0001 } from './migrations/0001_mcd_v0.ts';
+import { migration0002 } from './migrations/0002_schema_mission2.ts';
 
 export interface Migration {
   id: string;
@@ -7,7 +8,7 @@ export interface Migration {
 }
 
 /** Ordered list: append only, never reorder or edit an applied entry. */
-export const MIGRATIONS: readonly Migration[] = [migration0001];
+export const MIGRATIONS: readonly Migration[] = [migration0001, migration0002];
 
 /**
  * Home-made migrator (no drizzle-kit). The tracking table lives in the `meta`

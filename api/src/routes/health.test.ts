@@ -33,22 +33,22 @@ describe('GET /api/health', () => {
     expect(res.body).toEqual({ status: 'ok', tables: 0 });
   });
 
-  it('reports the 49 MCD V0 tables after migrate', async () => {
+  it('reports the 54 tables (49 MCD V0 + 5 from 0002) after migrate', async () => {
     handle = createDb();
     await migrate(handle.client);
     const res = await health(handle);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ status: 'ok', tables: 49 });
+    expect(res.body).toEqual({ status: 'ok', tables: 54 });
   });
 
-  it('is idempotent: a second migrate applies nothing and keeps 49 tables', async () => {
+  it('is idempotent: a second migrate applies nothing and keeps 54 tables', async () => {
     handle = createDb();
-    expect(await migrate(handle.client)).toEqual(['0001_mcd_v0']);
+    expect(await migrate(handle.client)).toEqual(['0001_mcd_v0', '0002_schema_mission2']);
     expect(await migrate(handle.client)).toEqual([]);
     const res = await health(handle);
-    expect(res.body).toEqual({ status: 'ok', tables: 49 });
-    const tracked = await handle.client.query<{ id: string }>('SELECT id FROM meta.migrations');
-    expect(tracked.rows).toEqual([{ id: '0001_mcd_v0' }]);
+    expect(res.body).toEqual({ status: 'ok', tables: 54 });
+    const tracked = await handle.client.query<{ id: string }>('SELECT id FROM meta.migrations ORDER BY id');
+    expect(tracked.rows).toEqual([{ id: '0001_mcd_v0' }, { id: '0002_schema_mission2' }]);
   });
 
   it('is atomic: SQL that succeeds but a tracking insert that fails leaves no table and no row', async () => {
