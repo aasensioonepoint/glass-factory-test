@@ -4,6 +4,10 @@
       "board_task_id": "T-01M63K36QN0S5WJE7VETZR5GX3",
       "tombstoned": false
     },
+    "20e73299-fd03-43ea-8b76-e84334b895cf": {
+      "board_task_id": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "tombstoned": false
+    },
     "2db2ed1d-fab3-413f-9b36-bf405ce34b0b": {
       "board_task_id": "T-01M63PPZVJBC15V86TYCXD6KJ7",
       "tombstoned": false
@@ -14,6 +18,10 @@
     },
     "6c63b010-189f-4e63-a8ef-8abc37bf33ba": {
       "board_task_id": "T-01M63K37YX42JH0T9JERBBDY0G",
+      "tombstoned": false
+    },
+    "86e0bbca-03b9-4720-a85c-00a20b100d97": {
+      "board_task_id": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
       "tombstoned": false
     },
     "d7209e34-c021-423b-864f-fcc53353503d": {
@@ -282,6 +290,132 @@
       "updated": "2026-10-29",
       "writeset": [
         "scripts/smoke.mjs"
+      ]
+    },
+    {
+      "chantier": "metier-graffard",
+      "direct": {
+        "chaine_franchie": "2026-10-29",
+        "le": "2026-10-29",
+        "writeset": [
+          "api/src/db/migrations/0002_schema_mission2.ts",
+          "api/src/db/migrations/0002_schema_mission2.test.ts",
+          "api/src/db/migrate.ts",
+          "api/src/routes/health.test.ts",
+          "schema/DATA_MODEL.md"
+        ]
+      },
+      "done_at": "2026-10-29T14:35:29.830Z",
+      "id": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
+      "owner": "dev-multi",
+      "parallel_group": "PG-0001",
+      "pas_un_defaut": "fonctionnalité : migration 0002 (D5, D6, D8, D9, Q1)",
+      "retour": {
+        "base": "3e71649cb89cd405f1a37e04a788c0c019416664",
+        "branche": "worktree-agent-a2883b5551a7f727d",
+        "causes": [],
+        "fichiers": [
+          "api/src/db/migrations/0002_schema_mission2.test.ts",
+          "api/src/db/migrations/0002_schema_mission2.ts"
+        ],
+        "le": "2026-10-29T14:25:57Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-a2883b5551a7f727d"
+        ],
+        "specs_borne": "S-01M63ZNJAQG23SNJ7RD1YDS62D",
+        "taches": [
+          "T-01M63VC6J8MB5B4P2AVHKFZQH9"
+        ],
+        "tip": "edf2b17aba674d09a8be26af0e167582d014fb08",
+        "verdict": "ok"
+      },
+      "stage": "T1 livré : schéma 0002 ; revue de clôture critic-opus, F2 corrigé (restriction ni supprimable ni rouvrable, triggers) ; sécurité CLEAN S-01M64183VPP7GEJHTA1T5D6NRA ; VERIFY OK @ 36b8691 [DIRECT SANS PLAN : 5 fichier(s), 5 validé(s) par direct]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Schéma 0002 : lot sans heure, tables santé et traçabilité",
+      "updated": "2026-10-29",
+      "writeset": [
+        "api/src/db/migrations/0002_schema_mission2.ts",
+        "api/src/db/migrations/0002_schema_mission2.test.ts",
+        "api/src/db/migrate.ts",
+        "api/src/routes/health.test.ts",
+        "schema/DATA_MODEL.md"
+      ]
+    },
+    {
+      "chantier": "metier-graffard",
+      "direct": {
+        "chaine_franchie": "2026-10-29",
+        "le": "2026-10-29",
+        "writeset": [
+          "web/src/api.ts",
+          "web/src/api.test.ts",
+          "web/src/components/ProfilePicker.tsx",
+          "web/src/components/ProfilePicker.test.tsx",
+          "web/src/App.tsx"
+        ]
+      },
+      "done_at": "2026-10-29T14:35:28.400Z",
+      "id": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "owner": "frontend-fidelity",
+      "parallel_group": "PG-0001",
+      "pas_un_defaut": "fonctionnalité : W1, connexion par persona côté web (D4-A)",
+      "retour": {
+        "base": "3e71649cb89cd405f1a37e04a788c0c019416664",
+        "branche": "worktree-agent-acafd2d781942df05",
+        "causes": [],
+        "fichiers": [
+          "web/src/components/ProfilePicker.test.tsx",
+          "web/src/components/ProfilePicker.tsx"
+        ],
+        "le": "2026-10-29T14:25:20Z",
+        "notes": [
+          "(h) doublon vierge, supprimable : worktree-agent-acafd2d781942df05"
+        ],
+        "specs_borne": "S-01M63ZNJAQG23SNJ7RD1YDS62D",
+        "taches": [
+          "T-01M63VC74JJN4J71TYR9GRXDR6"
+        ],
+        "tip": "7dd2e9b0c2bdc84b67747cf236aa7405fd41b90e",
+        "verdict": "ok"
+      },
+      "stage": "W1 livré : sélecteur de profil ; revue de clôture critic-opus, F1 corrigé (jeton retiré sur tout échec de /api/moi) ; sécurité CLEAN S-01M6417MT62YRPF9GGKV8WBP6M ; VERIFY OK @ 36b8691 (dérogation semgrep étendue par le pilote à ProfilePicker.test.tsx) [DIRECT SANS PLAN : 5 fichier(s), 5 validé(s) par direct] [revue de sécurité empruntée au slot T-01M63VC6J8MB5B4P2AVHKFZQH9 : S-01M64183VPP7GEJHTA1T5D6NRA]",
+      "stage_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "start_actor": {
+        "auteur": {
+          "email": "a.asensio@groupeonepoint.com",
+          "nom": "Alexis Asensio"
+        },
+        "copie": "4000f52f192d27eb"
+      },
+      "state": "done",
+      "task": "Sélecteur de profil de démonstration",
+      "updated": "2026-10-29",
+      "writeset": [
+        "web/src/api.ts",
+        "web/src/api.test.ts",
+        "web/src/components/ProfilePicker.tsx",
+        "web/src/components/ProfilePicker.test.tsx",
+        "web/src/App.tsx"
       ]
     }
   ]

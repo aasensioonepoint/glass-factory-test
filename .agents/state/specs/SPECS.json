@@ -206,6 +206,105 @@
       "task": "T-01M63K37AZMYHPH0AKH4FRNEVW",
       "text": "@e23b8b6 : health.test.ts verrou rouge (EPERM sur rmSync de pglite.lock sous Windows/EDR, puis « PGlite is closed » en cascade), k=2 échecs ; correctif : rmSync(lockPath, { force: true, maxRetries: 5, retryDelay: 100 }) aux deux sites de client.ts",
       "title": "porte rouge — tentative 1/3"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63W94DJ9TBG8EBXMMVRAFFQ",
+      "kind": "verdict",
+      "task": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
+      "text": "diff 6345fbb..69b4355 (5 fichiers) : 0 critical / 0 high ; 2 advisory (trigger audit sans TRUNCATE → passe de correction ; droits par rôle à poser avec les endpoints) ; coverage DEGRADED (semgrep erreur 2 sur le diff, revue manuelle complète)",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63X5MKP1Z33AV3VFP0J93N5",
+      "kind": "verdict",
+      "task": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
+      "text": "72d715d : 16 tests, build, grep heure, 54 tables, idempotence, 4 mutants ; écarts du dev acceptés (statut_officiel, libelle NOT NULL, restriction, trigger audit) ; 2 mineurs : TRUNCATE sur audit non couvert (DATA_MODEL.md:276 sur-affirme), défauts brouillon / ordre_passage>0 / libelle NOT NULL non testés ; base disque avec lots : 0002 s'annule, server.ts plante en pile brute (hors write-set)",
+      "title": "exec-critic GO_AVEC_RESERVES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63XAHFR00SB8E356ZM0PFJT",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "diff 6345fbb..acd986d (5 fichiers web/) : 0 critical / 0 high ; 1 advisory (jeton en sessionStorage, acceptable pour persona de démo, cookie HttpOnly + CSP dès de vrais comptes) ; coverage DEGRADED (semgrep inopérant : merge sans base, erreur 2, règles distantes SSL), revue manuelle complète",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63XVTBBKJW0DV2Q1YT1ERBC",
+      "kind": "verdict",
+      "task": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
+      "text": "diff 8d980d0..7006201 (correction, 3 fichiers) : 0 critical / 0 high / 0 medium ; 1 advisory (DROP TABLE / droits propriétaire, déjà bornés dans DATA_MODEL.md) ; coverage DEGRADED (semgrep refuse un HEAD de merge sans base), revue manuelle complète",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63XXWK86YGPY65VT5TYGTFJ",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "8d980d0 : web 36 tests, build, racine api 16 + web 36, 4 mutants tués ; arbitrages du dev jugés conformes ; 2 mineurs : garde de double connexion non testée, focus perdu après Réessayer vers l'état vide ; à vérifier : compteId comparé par === (string vs number), personas() envoie un jeton périmé, connexion non annoncée",
+      "title": "exec-critic GO_AVEC_RESERVES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63Y6CJBK2270AD98F285MG9",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "0 bloquant ; High : focus volé quand la liste arrive en retard (ProfilePicker.tsx:317), connexion non annoncée (4.1.3) ; Medium : nom perdu si compteId mixte, focus sur body après Changer de profil sans liste, pas de survol, états Connexion/échec non déclarés et carte en cours non marquée, décalage de 28 px, aria-disabled invisible, requête en vol non annulée ; 4 nits ; mesures de l'implémenteur reproduites ; arbitrages 1 et 4 acceptés, 2 et 3 refusés tels qu'implémentés",
+      "title": "design-review GO_AVEC_RESERVES"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M63ZNJAQG23SNJ7RD1YDS62D",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "diff ce3cf17..1b7cec1 (correction, 4 fichiers) : 0 critical / 0 high / 0 medium ; 2 advisory (signalDe sans AbortSignal.any perd le délai ; 401 tardif de moi pose sessionExpiree, inatteignable aujourd'hui) ; coverage DEGRADED (semgrep indisponible), revue manuelle",
+      "title": "security-code-review CLEAN"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M640WG6W192PWSRF360BTX82",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "diff 3e71649..7dd2e9b, 2 fichiers (ProfilePicker.tsx +test). Revue manuelle: deconnecter() appele sur tout echec de /api/moi (jeton efface, jamais conserve en silence), aucun sink, aucun secret, aucune injection, pas de donnee sensible en log. Semgrep: COVERAGE DEGRADED (gate nu refuse sur HEAD merge; --since 3e71649 erreur semgrep rc 2). findings: aucun.",
+      "title": "security-code-review CLEAN (coverage DEGRADED: semgrep rc 2) — correction de cloture W1 ProfilePicker, jeton efface sur tout echec /api/moi"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M6415HG7RE4Z02SMVJS8RJBM",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "Relance semgrep explicite: PATH=/c/Users/a.asensio/.venvs/semgrep/Scripts (semgrep 1.182.1), invocation du gate semgrep-scan.sh L2751: semgrep --config .agents/security/semgrep.yml --json --quiet --disable-version-check --metrics=off -- web/src/components/ProfilePicker.tsx web/src/components/ProfilePicker.test.tsx => rc=2, JSON absent; sans --json et avec -j 1 => 'semgrep-core exited with unexpected output / exn Unix_error: Invalid argument socketpair'. Aucun fichier scanne. Cause: semgrep-core echoue sur socketpair dans l'environnement de la session agent (python socket.socketpair() y fonctionne); le contournement du bac a sable (dangerouslyDisableSandbox) n'a pas ete utilise faute d'autorisation du pilote. Revue manuelle inchangee: aucun finding (S-01M640WG6W192PWSRF360BTX82). A rejouer hors bac a sable pour lever la degradation.",
+      "title": "security-code-review aucun finding en revue manuelle — semgrep NON EXECUTE (semgrep-core socketpair rc 2), couverture DEGRADED, revue SAST absente"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M6417MT62YRPF9GGKV8WBP6M",
+      "kind": "verdict",
+      "task": "T-01M63VC74JJN4J71TYR9GRXDR6",
+      "text": "Source: gate3.log, porte a 36b8691 (contient 229956a = diff 3e71649..7dd2e9b). L20 gitleaks: propre (racine). L23-24: semgrep --config .agents/security/semgrep.yml --error --baseline-commit 0a9198018d31 -- . => 'semgrep : propre (racine)'. L25: COVERAGE DEGRADED semgrep n'a pas lu en entier 2 fichiers: Navigation.test.tsx et ProfilePicker.test.tsx; derogation CADRE_GARDES_DEGRADEES dont le texte ne nomme que Navigation.test.tsx (L110) => ProfilePicker.test.tsx est une lecture partielle NON nommee par la derogation, a signaler au pilote. L114: VERIFY OK @ 36b8691. ProfilePicker.tsx (code produit) n'est pas dans la liste des fichiers mal lus: scanne propre. Revue manuelle des lignes ajoutees de ProfilePicker.test.tsx: jeton factice 'j', aucun sink, aucun secret reel (gitleaks propre). Bornes: semgrep rejoue hors porte impossible dans le bac a sable (socketpair, S-01M6415HG7RE4Z02SMVJS8RJBM); la lecture partielle du fichier de test n'est pas rejouee. findings: aucun.",
+      "title": "security-code-review CLEAN — ProfilePicker.tsx scanne propre par semgrep de la porte 36b8691 ; ProfilePicker.test.tsx lu en partie par semgrep (fichier de test, jeton factice), lignes ajoutees relues a la main, gitleaks propre"
+    },
+    {
+      "date": "2026-10-29",
+      "files": [],
+      "id": "S-01M64183VPP7GEJHTA1T5D6NRA",
+      "kind": "verdict",
+      "task": "T-01M63VC6J8MB5B4P2AVHKFZQH9",
+      "text": "SAST cité : gate3.log l.21-25 'semgrep : propre (racine)', seuls Navigation.test.tsx et ProfilePicker.test.tsx partiellement lus, 'VERIFY OK @ 36b8691' (relu dans le log). Manuel : fonction plpgsql sans SQL dynamique, RAISE avec TG_OP seul en paramètre, TG_OP testé avant OLD, triggers ligne+TRUNCATE ; aucun secret, aucune entrée externe. Borne : le propriétaire de la table peut DROP TRIGGER/DISABLE (déjà borné au DATA_MODEL).",
+      "title": "security-code-review CLEAN — diff 3e71649..edf2b17 (correction, 2 fichiers, +45 lignes) : 0 critical / 0 high / 0 medium ; 0 advisory nouvelle ; SAST = porte de clôture @36b8691 (semgrep propre sur l'arbre, 2 fichiers 0002 lus en entier ; mon semgrep inexécutable en sous-agent : socketpair), revue manuelle complète"
     }
   ]
 }
