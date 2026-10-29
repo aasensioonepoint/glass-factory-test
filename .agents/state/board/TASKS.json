@@ -250,10 +250,11 @@
           "scripts/smoke.mjs"
         ]
       },
+      "done_at": "2026-10-29T12:49:18.749Z",
       "id": "T-01M63PPZVJBC15V86TYCXD6KJ7",
       "owner": "dev-mono",
       "pas_un_defaut": "fonctionnalité : témoin d'intégration du socle",
-      "stage": "[DIRECT SANS PLAN : 1 fichier(s), 1 validé(s) par direct]",
+      "stage": "smoke vert sur la racine (rc 0), revu en clôture du socle, porte verte @ fd553b7 [SANS CIBLE : commité directement sur mission2 (ce2edf3) par l'orchestrateur, sur décision pilote de l'inclure dans la clôture du socle ; pas de branche propre donc pas de relevé retour ; corrigé ensuite sous les tâches racine/api] [DIRECT SANS PLAN : 1 fichier(s), 1 validé(s) par direct] [SANS RELEVÉ : commité directement sur mission2 (ce2edf3) par l'orchestrateur, sur décision pilote de l'inclure dans la clôture du socle ; pas de branche propre donc pas de relevé retour ; corrigé ensuite sous les tâches racine/api]",
       "stage_actor": {
         "auteur": {
           "email": "a.asensio@groupeonepoint.com",
@@ -268,7 +269,7 @@
         },
         "copie": "4000f52f192d27eb"
       },
-      "state": "running",
+      "state": "done",
       "task": "Smoke de bout en bout du socle : tests, build et /api/health sur la racine fusionnée",
       "updated": "2026-10-29",
       "writeset": [
