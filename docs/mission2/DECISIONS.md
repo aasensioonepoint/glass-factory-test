@@ -272,16 +272,16 @@ Les agents ne lisent pas le `.docx` ni le `.pptx`. Or la spécification fait foi
 
 | # | Décision | Bloque | Recommandation | Décidé |
 |---|---|---|---|---|
-| D1 | Stack | Squelette | TypeScript | |
-| D2 | Périmètre à 16h00 | Tout | Socle + règle critique + nourrissage | |
-| D3 | Découpage | Kickoffs parallèles | db / api / web | |
-| D4 | Authentification | Critères 3 et 12 | Comptes de démo par persona | |
-| D5 | `LOT.heure` | Schéma | Supprimer, ajouter `ordre_passage` | |
-| D6 | Tables manquantes | Schéma | `RESTRICTION`, `MESURE`, `REGIME_SPECIAL` | |
-| D7 | Versions du planning | Défi B | Table `PROGRAMME` | |
-| D8 | Audit et synchronisation | Schéma | `AUDIT` + clé d'idempotence | |
-| D9 | Statuts | Schéma | Énumération unique | |
-| D10 | Règle de restriction | Défi C | Bloque l'engagement, levée validée | |
+| D1 | Stack | Squelette | TypeScript | ✅ TypeScript (Fastify + PGlite/Drizzle, React PWA) |
+| D2 | Périmètre à 16h00 | Tout | Socle + règle critique + nourrissage | ✅ A, puis C si le temps (2026-10-29) |
+| D3 | Découpage | Kickoffs parallèles | db / api / web | ✅ socle découpé racine / api / web (S-01M63K3VPZ0S8VQK9FE0VA35F0) |
+| D4 | Authentification | Critères 3 et 12 | Comptes de démo par persona | ✅ A, comptes persona |
+| D5 | `LOT.heure` | Schéma | Supprimer, ajouter `ordre_passage` | ✅ supprimer `LOT.heure` → `ordre_passage` + unicité (numéro, cour, date) |
+| D6 | Tables manquantes | Schéma | `RESTRICTION`, `MESURE`, `REGIME_SPECIAL` | ✅ les trois tables |
+| D7 | Versions du planning | Défi B | Table `PROGRAMME` | ✅ `PROGRAMME` seulement si D2-C |
+| D8 | Audit et synchronisation | Schéma | `AUDIT` + clé d'idempotence | ✅ `AUDIT` + clé d'idempotence `COMMANDE_SYNC` dès le palier 1 ; `CONFLIT` seulement si hors ligne |
+| D9 | Statuts | Schéma | Énumération unique | ✅ énumération unique, « en retard » calculé |
+| D10 | Règle de restriction | Défi C | Bloque l'engagement, levée validée | ✅ levée par vétérinaire ou entraîneur avec motif ; fin = administration + `delai_retrait_jours` ; bloque l'engagement, avertit pour un lot ; statut inconnu = produit sans délai ou rien depuis N jours |
 | D11 | Scoring | Défi E | 3 niveaux, hypothèse affichée | |
 | D12 | IA vocale | Défi F | Transcription simulée | |
 | D13 | Hors ligne | Critère 9 | Nourrissage seul | |
