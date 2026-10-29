@@ -2,12 +2,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isValidElement } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';
-import { App } from '../App';
+import { App, clientPartage } from '../App';
 import { api } from '../api';
 import type { ApiClient, Compte, Persona, Resultat } from '../api';
 import { ProfilePicker } from '../components/ProfilePicker';
-import { Horses, HorsesView, formatDate, lireChevaux, lireDossier } from './Horses';
-import type { ChevalResume, DossierCheval, Fetch, HorsesProps } from './Horses';
+import {
+  Horses,
+  HorsesView,
+  cibleFocusChevaux,
+  focaliserDossier,
+  formatDate,
+  libelleCheval,
+  libelleCode,
+  lireChevaux,
+  lireDossier,
+  vueChevaux,
+} from './Horses';
+import type { ChevalResume, DossierCheval, Fetch, HorsesProps, VueListe } from './Horses';
 
 /*
  * Environnement Node, sans DOM. `renderToString` prouve le balisage ; pour le
@@ -172,9 +183,19 @@ function parId(tree: Host[], id: string): Host {
   return hit;
 }
 
-/** Texte des régions status, dans l'ordre (liste puis dossier). */
+/** Texte des régions status de la grille, dans l'ordre (liste puis dossier). */
 function statuts(tree: Host[]): string[] {
-  return tree.filter((el) => el.props.role === 'status').map((el) => texte(el));
+  return tree
+    .filter((el) => el.props.role === 'status' && el.props.id !== 'horses-session')
+    .map((el) => texte(el));
+}
+
+/** Région permanente de la session : son texte, ou une erreur si elle manque. */
+function statutSession(tree: Host[]): string {
+  const el = tree.find((e) => e.props.id === 'horses-session');
+  if (!el) throw new Error('région horses-session absente');
+  expect(el.props.role).toBe('status');
+  return texte(el);
 }
 
 function titres(tree: Host[], niveau: 'h1' | 'h2' | 'h3'): string[] {
@@ -182,10 +203,10 @@ function titres(tree: Host[], niveau: 'h1' | 'h2' | 'h3'): string[] {
 }
 
 /** Joue la ref de rappel d'un élément, comme React à l'attache. */
-function attacher(el: Host, focus: () => void): void {
+function attacher(el: Host, focus: (options?: FocusOptions) => void, scrollIntoView?: () => void): void {
   const ref = el.props.ref;
   if (typeof ref !== 'function') throw new Error('aucune ref de rappel');
-  (ref as (node: unknown) => void)({ focus });
+  (ref as (node: unknown) => void)(scrollIntoView ? { focus, scrollIntoView } : { focus });
 }
 
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -248,7 +269,7 @@ function fauxFetch(routes: Record<string, (() => Response)[]>) {
 
 function fauxClient(jeton: string | null = 'j') {
   let courant = jeton;
-  return {
+  const client = {
     personas: vi.fn(async () => ({ ok: true as const, valeur: [] as Persona[] })),
     connecter: vi.fn(async () => ({ ok: false as const, erreur: 'http' as const })),
     moi: vi.fn(async () => ({ ok: false as const, erreur: 'non_autorise' as const })),
@@ -257,6 +278,21 @@ function fauxClient(jeton: string | null = 'j') {
     }),
     jeton: () => courant,
   } satisfies ApiClient;
+  /** Une autre session remplace le jeton (connexion dans un autre composant). */
+  return Object.assign(client, {
+    poser: (suivant: string | null) => {
+      courant = suivant;
+    },
+  });
+}
+
+/** Réponse retenue : le test décide quand elle arrive. */
+function differee() {
+  let livrer: (r: Response) => void = noop;
+  const promesse = new Promise<Response>((resolve) => {
+    livrer = resolve;
+  });
+  return { promesse, livrer: (r: Response) => livrer(r) };
 }
 
 interface Montage {
@@ -320,23 +356,69 @@ describe('Horses — liste', () => {
       expect(b.props['aria-current']).toBeUndefined();
       expect(b.props['aria-controls']).toBe('horses-dossier');
     }
+    // Nom accessible « nom, statut · cour » : la virgule marque la pause.
+    expect(liste.map((b) => b.props['aria-label'])).toEqual([
+      'Galop Royal, En entraînement · Cour A',
+      'Belle Attente',
+      'King’s Mind, Repos',
+    ]);
     expect(statuts(tree)).toEqual(['', 'Choisissez un cheval dans la liste pour ouvrir son dossier.']);
     expect(titres(tree, 'h2')).toEqual(['Liste des chevaux', 'Dossier']);
   });
 
-  it('vide : message, « Réessayer » relance la requête', async () => {
-    const fetcher = fauxFetch({ '/api/chevaux': [() => json([]), () => json(LISTE)] });
+  it('pendant le chargement, le panneau dossier n’invite pas à choisir', () => {
+    const tree = rendre(ecran({ fetcher: vi.fn<Fetch>(() => new Promise<Response>(noop)) }));
+    expect(statuts(tree)).toEqual(['Chargement des chevaux…', '']);
+  });
+
+  it('vide : message, ni « Réessayer » ni invitation à choisir', async () => {
+    const fetcher = fauxFetch({ '/api/chevaux': [() => json([])] });
+    const el = ecran({ fetcher });
+    rendre(el);
+    await flush();
+    const tree = rendre(el);
+    expect(statuts(tree)).toEqual(['Aucun cheval dans votre périmètre.', '']);
+    expect(boutons(tree)).toHaveLength(0);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it('erreur : « Réessayer » reste monté, inerte (« Chargement… »), garde le focus ; liste reçue : premier cheval', async () => {
+    const fetcher = fauxFetch({
+      '/api/chevaux': [() => json({}, 503), () => json({}, 503), () => json(LISTE)],
+    });
     const el = ecran({ fetcher });
     rendre(el);
     await flush();
     let tree = rendre(el);
-    expect(statuts(tree)[0]).toBe('Aucun cheval dans votre périmètre.');
+    expect(statuts(tree)).toEqual(['Le serveur n’a pas répondu. Réessayez.', '']);
+    const focusReessayer = vi.fn();
+    attacher(bouton(tree, 'Réessayer'), focusReessayer);
+    const position = tree.indexOf(bouton(tree, 'Réessayer'));
+
     click(bouton(tree, 'Réessayer'));
     tree = rendre(el);
+    // Même place dans l'arbre, inerte : React garde le nœud, et le focus avec lui.
+    const inerte = bouton(tree, 'Chargement…');
+    expect(tree.indexOf(inerte)).toBe(position);
+    expect(inerte.props['aria-disabled']).toBe(true);
+    expect(inerte.props.onClick).toBeUndefined();
     expect(statuts(tree)[0]).toBe('Chargement des chevaux…');
-    await flush();
-    expect(chevaux(rendre(el))).toHaveLength(3);
-    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    await flush(); // second échec : le bouton redevient « Réessayer », à la même place
+    tree = rendre(el);
+    expect(tree.indexOf(bouton(tree, 'Réessayer'))).toBe(position);
+    expect(bouton(tree, 'Réessayer').props['aria-disabled']).toBeUndefined();
+    expect(focusReessayer).not.toHaveBeenCalled(); // rien ne le lui a pris
+
+    click(bouton(tree, 'Réessayer'));
+    rendre(el);
+    await flush(); // succès : le focus va au premier cheval
+    tree = rendre(el);
+    const focusPremier = vi.fn();
+    attacher(chevaux(tree)[0] as Host, focusPremier);
+    rendre(el);
+    expect(focusPremier).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
 
   it('réponse hors contrat (identifiant numérique) : erreur serveur, jamais une liste partielle', async () => {
@@ -401,8 +483,9 @@ describe('Horses — dossier', () => {
     expect(titres(tree, 'h3')).toEqual(['Identité', 'Régime', 'Mesures']);
     const balisage = html(el);
     expect(balisage).toContain('Foin à volonté, 3 kg d’orge matin et soir');
-    expect(balisage).toContain('<td>Poids</td><td>512 kg</td>');
-    expect(balisage).toContain('<time dateTime="2025-04-24">24 avril 2025</time>');
+    expect(balisage).toContain('<td>Poids</td><td class="horses__valeur">512 kg</td>');
+    // Colonne Date des mesures : style « medium » pour toutes ses lignes.
+    expect(balisage).toContain('<time dateTime="2025-04-24">24 avr. 2025</time>');
     expect(balisage).toContain('<time dateTime="2021-04-02">2 avril 2021</time>');
     expect(balisage).toContain('Lope de Vega');
     // `<!-- -->` : séparateur de deux nœuds texte voisins dans le rendu serveur.
@@ -442,15 +525,60 @@ describe('Horses — dossier', () => {
     expect(boutons(tree).filter((b) => texte(b) === 'Réessayer')).toHaveLength(0);
   });
 
-  it('erreur serveur sur le dossier : « Réessayer » relance le même cheval', async () => {
-    const { el, fetcher } = await ouvrir({}, 503);
+  it('erreur serveur sur le dossier : « Réessayer » relance le même cheval, reste monté puis rend le focus au titre', async () => {
+    const fetcher = fauxFetch({
+      '/api/chevaux': [() => json(LISTE)],
+      '/api/chevaux/c1': [() => json({}, 503), () => json(DOSSIER)],
+    });
+    const el = ecran({ fetcher });
+    rendre(el);
+    await flush();
+    click(chevaux(rendre(el))[0]);
+    rendre(el);
     await flush();
     let tree = rendre(el);
     expect(statuts(tree)[1]).toBe('Le serveur n’a pas répondu. Réessayez.');
+    const position = tree.indexOf(bouton(tree, 'Réessayer'));
     click(bouton(tree, 'Réessayer'));
     tree = rendre(el);
     expect(statuts(tree)[1]).toBe('Chargement du dossier…');
+    const inerte = bouton(tree, 'Chargement…');
+    expect(tree.indexOf(inerte)).toBe(position);
+    expect(inerte.props['aria-disabled']).toBe(true);
     expect(fetcher.mock.calls.at(-1)?.[0]).toBe('/api/chevaux/c1');
+    const focusTitre = vi.fn();
+    attacher(parId(tree, 'horses-dossier-titre'), focusTitre);
+    await flush();
+    tree = rendre(el);
+    expect(titres(tree, 'h3')).toEqual(['Identité', 'Régime', 'Mesures']);
+    expect(focusTitre).toHaveBeenCalledOnce();
+  });
+
+  it('dès 768 px, le choix focalise le titre SANS défilement du focus (preventScroll), puis au plus près', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q === '(min-width: 768px)' }));
+    const fetcher = fauxFetch({
+      '/api/chevaux': [() => json(LISTE)],
+      '/api/chevaux/c1': [() => json(DOSSIER)],
+    });
+    const el = ecran({ fetcher });
+    rendre(el);
+    await flush();
+    const focus = vi.fn();
+    const scrollIntoView = vi.fn();
+    attacher(parId(rendre(el), 'horses-dossier-titre'), focus, scrollIntoView);
+    click(chevaux(rendre(el))[0]);
+    expect(focus).not.toHaveBeenCalled(); // pas dans le gestionnaire : après le rendu
+    rendre(el);
+    expect(focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true });
+    expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: 'nearest', inline: 'nearest' });
+  });
+
+  it('sous 768 px, le dossier empilé vient en haut de l’écran', () => {
+    const focus = vi.fn();
+    const scrollIntoView = vi.fn();
+    focaliserDossier({ focus, scrollIntoView }, false);
+    expect(focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true });
+    expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: 'start' });
   });
 
   it('un changement de cheval abandonne la requête du précédent', async () => {
@@ -482,9 +610,10 @@ describe('Horses — session', () => {
     const onConnexion = vi.fn();
     const tree = rendre(ecran({ fetcher, compte: null, onConnexion }));
     expect(titres(tree, 'h2')).toEqual(['Connexion requise']);
-    expect(statuts(tree)).toEqual(['Connectez-vous pour consulter les chevaux.']);
+    expect(statutSession(tree)).toBe('Connectez-vous pour consulter les chevaux.');
+    expect(statuts(tree)).toEqual([]);
     const b = bouton(tree, 'Choisir un profil');
-    expect(b.props['aria-describedby']).toBe('horses-connexion-statut');
+    expect(b.props['aria-describedby']).toBe('horses-session');
     click(b);
     expect(onConnexion).toHaveBeenCalledOnce();
     expect(fetcher).not.toHaveBeenCalled();
@@ -498,17 +627,63 @@ describe('Horses — session', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it('401 : session vidée, App prévenue, « session expirée » annoncée', async () => {
+  it('401 : session vidée, App prévenue ; la région permanente change de texte, le focus va à « Choisir un profil »', async () => {
     const client = fauxClient();
     const onSessionPerdue = vi.fn();
     const fetcher = fauxFetch({ '/api/chevaux': [() => json({}, 401)] });
     const el = ecran({ fetcher, client, onSessionPerdue });
+    let tree = rendre(el);
+    // Région présente AVANT le refus, vide, à la place qu'elle gardera.
+    expect(statutSession(tree)).toBe('');
+    const position = tree.findIndex((e) => e.props.id === 'horses-session');
+    await flush();
+    tree = rendre(el);
+    expect(client.deconnecter).toHaveBeenCalledOnce();
+    expect(onSessionPerdue).toHaveBeenCalledOnce();
+    expect(statutSession(tree)).toBe('Votre session a expiré, connectez-vous de nouveau.');
+    // Après le h2 « Connexion requise », inséré avant elle : une place plus loin, même parent.
+    expect(tree.findIndex((e) => e.props.id === 'horses-session')).toBe(position + 1);
+    const focus = vi.fn();
+    attacher(bouton(tree, 'Choisir un profil'), focus);
+    rendre(el);
+    expect(focus).toHaveBeenCalledOnce();
+    rendre(el);
+    expect(focus).toHaveBeenCalledOnce(); // l'attente est retombée
+  });
+
+  it('401 pour un jeton déjà remplacé : rien n’est vidé, la liste est redemandée avec le nouveau jeton', async () => {
+    const client = fauxClient('ancien');
+    const onSessionPerdue = vi.fn();
+    const reponse = differee();
+    const auth: string[] = [];
+    const fetcher = vi.fn<Fetch>(async (_url, init) => {
+      auth.push((init.headers as Record<string, string>).Authorization ?? '');
+      return auth.length === 1 ? reponse.promesse : json(LISTE);
+    });
+    const el = ecran({ fetcher, client, onSessionPerdue });
+    rendre(el);
+    client.poser('nouveau'); // une connexion ailleurs pendant la requête
+    reponse.livrer(json({}, 401));
+    await flush();
     rendre(el);
     await flush();
     const tree = rendre(el);
-    expect(client.deconnecter).toHaveBeenCalledOnce();
-    expect(onSessionPerdue).toHaveBeenCalledOnce();
-    expect(statuts(tree)).toEqual(['Votre session a expiré, connectez-vous de nouveau.']);
+    expect(client.deconnecter).not.toHaveBeenCalled();
+    expect(onSessionPerdue).not.toHaveBeenCalled();
+    expect(auth).toEqual(['Bearer ancien', 'Bearer nouveau']);
+    expect(chevaux(tree)).toHaveLength(3);
+  });
+
+  it('session en cours de relecture : chargement, jamais « Connexion requise », aucune requête', () => {
+    const fetcher = fauxFetch({});
+    const el = (
+      <Horses lang="fr" compte={null} verification client={fauxClient()} fetcher={fetcher} onConnexion={noop} />
+    );
+    const tree = rendre(el);
+    expect(titres(tree, 'h2')).toEqual(['Liste des chevaux', 'Dossier']);
+    expect(statuts(tree)).toEqual(['Chargement des chevaux…', '']);
+    expect(statutSession(tree)).toBe('');
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   it('le démontage abandonne la requête en vol', () => {
@@ -522,7 +697,7 @@ describe('Horses — session', () => {
 
   it('en anglais', () => {
     const tree = rendre(ecran({ fetcher: fauxFetch({}), compte: null, lang: 'en' }));
-    expect(statuts(tree)).toEqual(['Sign in to view the horses.']);
+    expect(statutSession(tree)).toBe('Sign in to view the horses.');
     expect(boutons(tree).map(texte)).toEqual(['Choose a profile']);
   });
 });
@@ -552,9 +727,101 @@ describe('Horses — contrat et formatage (fonctions pures)', () => {
     expect(formatDate('en', '2025-03-12')).toBe('12 March 2025');
     expect(formatDate('fr', '2025-02-31')).toBe('2025-02-31');
     expect(formatDate('fr', 'hier')).toBe('hier');
+    // Une colonne, un style de date : jour et date-heure partagent « medium ».
+    expect(formatDate('fr', '2025-03-12', 'medium')).toBe('12 mars 2025');
+    expect(formatDate('fr', '2025-03-12T08:00:00Z', 'medium')).toMatch(/^12 mars 2025/);
+    expect(formatDate('fr', '2025-03-12T08:00:00Z', 'long')).toMatch(/^12 mars 2025/);
   });
 
-  it('la feuille de l’écran ne lit que les jetons, sans or ni couleur en dur', () => {
+  it('<time dateTime> pour une valeur ISO lisible seulement', () => {
+    const vue = (mesures: DossierCheval['mesures']) =>
+      renderToString(
+        <HorsesView
+          lang="fr"
+          vue={{ etat: 'connecte', liste: { etat: 'vide' }, dossier: { etat: 'dossier', dossier: { ...DOSSIER, mesures } } }}
+          onChoisir={noop}
+          onReessayerListe={noop}
+          onReessayerDossier={noop}
+          onConnexion={noop}
+        />,
+      );
+    const html = vue([
+      { nature: 'poids', valeur: '478,5 kg', date: 'hier' },
+      { nature: 'temperature', valeur: '37,8 °C', date: '2025-04-23' },
+    ]);
+    expect(html).toContain('<td>hier</td>');
+    expect(html).not.toContain('dateTime="hier"');
+    expect(html).toContain('<time dateTime="2025-04-23">23 avr. 2025</time>');
+  });
+
+  it('codes bruts de la graine : libellés FR/EN, code inconnu rendu tel quel', () => {
+    expect(libelleCode('fr', 'statut', 'a_l_entrainement')).toBe('À l’entraînement');
+    expect(libelleCode('en', 'statut', 'a_l_entrainement')).toBe('In training');
+    expect(libelleCode('fr', 'sexe', 'F')).toBe('Femelle');
+    expect(libelleCode('fr', 'sexe', 'M')).toBe('Mâle');
+    expect(libelleCode('en', 'sexe', 'F')).toBe('Female');
+    expect(libelleCode('en', 'sexe', 'M')).toBe('Male');
+    expect(libelleCode('fr', 'nature', 'poids')).toBe('Poids');
+    expect(libelleCode('en', 'nature', 'temperature')).toBe('Temperature');
+    expect(libelleCode('fr', 'statut', 'au_repos')).toBe('au_repos');
+    expect(libelleCode('fr', 'sexe', 'constructor')).toBe('constructor');
+    expect(
+      libelleCheval('fr', { ...(LISTE[0] as ChevalResume), statut: 'a_l_entrainement', cour: 'Cour A' }),
+    ).toBe('Galop Royal, À l’entraînement · Cour A');
+  });
+
+  it('le dossier montre les libellés des codes (sexe, statut, nature de mesure)', () => {
+    const html = renderToString(
+      <HorsesView
+        lang="en"
+        vue={{
+          etat: 'connecte',
+          liste: { etat: 'vide' },
+          dossier: {
+            etat: 'dossier',
+            dossier: {
+              ...DOSSIER,
+              sexe: 'F',
+              statut: 'a_l_entrainement',
+              mesures: [{ nature: 'poids', valeur: '478.5 kg', date: '2025-04-24' }],
+            },
+          },
+        }}
+        onChoisir={noop}
+        onReessayerListe={noop}
+        onReessayerDossier={noop}
+        onConnexion={noop}
+      />,
+    );
+    expect(html).toContain('<dd>Female</dd>');
+    expect(html).toContain('<dd>In training</dd>');
+    expect(html).toContain('<td>Weight</td>');
+    expect(html).not.toContain('a_l_entrainement');
+  });
+
+  it('vueChevaux : liste en erreur ou vide → le dossier attend, il n’invite pas', () => {
+    const base = { connecte: true, sessionExpiree: false, choix: null, dossier: null };
+    const erreur = vueChevaux({ ...base, liste: { statut: 'erreur', cause: 'reseau' } });
+    const vide = vueChevaux({ ...base, liste: { statut: 'pret', chevaux: [] } });
+    const pleine = vueChevaux({ ...base, liste: { statut: 'pret', chevaux: LISTE } });
+    expect(erreur.etat === 'connecte' && erreur.dossier).toEqual({ etat: 'attente' });
+    expect(vide.etat === 'connecte' && vide.dossier).toEqual({ etat: 'attente' });
+    expect(pleine.etat === 'connecte' && pleine.dossier).toEqual({ etat: 'invite' });
+  });
+
+  it('cibleFocusChevaux : réessai gardé en chargement, rendu au bouton en erreur', () => {
+    const reessai = (liste: VueListe) =>
+      cibleFocusChevaux('reessai-liste', { etat: 'connecte', liste, dossier: { etat: 'attente' } });
+    expect(reessai({ etat: 'chargement', reessai: true })).toEqual({ cible: null, garder: true });
+    expect(reessai({ etat: 'erreur', cause: 'serveur' })).toEqual({ cible: null, garder: false });
+    expect(reessai({ etat: 'vide' })).toEqual({ cible: 'titre-liste', garder: false });
+    expect(cibleFocusChevaux('session', { etat: 'non_connecte', sessionExpiree: true })).toEqual({
+      cible: 'connexion',
+      garder: false,
+    });
+  });
+
+  function feuille(): string {
     const html = renderToString(
       <HorsesView
         lang="fr"
@@ -565,11 +832,101 @@ describe('Horses — contrat et formatage (fonctions pures)', () => {
         onConnexion={noop}
       />,
     );
-    const css = /<style[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    return /<style[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+  }
+
+  /** Règles CSS à plat (sélecteur, corps), media queries dépliées. */
+  function regles(css: string): { selecteur: string; corps: string; media: string | null }[] {
+    const out: { selecteur: string; corps: string; media: string | null }[] = [];
+    const re = /@media\s*([^{]+)\{((?:[^{}]*\{[^{}]*\})*)\s*\}|([^{}@]+)\{([^{}]*)\}/g;
+    for (const m of css.matchAll(re)) {
+      if (m[1] !== undefined && m[2] !== undefined) {
+        for (const r of m[2].matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+          out.push({ selecteur: (r[1] ?? '').trim(), corps: r[2] ?? '', media: m[1].trim() });
+        }
+      } else if (m[3] !== undefined) {
+        out.push({ selecteur: m[3].trim(), corps: m[4] ?? '', media: null });
+      }
+    }
+    return out;
+  }
+
+  it('la feuille de l’écran ne lit que les jetons, sans or ni couleur en dur', () => {
+    const css = feuille();
     expect(css).toContain('var(--color-navy)');
     expect(css).toContain('min-height:var(--target-min)');
     expect(css).toContain('@media (min-width:768px)');
-    expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgb|--color-gold|outline|box-shadow/i);
+    expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgb|--color-gold/i);
+    // Aucun anneau posé sur un bouton : c'est celui de styles.css.
+    for (const r of regles(css)) {
+      if (/outline|box-shadow/.test(r.corps)) expect(r.selecteur).not.toMatch(/button|cheval|action/);
+    }
+  });
+
+  it('titre focalisé par script : double anneau de la coque (jetons --ring-*), jamais celui du navigateur', () => {
+    const r = regles(feuille()).find((x) => x.selecteur.includes("[tabindex='-1']:focus-visible"));
+    expect(r?.selecteur).toBe(".horses-ecran h2[tabindex='-1']:focus-visible");
+    expect(r?.corps).toContain('outline:2px solid transparent');
+    expect(r?.corps).toContain(
+      'box-shadow:0 0 0 var(--ring-inner) var(--color-ivory),0 0 0 calc(var(--ring-inner) + var(--ring-outer)) var(--color-navy)',
+    );
+  });
+
+  it('dès 768 px, la liste est une colonne collante qui défile seule ; sous 768 px, rien de collant', () => {
+    const toutes = regles(feuille());
+    const liste = toutes.find((x) => x.selecteur === '.horses__panneau--liste');
+    expect(liste?.media).toBe('(min-width:768px)');
+    expect(liste?.corps).toContain('position:sticky');
+    expect(liste?.corps).toMatch(/top:calc\(var\(--safe-top\) \+ var\(--bar-h\)/);
+    expect(liste?.corps).toMatch(/max-height:calc\(100dvh - /);
+    expect(liste?.corps).toMatch(/max-height:calc\(100vh - /); // repli sans dvh
+    expect(liste?.corps).toContain('overflow-y:auto');
+    expect(toutes.filter((x) => x.media === null && x.corps.includes('sticky'))).toEqual([]);
+    // Sous 768 px, un dossier choisi réserve sa hauteur : son titre peut venir en haut.
+    const choisi = toutes.find((x) => x.selecteur === '.horses__panneau--choisi');
+    expect(choisi?.media).toBe('(max-width:767.98px)');
+    expect(choisi?.corps).toContain('min-height:calc(100dvh - 13rem)');
+  });
+
+  it('mesures : une valeur longue sans espace se coupe (overflow-wrap:anywhere), jamais de débordement à 360 px', () => {
+    // Sélecteur (0,2,0) : il doit battre `.horses__table td` (0,1,1), mesuré en direct.
+    const valeur = regles(feuille()).find((x) => x.selecteur === '.horses__table .horses__valeur');
+    expect(valeur?.corps).toBe('overflow-wrap:anywhere');
+    const html = renderToString(
+      <HorsesView
+        lang="fr"
+        vue={{ etat: 'connecte', liste: { etat: 'vide' }, dossier: { etat: 'dossier', dossier: DOSSIER } }}
+        onChoisir={noop}
+        onReessayerListe={noop}
+        onReessayerDossier={noop}
+        onConnexion={noop}
+      />,
+    );
+    expect(html).toContain('<td class="horses__valeur">512 kg</td>');
+  });
+});
+
+describe('App — relecture de session partagée', () => {
+  it('clientPartage : une seule /api/moi pour deux lecteurs ; l’abandon de l’un ne coupe pas l’autre', async () => {
+    let livrer: (r: Resultat<Compte>) => void = noop;
+    const base = {
+      ...fauxClient('j'),
+      moi: vi.fn(
+        () =>
+          new Promise<Resultat<Compte>>((resolve) => {
+            livrer = resolve;
+          }),
+      ),
+    } satisfies ApiClient;
+    const client = clientPartage(base);
+    const controle = new AbortController();
+    const premier = client.moi(controle.signal);
+    const second = client.moi(new AbortController().signal);
+    controle.abort();
+    livrer({ ok: true, valeur: COMPTE });
+    expect(await premier).toEqual({ ok: false, erreur: 'annule' });
+    expect(await second).toEqual({ ok: true, valeur: COMPTE });
+    expect(base.moi).toHaveBeenCalledOnce();
   });
 });
 
@@ -685,5 +1042,60 @@ describe('App — entrée « Chevaux »', () => {
     tree = rendre(<App />);
     expect(chevauxAppel).toHaveBeenCalledExactlyOnceWith('Bearer tok');
     expect(chevaux(tree)).toHaveLength(3);
+  });
+
+  it('rechargement avec un jeton valide, droit vers « Chevaux » : chargement, jamais « Connexion requise », puis la liste', async () => {
+    const moi = differee();
+    const appels: string[] = [];
+    stubApp(async (url, init) => {
+      appels.push(url);
+      if (url === '/api/session') return json({ jeton: 'tok', compte: COMPTE });
+      if (url === '/api/personas') return json([]);
+      if (url === '/api/moi') return moi.promesse;
+      if (url === '/api/chevaux') {
+        expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer tok');
+        return json(LISTE);
+      }
+      return new Response('', { status: 500 });
+    });
+    // Le jeton repris de sessionStorage au lancement (ici : posé avant le montage).
+    expect((await api.connecter('1')).ok).toBe(true);
+    appels.length = 0;
+
+    let tree = rendre(<App />);
+    click(tree.find((e) => e.props['data-nav'] === 'horses'));
+    tree = rendre(<App />); // ProfilePicker démonté : SON attente de /api/moi est abandonnée
+    expect(titres(tree, 'h2')).toEqual(['Liste des chevaux', 'Dossier']);
+    expect(statuts(tree)).toEqual(['Chargement des chevaux…', '']);
+    expect(statutSession(tree)).toBe(''); // ni « Connectez-vous… » ni « session expirée »
+
+    moi.livrer(json(COMPTE));
+    await flush();
+    rendre(<App />);
+    await flush();
+    tree = rendre(<App />);
+    expect(chevaux(tree)).toHaveLength(3);
+    // Une seule relecture : App et ProfilePicker ont partagé la même requête.
+    expect(appels.filter((u) => u === '/api/moi')).toHaveLength(1);
+  });
+
+  it('rechargement avec un jeton refusé (401) : « Connexion requise » après la réponse, pas avant', async () => {
+    const moi = differee();
+    stubApp(async (url) => {
+      if (url === '/api/session') return json({ jeton: 'tok', compte: COMPTE });
+      if (url === '/api/personas') return json([]);
+      if (url === '/api/moi') return moi.promesse;
+      return new Response('', { status: 500 });
+    });
+    expect((await api.connecter('1')).ok).toBe(true);
+    let tree = rendre(<App />);
+    click(tree.find((e) => e.props['data-nav'] === 'horses'));
+    tree = rendre(<App />);
+    expect(statuts(tree)[0]).toBe('Chargement des chevaux…');
+    moi.livrer(json({}, 401));
+    await flush();
+    tree = rendre(<App />);
+    expect(titres(tree, 'h2')).toEqual(['Connexion requise']);
+    expect(api.jeton()).toBeNull();
   });
 });

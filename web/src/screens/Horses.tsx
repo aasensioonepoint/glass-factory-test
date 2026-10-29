@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode, Ref } from 'react';
 import { DELAI_REQUETE_MS, api } from '../api';
 import type { ApiClient, Compte } from '../api';
+import { focusLibre } from '../components/ProfilePicker';
 import type { Lang } from '../i18n';
 
 /*
@@ -17,7 +18,9 @@ import type { Lang } from '../i18n';
  * `api.ts` n'expose pas de GET authentifié générique : la requête est faite ici,
  * avec ses conventions (jeton Bearer du client, AbortSignal borné par
  * DELAI_REQUETE_MS, réponse validée avant d'atteindre l'interface). Un 401 vide
- * la session par `client.deconnecter()`, comme le client le fait pour /api/moi.
+ * la session par `client.deconnecter()` seulement si le jeton refusé est encore
+ * celui du client (même règle que api.ts) ; sinon la requête est relancée avec
+ * le jeton courant.
  *
  * Aucune maquette lisible (écran 03 en EMF) : la coque et les cartes reprennent
  * les jetons de styles.css et le style de ProfilePicker (bleu nuit sur ivoire,
@@ -35,6 +38,7 @@ const TEXTES = {
     erreurListeReseau: 'Les chevaux n’ont pas pu être chargés. Vérifiez la connexion.',
     erreurServeur: 'Le serveur n’a pas répondu. Réessayez.',
     reessayer: 'Réessayer',
+    chargementCourt: 'Chargement…',
     dossier: 'Dossier',
     invite: 'Choisissez un cheval dans la liste pour ouvrir son dossier.',
     chargementDossier: 'Chargement du dossier…',
@@ -75,6 +79,7 @@ const TEXTES = {
     erreurListeReseau: 'Horses could not be loaded. Check your connection.',
     erreurServeur: 'The server did not respond. Try again.',
     reessayer: 'Try again',
+    chargementCourt: 'Loading…',
     dossier: 'File',
     invite: 'Choose a horse in the list to open its file.',
     chargementDossier: 'Loading the file…',
@@ -111,6 +116,31 @@ const TEXTES = {
 } satisfies Record<Lang, Record<string, string>>;
 
 type Textes = (typeof TEXTES)[Lang];
+
+/*
+ * Codes bruts de l'API (graine `api/src/db/seed.ts`) → libellés. Un code inconnu
+ * est montré tel quel : jamais un libellé inventé pour une valeur non prévue.
+ */
+const CODES = {
+  fr: {
+    statut: { a_l_entrainement: 'À l’entraînement' },
+    sexe: { F: 'Femelle', M: 'Mâle' },
+    nature: { poids: 'Poids', temperature: 'Température' },
+  },
+  en: {
+    statut: { a_l_entrainement: 'In training' },
+    sexe: { F: 'Female', M: 'Male' },
+    nature: { poids: 'Weight', temperature: 'Temperature' },
+  },
+} satisfies Record<Lang, Record<'statut' | 'sexe' | 'nature', Record<string, string>>>;
+
+export type ChampCode = keyof (typeof CODES)[Lang];
+
+/** Libellé d'un code connu, sinon le code brut (`Object.hasOwn` : jamais `constructor`). */
+export function libelleCode(lang: Lang, champ: ChampCode, code: string): string {
+  const table: Record<string, string> = CODES[lang][champ];
+  return Object.hasOwn(table, code) ? (table[code] ?? code) : code;
+}
 
 /* ---------- Contrat de T7 : formes validées ---------- */
 
@@ -340,27 +370,33 @@ function cause(erreur: ErreurChevaux): CauseErreur {
   return erreur === 'reseau' ? 'reseau' : 'serveur';
 }
 
+/** `reessai` : rechargement demandé par « Réessayer », qui reste monté (inerte) et garde le focus. */
 export type EtatListe =
-  | { statut: 'chargement' }
+  | { statut: 'chargement'; reessai: boolean }
   | { statut: 'erreur'; cause: CauseErreur }
   | { statut: 'pret'; chevaux: ChevalResume[] };
 
 /** État du dossier, attaché à l'identifiant demandé : un dossier d'un autre cheval n'est jamais montré. */
 export type EtatDossier =
-  | { id: string; statut: 'chargement' }
+  | { id: string; statut: 'chargement'; reessai: boolean }
   | { id: string; statut: 'erreur'; cause: CauseErreur }
   | { id: string; statut: 'introuvable' }
   | { id: string; statut: 'pret'; dossier: DossierCheval };
 
 export type VueListe =
-  | { etat: 'chargement' }
+  | { etat: 'chargement'; reessai: boolean }
   | { etat: 'erreur'; cause: CauseErreur }
   | { etat: 'vide' }
   | { etat: 'liste'; chevaux: ChevalResume[]; choisi: string | null };
 
+/**
+ * `invite` : la liste est là, rien n'est choisi. `attente` : la liste n'est pas
+ * là (chargement, vide, erreur) — le panneau n'invite pas à choisir.
+ */
 export type VueDossier =
   | { etat: 'invite' }
-  | { etat: 'chargement'; nom: string }
+  | { etat: 'attente' }
+  | { etat: 'chargement'; nom: string; reessai: boolean }
   | { etat: 'erreur'; nom: string; cause: CauseErreur }
   | { etat: 'introuvable'; nom: string }
   | { etat: 'dossier'; dossier: DossierCheval };
@@ -376,86 +412,208 @@ export interface Choix {
 
 /** Dérive la vue de l'état du conteneur (pas de seconde source de vérité). */
 export function vueChevaux(etat: {
+  /** Session reprise en cours de relecture (App) : l'écran attend, il ne conclut rien. */
+  verification?: boolean;
   connecte: boolean;
   sessionExpiree: boolean;
   liste: EtatListe;
   choix: Choix | null;
   dossier: EtatDossier | null;
 }): VueChevaux {
+  if (etat.verification === true) {
+    return {
+      etat: 'connecte',
+      liste: { etat: 'chargement', reessai: false },
+      dossier: { etat: 'attente' },
+    };
+  }
   if (!etat.connecte) return { etat: 'non_connecte', sessionExpiree: etat.sessionExpiree === true };
   const { liste: l, choix, dossier: d } = etat;
   const liste: VueListe =
     l.statut === 'chargement'
-      ? { etat: 'chargement' }
+      ? { etat: 'chargement', reessai: l.reessai }
       : l.statut === 'erreur'
         ? { etat: 'erreur', cause: l.cause }
         : l.chevaux.length === 0
           ? { etat: 'vide' }
           : { etat: 'liste', chevaux: l.chevaux, choisi: choix?.id ?? null };
   let dossier: VueDossier;
-  if (choix === null) dossier = { etat: 'invite' };
-  else if (d === null || d.id !== choix.id || d.statut === 'chargement') {
-    dossier = { etat: 'chargement', nom: choix.nom };
+  if (choix === null) dossier = liste.etat === 'liste' ? { etat: 'invite' } : { etat: 'attente' };
+  else if (d === null || d.id !== choix.id) {
+    dossier = { etat: 'chargement', nom: choix.nom, reessai: false };
+  } else if (d.statut === 'chargement') {
+    dossier = { etat: 'chargement', nom: choix.nom, reessai: d.reessai };
   } else if (d.statut === 'erreur') dossier = { etat: 'erreur', nom: choix.nom, cause: d.cause };
   else if (d.statut === 'introuvable') dossier = { etat: 'introuvable', nom: choix.nom };
   else dossier = { etat: 'dossier', dossier: d.dossier };
   return { etat: 'connecte', liste, dossier };
 }
 
+/*
+ * Focus (INTERACTION focus=liste, puis dossier au choix d'un cheval) : un
+ * déplacement attendu, jamais un vol (même règle que ProfilePicker).
+ *   reessai-liste   — « Réessayer » reste monté et garde le focus pendant le
+ *                     rechargement et après un nouvel échec ; liste reçue : le
+ *                     premier cheval ; liste vide : le titre de la liste ;
+ *   reessai-dossier — idem ; dossier reçu ou 404 : le titre du dossier ;
+ *   session         — 401 en cours d'écran : « Choisir un profil », qui
+ *                     remplace la grille (sinon le focus tomberait sur <body>) ;
+ *   choix           — un cheval choisi : le titre du dossier, APRÈS le rendu
+ *                     qui réserve la hauteur du panneau (sous 768 px, sans elle
+ *                     le défilement vers le titre est plafonné).
+ */
+export type AttenteFocus = 'reessai-liste' | 'reessai-dossier' | 'session' | 'choix';
+
+export type CibleFocusChevaux = 'premier' | 'titre-liste' | 'titre-dossier' | 'connexion';
+
+/** Cible du focus attendu dans cette vue ; `garder` : l'attente survit à ce rendu. */
+export function cibleFocusChevaux(
+  attente: AttenteFocus,
+  vue: VueChevaux,
+): { cible: CibleFocusChevaux | null; garder: boolean } {
+  if (attente === 'session') {
+    return { cible: vue.etat === 'non_connecte' ? 'connexion' : null, garder: false };
+  }
+  if (vue.etat !== 'connecte') return { cible: null, garder: false };
+  if (attente === 'choix') {
+    const choisi = vue.dossier.etat !== 'invite' && vue.dossier.etat !== 'attente';
+    return { cible: choisi ? 'titre-dossier' : null, garder: false };
+  }
+  if (attente === 'reessai-liste') {
+    switch (vue.liste.etat) {
+      case 'chargement':
+        return { cible: null, garder: true };
+      case 'liste':
+        return { cible: 'premier', garder: false };
+      case 'vide':
+        return { cible: 'titre-liste', garder: false };
+      case 'erreur':
+        return { cible: null, garder: false }; // « Réessayer » a gardé le focus
+    }
+  }
+  if (attente === 'reessai-dossier') {
+    switch (vue.dossier.etat) {
+      case 'chargement':
+        return { cible: null, garder: true };
+      case 'dossier':
+      case 'introuvable':
+        return { cible: 'titre-dossier', garder: false };
+      default:
+        return { cible: null, garder: false };
+    }
+  }
+  return { cible: null, garder: false };
+}
+
+/** Dès 768 px, la liste est une colonne collante qui défile seule (voir CSS). */
+export const MEDIA_LARGE = '(min-width: 768px)';
+
+function ecranLarge(): boolean {
+  return typeof globalThis.matchMedia === 'function' && globalThis.matchMedia(MEDIA_LARGE).matches;
+}
+
+type Focalisable = Pick<HTMLElement, 'focus'> & Partial<Pick<HTMLElement, 'scrollIntoView'>>;
+
+/**
+ * Titre du dossier focalisé, jamais avec le défilement implicite du focus (que
+ * le navigateur place où il veut : mesuré à 360 px, titre à 558 px sur 780, le
+ * dossier hors de vue). Dès 768 px : défilement minimal qui montre le titre —
+ * la liste, collante, garde sa position et son propre défilement. Sous 768 px :
+ * le dossier, empilé sous la liste, vient en haut de l'écran (sous la pastille,
+ * par le scroll-padding de la coque) ; la liste n'est pas re-rendue, sa
+ * position reste où le choix l'a laissée, et Maj+Tab y ramène au cheval choisi.
+ */
+export function focaliserDossier(titre: Focalisable, large: boolean = ecranLarge()): void {
+  titre.focus({ preventScroll: true });
+  titre.scrollIntoView?.(large ? { block: 'nearest', inline: 'nearest' } : { block: 'start' });
+}
+
 /* ---------- Formatage ---------- */
 
 const JOUR = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/**
- * Date du contrat (YYYY-MM-DD) au format de la langue, en UTC : jamais décalée
- * d'un jour par le fuseau. Une date-heure ISO est montrée à l'heure locale ; une
- * valeur illisible est montrée telle quelle, jamais inventée.
- */
-export function formatDate(lang: Lang, valeur: string): string {
-  const locale = lang === 'fr' ? 'fr-FR' : 'en-GB';
+type DateLue = { type: 'jour'; date: Date } | { type: 'instant'; t: number };
+
+/** Date du contrat lue : jour AAAA-MM-JJ réel, ou date-heure ISO ; sinon `null`. */
+function lireDate(valeur: string): DateLue | null {
   const m = JOUR.exec(valeur);
   if (m !== null) {
     const [annee, mois, jour] = [Number(m[1]), Number(m[2]), Number(m[3])];
     const d = new Date(Date.UTC(annee, mois - 1, jour));
     if (d.getUTCFullYear() !== annee || d.getUTCMonth() !== mois - 1 || d.getUTCDate() !== jour) {
-      return valeur;
+      return null;
     }
-    return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(d);
+    return { type: 'jour', date: d };
   }
-  if (valeur.includes('T')) {
+  if (/^\d{4}-\d{2}-\d{2}T/.test(valeur)) {
     const t = Date.parse(valeur);
-    if (!Number.isNaN(t)) {
-      return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(t);
-    }
+    if (!Number.isNaN(t)) return { type: 'instant', t };
   }
-  return valeur;
+  return null;
 }
 
-function Quand({ lang, valeur }: { lang: Lang; valeur: string }) {
-  return <time dateTime={valeur}>{formatDate(lang, valeur)}</time>;
+export type StyleDate = 'long' | 'medium';
+
+/**
+ * Date du contrat au format de la langue. Un jour est formaté en UTC : jamais
+ * décalé d'un jour par le fuseau. Une date-heure ISO est montrée à l'heure
+ * locale, avec le MÊME style de date que les jours de sa colonne. Une valeur
+ * illisible est montrée telle quelle, jamais inventée.
+ */
+export function formatDate(lang: Lang, valeur: string, style: StyleDate = 'long'): string {
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-GB';
+  const lue = lireDate(valeur);
+  if (lue === null) return valeur;
+  if (lue.type === 'jour') {
+    return new Intl.DateTimeFormat(locale, { dateStyle: style, timeZone: 'UTC' }).format(lue.date);
+  }
+  return new Intl.DateTimeFormat(locale, { dateStyle: style, timeStyle: 'short' }).format(lue.t);
+}
+
+/** `<time dateTime>` pour une valeur ISO lisible seulement ; sinon le texte brut. */
+function Quand({ lang, valeur, style }: { lang: Lang; valeur: string; style?: StyleDate }) {
+  if (lireDate(valeur) === null) return <>{valeur}</>;
+  return <time dateTime={valeur}>{formatDate(lang, valeur, style)}</time>;
 }
 
 /* ---------- Styles ---------- */
 
 /*
  * Mobile d'abord : une colonne ; dès 768 px (le point de rupture de la coque),
- * liste à gauche, dossier à droite. Cibles ≥ 44 px (--target-min). Le focus est
+ * liste à gauche, collante sous la barre haute, avec son propre défilement ;
+ * dossier à droite. Cibles ≥ 44 px (--target-min). Le focus d'un bouton est
  * l'anneau de styles.css (button:focus-visible) : aucune règle ici ne pose
- * outline ni box-shadow sur un bouton.
+ * outline ni box-shadow sur un bouton. Les titres focalisés par script
+ * (tabindex -1) reçoivent le même double anneau (jetons --ring-*), sans quoi
+ * l'anneau du navigateur (2,14:1 sur ivoire, mesuré par design-review) reste.
+ * Le défilement de la liste porte une marge intérieure de 6 px (≥ 5 px
+ * d'anneau), compensée par une marge négative : l'anneau n'est pas rogné.
+ * Sous 768 px, un cheval choisi réserve au dossier une hauteur d'écran moins
+ * 13rem (scroll-padding haut 68 px + marge basse de .main 144 px = 212 px ≤
+ * 208 + 4) : sans elle, le dossier encore vide laisse un document trop court
+ * et le défilement vers son titre est plafonné (mesuré : 558 px sur 780).
  */
+const HAUT_LISTE =
+  'var(--safe-top) + var(--bar-h) + var(--bar-rim) + var(--scrollbar-allowance) + var(--scroll-slack)';
+
 const CSS = `
+.horses-ecran{min-width:0}
 .horses{display:grid;gap:1.5rem;margin-top:1.5rem}
-@media (min-width:768px){.horses{grid-template-columns:minmax(14rem,1fr) minmax(0,2fr);align-items:start}}
+@media (min-width:768px){.horses{grid-template-columns:minmax(14rem,1fr) minmax(0,2fr);align-items:start}.horses__panneau--liste{position:sticky;top:calc(${HAUT_LISTE});max-height:calc(100vh - (${HAUT_LISTE}) - 1.5rem);max-height:calc(100dvh - (${HAUT_LISTE}) - 1.5rem);overflow-y:auto;overscroll-behavior:contain;padding:.375rem;margin:-.375rem}}
 .horses__panneau{min-width:0}
-.horses__seul{margin-top:1.5rem;max-width:60rem}
+@media (max-width:767.98px){.horses__panneau--choisi{min-height:calc(100vh - 13rem);min-height:calc(100dvh - 13rem)}}
+.horses__connexion{margin-top:1.5rem}
 .horses__titre{margin:0;font-size:1.25rem;line-height:1.3;overflow-wrap:anywhere}
+.horses-ecran h2[tabindex='-1']:focus-visible{outline:2px solid transparent;outline-offset:2px;box-shadow:0 0 0 var(--ring-inner) var(--color-ivory),0 0 0 calc(var(--ring-inner) + var(--ring-outer)) var(--color-navy)}
 .horses__statut{margin:.25rem 0 0;min-height:1lh;overflow-wrap:anywhere}
+.horses__session:empty{min-height:0;margin:0}
 .horses__texte{margin:.25rem 0 0;overflow-wrap:anywhere}
 .horses__liste{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}
 .horses__cheval,.horses__action{min-height:var(--target-min);min-width:var(--target-min);padding:.625rem 1rem;border:2px solid var(--color-navy);border-radius:.75rem;background:var(--color-ivory);color:var(--color-navy);text-align:start;overflow-wrap:anywhere}
 .horses__cheval{display:block;width:100%}
 .horses__action{display:inline-block;margin-top:.75rem;font-weight:600}
-.horses__cheval:hover,.horses__action:hover{text-decoration:underline;text-underline-offset:.25em}
+.horses__action[aria-disabled='true']{border-style:dashed;cursor:not-allowed}
+.horses__cheval:hover,.horses__action:not([aria-disabled='true']):hover{text-decoration:underline;text-underline-offset:.25em}
 .horses__cheval[aria-current='true']{background:var(--color-navy);color:var(--color-ivory)}
 .horses__nom{display:block;font-weight:700}
 .horses__detail{display:block;font-size:.875rem}
@@ -466,6 +624,7 @@ const CSS = `
 .horses__champs dd{margin:0;overflow-wrap:anywhere}
 .horses__table{width:100%;border-collapse:collapse}
 .horses__table th,.horses__table td{padding:.375rem .5rem;border-bottom:1px solid var(--color-navy);text-align:start;vertical-align:top;overflow-wrap:break-word}
+.horses__table .horses__valeur{overflow-wrap:anywhere}
 .horses__table th{font-weight:600}
 .horses__restrictions{display:grid;gap:.75rem;margin:0;padding:0;list-style:none}
 .horses__badge{display:inline-block;margin-bottom:.25rem;padding:0 .625rem;border:1px solid var(--color-navy);border-radius:999px;font-size:.875rem;font-weight:700}
@@ -492,6 +651,8 @@ function messageDossier(textes: Textes, vue: VueDossier): string {
   switch (vue.etat) {
     case 'invite':
       return textes.invite;
+    case 'attente':
+      return '';
     case 'chargement':
       return textes.chargementDossier;
     case 'erreur':
@@ -509,6 +670,21 @@ function ouAbsent(textes: Textes, valeur: string | null, rendu?: (v: string) => 
   return rendu ? rendu(valeur) : valeur;
 }
 
+/** Nom accessible d'un cheval : « nom, statut · cour » — la virgule marque une pause. */
+export function libelleCheval(lang: Lang, cheval: ChevalResume): string {
+  const details = detailsCheval(lang, cheval);
+  return details.length > 0 ? `${cheval.nom}, ${details.join(' · ')}` : cheval.nom;
+}
+
+function detailsCheval(lang: Lang, cheval: ChevalResume): string[] {
+  const details: string[] = [];
+  if (cheval.statut !== null && cheval.statut !== '') {
+    details.push(libelleCode(lang, 'statut', cheval.statut));
+  }
+  if (cheval.cour !== null && cheval.cour !== '') details.push(cheval.cour);
+  return details;
+}
+
 function Dossier({ lang, dossier }: { lang: Lang; dossier: DossierCheval }) {
   const textes = TEXTES[lang];
   const { sejour, regime, mesures, restrictions } = dossier;
@@ -520,11 +696,11 @@ function Dossier({ lang, dossier }: { lang: Lang; dossier: DossierCheval }) {
         </h3>
         <dl className="horses__champs">
           <dt>{textes.sexe}</dt>
-          <dd>{ouAbsent(textes, dossier.sexe)}</dd>
+          <dd>{ouAbsent(textes, dossier.sexe, (v) => libelleCode(lang, 'sexe', v))}</dd>
           <dt>{textes.naissance}</dt>
           <dd>{ouAbsent(textes, dossier.dateNaissance, (v) => <Quand lang={lang} valeur={v} />)}</dd>
           <dt>{textes.statut}</dt>
-          <dd>{ouAbsent(textes, dossier.statut)}</dd>
+          <dd>{ouAbsent(textes, dossier.statut, (v) => libelleCode(lang, 'statut', v))}</dd>
           <dt>{textes.pere}</dt>
           <dd>{ouAbsent(textes, dossier.sire)}</dd>
           <dt>{textes.sejour}</dt>
@@ -569,10 +745,12 @@ function Dossier({ lang, dossier }: { lang: Lang; dossier: DossierCheval }) {
             <tbody>
               {mesures.map((m, i) => (
                 <tr key={`${m.date}|${m.nature}|${i}`}>
-                  <td>{m.nature}</td>
-                  <td>{m.valeur}</td>
+                  <td>{libelleCode(lang, 'nature', m.nature)}</td>
+                  {/* Seule la valeur (saisie libre) se coupe n'importe où : sa largeur
+                   * minimale tombe à un caractère, les mots des autres colonnes restent entiers. */}
+                  <td className="horses__valeur">{m.valeur}</td>
                   <td>
-                    <Quand lang={lang} valeur={m.date} />
+                    <Quand lang={lang} valeur={m.date} style="medium" />
                   </td>
                 </tr>
               ))}
@@ -629,9 +807,48 @@ export interface HorsesViewProps {
   onConnexion: () => void;
   /** Reçoit le titre du dossier (focalisable par script seulement). */
   titreDossierRef?: Ref<HTMLHeadingElement>;
+  /** Reçoit le titre de la liste (focalisable par script seulement). */
+  titreListeRef?: Ref<HTMLHeadingElement>;
+  /** Reçoit le premier cheval de la liste. */
+  premierRef?: Ref<HTMLButtonElement>;
+  /** Reçoivent « Réessayer » (liste, dossier) et « Choisir un profil ». */
+  reessayerListeRef?: Ref<HTMLButtonElement>;
+  reessayerDossierRef?: Ref<HTMLButtonElement>;
+  connexionRef?: Ref<HTMLButtonElement>;
 }
 
-/** Vue pure : props → rendu. */
+const SESSION_ID = 'horses-session';
+
+/** « Réessayer », inerte et libellé « Chargement… » pendant le rechargement qu'il a lancé. */
+function BoutonReessayer({
+  textes,
+  enCours,
+  onReessayer,
+  boutonRef,
+}: {
+  textes: Textes;
+  enCours: boolean;
+  onReessayer: () => void;
+  boutonRef?: Ref<HTMLButtonElement>;
+}) {
+  return (
+    <button
+      ref={boutonRef}
+      type="button"
+      className="horses__action"
+      aria-disabled={enCours ? true : undefined}
+      onClick={enCours ? undefined : onReessayer}
+    >
+      {enCours ? textes.chargementCourt : textes.reessayer}
+    </button>
+  );
+}
+
+/**
+ * Vue pure : props → rendu. La région `horses-session` est PERMANENTE, à la même
+ * place dans les deux mises en page : un 401 en cours d'écran y change le texte
+ * (annoncé), il n'y insère pas une région déjà remplie.
+ */
 export function HorsesView({
   lang,
   vue,
@@ -640,73 +857,130 @@ export function HorsesView({
   onReessayerDossier,
   onConnexion,
   titreDossierRef,
+  titreListeRef,
+  premierRef,
+  reessayerListeRef,
+  reessayerDossierRef,
+  connexionRef,
 }: HorsesViewProps) {
   const textes = TEXTES[lang];
-  const feuille = (
-    <style href="graffard-horses" precedence="default">
-      {CSS}
-    </style>
+  const nonConnecte = vue.etat === 'non_connecte';
+  const messageSession = nonConnecte
+    ? vue.sessionExpiree
+      ? textes.sessionExpiree
+      : textes.nonConnecte
+    : null;
+  return (
+    <div className="horses-ecran">
+      <style href="graffard-horses" precedence="default">
+        {CSS}
+      </style>
+      {nonConnecte && (
+        <h2 id="horses-connexion" className="horses__titre horses__connexion">
+          {textes.connexionTitre}
+        </h2>
+      )}
+      <p id={SESSION_ID} role="status" className="horses__statut horses__session">
+        {messageSession}
+      </p>
+      {vue.etat === 'non_connecte' ? (
+        <button
+          ref={connexionRef}
+          type="button"
+          className="horses__action"
+          aria-describedby={SESSION_ID}
+          onClick={onConnexion}
+        >
+          {textes.choisirProfil}
+        </button>
+      ) : (
+        <Grille
+          textes={textes}
+          lang={lang}
+          liste={vue.liste}
+          dossier={vue.dossier}
+          onChoisir={onChoisir}
+          onReessayerListe={onReessayerListe}
+          onReessayerDossier={onReessayerDossier}
+          titreDossierRef={titreDossierRef}
+          titreListeRef={titreListeRef}
+          premierRef={premierRef}
+          reessayerListeRef={reessayerListeRef}
+          reessayerDossierRef={reessayerDossierRef}
+        />
+      )}
+    </div>
   );
-  if (vue.etat === 'non_connecte') {
-    return (
-      <>
-        {feuille}
-        <section className="horses__seul" aria-labelledby="horses-connexion">
-          <h2 id="horses-connexion" className="horses__titre">
-            {textes.connexionTitre}
-          </h2>
-          <p id="horses-connexion-statut" role="status" className="horses__statut">
-            {vue.sessionExpiree ? textes.sessionExpiree : textes.nonConnecte}
-          </p>
-          <button
-            type="button"
-            className="horses__action"
-            aria-describedby="horses-connexion-statut"
-            onClick={onConnexion}
-          >
-            {textes.choisirProfil}
-          </button>
-        </section>
-      </>
-    );
-  }
-  const { liste, dossier } = vue;
+}
+
+function Grille({
+  textes,
+  lang,
+  liste,
+  dossier,
+  onChoisir,
+  onReessayerListe,
+  onReessayerDossier,
+  titreDossierRef,
+  titreListeRef,
+  premierRef,
+  reessayerListeRef,
+  reessayerDossierRef,
+}: {
+  textes: Textes;
+  lang: Lang;
+  liste: VueListe;
+  dossier: VueDossier;
+  onChoisir: (cheval: ChevalResume) => void;
+  onReessayerListe: () => void;
+  onReessayerDossier: () => void;
+  titreDossierRef?: Ref<HTMLHeadingElement>;
+  titreListeRef?: Ref<HTMLHeadingElement>;
+  premierRef?: Ref<HTMLButtonElement>;
+  reessayerListeRef?: Ref<HTMLButtonElement>;
+  reessayerDossierRef?: Ref<HTMLButtonElement>;
+}) {
   const titreDossier =
-    dossier.etat === 'invite'
+    dossier.etat === 'invite' || dossier.etat === 'attente'
       ? textes.dossier
       : dossier.etat === 'dossier'
         ? dossier.dossier.nom
         : dossier.nom;
+  const reessaiListe = liste.etat === 'chargement' && liste.reessai;
+  const reessaiDossier = dossier.etat === 'chargement' && dossier.reessai;
   return (
     <div className="horses">
-      {feuille}
       <section
-        className="horses__panneau"
+        className="horses__panneau horses__panneau--liste"
         aria-labelledby="horses-liste-titre"
         aria-busy={liste.etat === 'chargement'}
       >
-        <h2 id="horses-liste-titre" className="horses__titre">
+        <h2 id="horses-liste-titre" ref={titreListeRef} tabIndex={-1} className="horses__titre">
           {textes.listeTitre}
         </h2>
         <p role="status" className="horses__statut">
           {messageListe(textes, liste)}
         </p>
-        {(liste.etat === 'erreur' || liste.etat === 'vide') && (
-          <button type="button" className="horses__action" onClick={onReessayerListe}>
-            {textes.reessayer}
-          </button>
+        {/* Erreur seulement : une liste vide est une réponse, pas un échec à relancer. */}
+        {(liste.etat === 'erreur' || reessaiListe) && (
+          <BoutonReessayer
+            textes={textes}
+            enCours={reessaiListe}
+            onReessayer={onReessayerListe}
+            boutonRef={reessayerListeRef}
+          />
         )}
         {liste.etat === 'liste' && (
           <ul className="horses__liste">
-            {liste.chevaux.map((cheval) => {
-              const details = [cheval.statut, cheval.cour].filter(
-                (v): v is string => v !== null && v !== '',
-              );
+            {liste.chevaux.map((cheval, index) => {
+              const details = detailsCheval(lang, cheval);
               return (
                 <li key={cheval.id}>
                   <button
+                    ref={index === 0 ? premierRef : undefined}
                     type="button"
                     className="horses__cheval"
+                    aria-label={libelleCheval(lang, cheval)}
                     aria-current={cheval.id === liste.choisi ? 'true' : undefined}
                     aria-controls="horses-dossier"
                     data-cheval={cheval.id}
@@ -728,7 +1002,11 @@ export function HorsesView({
       </section>
       <section
         id="horses-dossier"
-        className="horses__panneau"
+        className={
+          dossier.etat === 'invite' || dossier.etat === 'attente'
+            ? 'horses__panneau'
+            : 'horses__panneau horses__panneau--choisi'
+        }
         aria-labelledby="horses-dossier-titre"
         aria-busy={dossier.etat === 'chargement'}
       >
@@ -738,10 +1016,13 @@ export function HorsesView({
         <p role="status" className="horses__statut">
           {messageDossier(textes, dossier)}
         </p>
-        {dossier.etat === 'erreur' && (
-          <button type="button" className="horses__action" onClick={onReessayerDossier}>
-            {textes.reessayer}
-          </button>
+        {(dossier.etat === 'erreur' || reessaiDossier) && (
+          <BoutonReessayer
+            textes={textes}
+            enCours={reessaiDossier}
+            onReessayer={onReessayerDossier}
+            boutonRef={reessayerDossierRef}
+          />
         )}
         {dossier.etat === 'dossier' && <Dossier lang={lang} dossier={dossier.dossier} />}
       </section>
@@ -753,8 +1034,13 @@ export function HorsesView({
 
 export interface HorsesProps {
   lang: Lang;
-  /** Compte connecté (tenu par App, rapporté par ProfilePicker) ; `null` : personne. */
+  /** Compte connecté (tenu par App) ; `null` : personne. */
   compte: Compte | null;
+  /**
+   * Session reprise en cours de relecture par App (`/api/moi`) : l'écran montre
+   * son chargement, jamais « Connexion requise » avant la réponse.
+   */
+  verification?: boolean;
   /** Ramène au sélecteur de profil. */
   onConnexion: () => void;
   /** La session a été refusée (401) : le jeton est déjà oublié. */
@@ -769,31 +1055,50 @@ export interface HorsesProps {
  * et useEffect (les tests déplient l'arbre hors de React, hooks remplacés).
  * Focus (INTERACTION) : l'ordre DOM met la liste juste après le h1 de l'écran,
  * que App focalise au changement d'entrée ; au choix d'un cheval, le focus passe
- * au titre du dossier, déjà monté — déplacé dans le gestionnaire, sans effet.
+ * au titre du dossier. Tous les déplacements (choix, réessai, 401) passent par
+ * une attente jouée dans un effet, après le rendu qui place la cible : voir
+ * `cibleFocusChevaux`.
  */
 export function Horses({
   lang,
   compte,
+  verification = false,
   onConnexion,
   onSessionPerdue,
   client = api,
   fetcher = fetchNavigateur,
   delaiMs = DELAI_REQUETE_MS,
 }: HorsesProps) {
-  const [liste, setListe] = useState<EtatListe>({ statut: 'chargement' });
+  const [liste, setListe] = useState<EtatListe>({ statut: 'chargement', reessai: false });
   const [choix, setChoix] = useState<Choix | null>(null);
   const [dossier, setDossier] = useState<EtatDossier | null>(null);
   const [tentativeListe, setTentativeListe] = useState(0);
   const [tentativeDossier, setTentativeDossier] = useState(0);
   const [sessionExpiree, setSessionExpiree] = useState(false);
+  const [attente, setAttente] = useState<AttenteFocus | null>(null);
   const [titreDossier, setTitreDossier] = useState<HTMLHeadingElement | null>(null);
+  const [titreListe, setTitreListe] = useState<HTMLHeadingElement | null>(null);
+  const [premier, setPremier] = useState<HTMLButtonElement | null>(null);
+  const [reessayerListeEl, setReessayerListeEl] = useState<HTMLButtonElement | null>(null);
+  const [reessayerDossierEl, setReessayerDossierEl] = useState<HTMLButtonElement | null>(null);
+  const [connexionEl, setConnexionEl] = useState<HTMLButtonElement | null>(null);
 
-  const connecte = compte !== null && client.jeton() !== null;
+  const connecte = !verification && compte !== null && client.jeton() !== null;
   const choixId = choix?.id ?? null;
 
-  function sessionPerdue(): void {
+  /**
+   * 401 : seul le jeton ENVOYÉ est refusé. S'il est encore celui du client, la
+   * session est vidée ; sinon une session plus récente a été ouverte entre-temps,
+   * et la requête est relancée avec elle.
+   */
+  function refus(jetonEnvoye: string, relancer: () => void): void {
+    if (client.jeton() !== jetonEnvoye) {
+      relancer();
+      return;
+    }
     client.deconnecter();
     setSessionExpiree(true);
+    setAttente('session');
     onSessionPerdue?.();
   }
 
@@ -806,13 +1111,13 @@ export function Horses({
     void lireApi(fetcher, '/api/chevaux', jeton, controle.signal, lireChevaux, delaiMs).then((r) => {
       if (controle.signal.aborted) return;
       if (r.ok) setListe({ statut: 'pret', chevaux: r.valeur });
-      else if (r.erreur === 'non_autorise') sessionPerdue();
+      else if (r.erreur === 'non_autorise') refus(jeton, () => setTentativeListe((n) => n + 1));
       else setListe({ statut: 'erreur', cause: cause(r.erreur) });
     });
     return () => controle.abort();
-    // `sessionPerdue` n'est pas une dépendance : nouvelle à chaque rendu, elle
-    // relancerait la requête à chaque rendu. Elle lit le `onSessionPerdue` du
-    // rendu qui a lancé la requête.
+    // `refus` n'est pas une dépendance : nouvelle à chaque rendu, elle relancerait
+    // la requête à chaque rendu. Elle lit le `onSessionPerdue` du rendu qui a
+    // lancé la requête.
   }, [connecte, client, fetcher, delaiMs, tentativeListe]);
 
   useEffect(() => {
@@ -825,32 +1130,78 @@ export function Horses({
     void lireApi(fetcher, chemin, jeton, controle.signal, lireDossier, delaiMs).then((r) => {
       if (controle.signal.aborted) return;
       if (r.ok) setDossier({ id, statut: 'pret', dossier: r.valeur });
-      else if (r.erreur === 'non_autorise') sessionPerdue();
+      else if (r.erreur === 'non_autorise') refus(jeton, () => setTentativeDossier((n) => n + 1));
       else if (r.erreur === 'introuvable') setDossier({ id, statut: 'introuvable' });
       else setDossier({ id, statut: 'erreur', cause: cause(r.erreur) });
     });
     return () => controle.abort();
   }, [connecte, client, fetcher, delaiMs, choixId, tentativeDossier]);
 
-  const vue = vueChevaux({ connecte, sessionExpiree, liste, choix, dossier });
+  const vue = vueChevaux({ verification, connecte, sessionExpiree, liste, choix, dossier });
+
+  const focusAttendu = attente === null ? null : cibleFocusChevaux(attente, vue);
+  const cible = focusAttendu?.cible ?? null;
+  const garder = focusAttendu?.garder ?? false;
+
+  // Focus attendu : déplacé seulement s'il est libre, sinon l'attente est abandonnée.
+  useEffect(() => {
+    if (attente === null) return;
+    if (cible !== null) {
+      const elements = {
+        premier,
+        'titre-liste': titreListe,
+        'titre-dossier': titreDossier,
+        connexion: connexionEl,
+      };
+      const element = elements[cible];
+      if (element === null) return; // ref pas encore attachée : le rendu suivant la porte
+      const doc = typeof document === 'undefined' ? undefined : document;
+      const pose =
+        attente === 'reessai-liste'
+          ? reessayerListeEl
+          : attente === 'reessai-dossier'
+            ? reessayerDossierEl
+            : null;
+      // `choix` suit un clic du même tour : le focus est sur le cheval choisi, il est attendu.
+      if (attente !== 'choix' && !focusLibre(doc?.activeElement, [doc?.body, pose])) {
+        setAttente(null);
+        return;
+      }
+      if (cible === 'titre-dossier') focaliserDossier(element);
+      else element.focus();
+    }
+    if (!garder) setAttente(null);
+  }, [
+    attente,
+    cible,
+    garder,
+    premier,
+    titreListe,
+    titreDossier,
+    connexionEl,
+    reessayerListeEl,
+    reessayerDossierEl,
+  ]);
 
   function choisir(cheval: ChevalResume): void {
     if (choix?.id !== cheval.id) {
       setChoix({ id: cheval.id, nom: cheval.nom });
-      setDossier({ id: cheval.id, statut: 'chargement' });
+      setDossier({ id: cheval.id, statut: 'chargement', reessai: false });
     }
-    titreDossier?.focus();
+    setAttente('choix');
   }
 
   function reessayerListe(): void {
-    setListe({ statut: 'chargement' });
+    setListe({ statut: 'chargement', reessai: true });
     setTentativeListe((n) => n + 1);
+    setAttente('reessai-liste');
   }
 
   function reessayerDossier(): void {
     if (choix === null) return;
-    setDossier({ id: choix.id, statut: 'chargement' });
+    setDossier({ id: choix.id, statut: 'chargement', reessai: true });
     setTentativeDossier((n) => n + 1);
+    setAttente('reessai-dossier');
   }
 
   return (
@@ -862,6 +1213,11 @@ export function Horses({
       onReessayerDossier={reessayerDossier}
       onConnexion={onConnexion}
       titreDossierRef={setTitreDossier}
+      titreListeRef={setTitreListe}
+      premierRef={setPremier}
+      reessayerListeRef={setReessayerListeEl}
+      reessayerDossierRef={setReessayerDossierEl}
+      connexionRef={setConnexionEl}
     />
   );
 }
