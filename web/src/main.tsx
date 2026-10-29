@@ -13,3 +13,16 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+// Service worker enregistré ici (injectRegister: null dans vite.config.ts) pour
+// en attraper le refus : contexte non sécurisé, navigation privée, politique.
+// L'application reste utilisable en ligne sans lui.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
+      .catch((error: unknown) => {
+        console.warn('Service worker non enregistré : mode hors ligne indisponible.', error);
+      });
+  });
+}

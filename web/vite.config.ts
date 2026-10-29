@@ -7,6 +7,12 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
+      // L'enregistrement est fait par src/main.tsx, qui en attrape le refus.
+      injectRegister: null,
+      workbox: {
+        // Une navigation vers l'API n'est jamais servie par l'index mis en cache.
+        navigateFallbackDenylist: [/^\/api/],
+      },
       manifest: {
         name: 'Graffard Racing',
         short_name: 'Graffard',

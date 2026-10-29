@@ -2,12 +2,13 @@
  * Palette Graffard — contrastes WCAG mesurés (annexe M5) :
  *   ivoire / bleu nuit 12,66:1 · or / bleu nuit 5,37:1 · gris / ivoire 5,34:1
  *   or / ivoire 2,36:1 : l'or n'est JAMAIS du texte ni un focus sur fond ivoire.
+ * Le gris (#56666d) est réservé au texte secondaire : la coque n'en porte pas,
+ * il sera déclaré avec le premier écran qui l'emploie.
  */
 :root {
   --color-navy: #142e3b;
   --color-ivory: #f5f2eb;
   --color-gold: #b89c63;
-  --color-grey: #56666d;
 
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
@@ -17,6 +18,14 @@
   --indicator: 3px;
   --ring-inner: 2px; /* ivoire */
   --ring-outer: 3px; /* bleu nuit */
+  --lang-inset: 0.5rem; /* écart de la pastille FR/EN au bord, mobile */
+  --lang-pad: 0.25rem;
+  --add-gap: 1rem; /* écart de « + Ajouter » au-dessus de la barre basse */
+  --scroll-slack: 0.5rem; /* marge entre un élément focalisé et une couche fixe */
+  /* Barre de défilement « classique » de la liste quand elle déborde : épaisseur
+   * en px, indépendante du texte (mesuré 10 px sous Chromium/Windows en mode thin,
+   * 17 px au plus pour une barre pleine). */
+  --scrollbar-allowance: 17px;
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -33,6 +42,19 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* WCAG 2.4.11 : un élément qui reçoit le focus défile hors des couches fixes.
+ * Mobile : pastille FR/EN en haut, barre basse + « + Ajouter » en bas. */
+html {
+  scroll-padding-top: calc(
+    var(--safe-top) + var(--lang-inset) + var(--target-min) + 2 * var(--lang-pad) +
+      var(--scroll-slack)
+  );
+  scroll-padding-bottom: calc(
+    var(--safe-bottom) + var(--bar-rim) + var(--bar-h) + var(--add-gap) + var(--target-min) +
+      var(--scroll-slack)
+  );
 }
 
 body {
@@ -72,17 +94,26 @@ button:focus-visible {
 }
 
 /* Colonnes à la mesure du libellé : l'espace libre se répartit en marges égales,
- * pour que l'anneau intérieur ne morde pas un libellé long (« Aujourd’hui »). */
+ * pour que l'anneau intérieur ne morde pas un libellé long (« Aujourd’hui »).
+ * Quand les six libellés ne tiennent plus (texte à 200 %, écran sous 289 px),
+ * la liste défile horizontalement : aucune entrée ne sort de portée, et le
+ * focus clavier fait défiler l'entrée focalisée dans la vue. Pas de
+ * scroll-snap : mesuré à 200 %, l'accroche ramenait la liste en arrière et
+ * laissait l'entrée focalisée à moitié hors de l'écran. */
 .nav__list {
   display: flex;
   margin: 0;
   padding: 0;
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ivory) var(--color-navy);
 }
 
 .nav__list > li {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
 }
 
 .nav__item {
@@ -124,11 +155,11 @@ button:focus-visible {
 /* Bascule de langue : pastille bleu nuit fixée en haut à droite sur mobile. */
 .lang {
   position: fixed;
-  top: calc(var(--safe-top) + 0.5rem);
-  right: calc(var(--safe-right) + 0.5rem);
+  top: calc(var(--safe-top) + var(--lang-inset));
+  right: calc(var(--safe-right) + var(--lang-inset));
   display: flex;
   gap: 0.25rem;
-  padding: 0.25rem;
+  padding: var(--lang-pad);
   border-radius: 0.75rem;
   background: var(--color-navy);
 }
@@ -162,11 +193,21 @@ button:focus-visible {
   color: var(--color-navy);
 }
 
+/* Sur le bouton pressé (fond or), l'anneau intérieur passe au bleu nuit
+ * (5,37:1 contre l'or) et l'ivoire part à l'extérieur, contre le bleu nuit de
+ * la pastille (12,66:1) : l'ivoire ne touche jamais l'or (2,36:1). Total 4 px,
+ * soit la marge intérieure de la pastille : l'ivoire ne déborde pas sur la page. */
+.lang__item[aria-pressed='true']:focus-visible {
+  box-shadow:
+    0 0 0 var(--ring-inner) var(--color-navy),
+    0 0 0 calc(2 * var(--ring-inner)) var(--color-ivory);
+}
+
 /* « + Ajouter » : frère de <nav>, fixe, au-dessus de la barre. */
 .add {
   position: fixed;
   right: calc(var(--safe-right) + 1rem);
-  bottom: calc(var(--safe-bottom) + var(--bar-rim) + var(--bar-h) + 1rem);
+  bottom: calc(var(--safe-bottom) + var(--bar-rim) + var(--bar-h) + var(--add-gap));
   z-index: var(--z-add);
   min-height: var(--target-min);
   min-width: var(--target-min);
@@ -203,17 +244,36 @@ button:focus-visible {
 /* ---------- Dès 768 px : barre haute ---------- */
 
 @media (min-width: 768px) {
+  /* Barre haute + « + Ajouter » en bas à droite. */
+  html {
+    scroll-padding-top: calc(
+      var(--safe-top) + var(--bar-h) + var(--bar-rim) + var(--scrollbar-allowance) +
+        var(--scroll-slack)
+    );
+    scroll-padding-bottom: calc(
+      var(--safe-bottom) + 1.5rem + var(--target-min) + var(--scroll-slack)
+    );
+  }
+
   .nav {
     inset: 0 0 auto 0;
     display: flex;
     align-items: center;
+    gap: 1rem;
     padding: var(--safe-top) calc(var(--safe-right) + 1.5rem) var(--bar-rim)
       calc(var(--safe-left) + 1.5rem);
   }
 
+  /* La liste rétrécit et défile avant que la bascule de langue ne sorte de
+   * l'écran : des libellés plus longs dégradent la barre, jamais sa portée. */
   .nav__list {
-    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
     gap: 0.25rem;
+  }
+
+  .nav__list > li {
+    flex: 0 0 auto;
   }
 
   .nav__item {
@@ -229,6 +289,7 @@ button:focus-visible {
 
   .lang {
     position: static;
+    flex: none;
     margin-left: auto;
     padding: 0;
   }
