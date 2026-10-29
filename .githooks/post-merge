@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+# post-merge — signale, SANS RIEN BLOQUER, une fusion qui a touché un chemin
+# `merge=cadre-enregistrement` alors que le pilote de fusion par champ de ce
+# clone n'est pas installé (ou plus valide). T-01M5F354YPRRFCRYBG03VHGTH1, lot C
+# de T-01M5DBEZMXN95Y31363NXXJ30F.
+#
+# POURQUOI. Sans `--installer`, git garde sa fusion texte EN SILENCE sur ces
+# chemins (`.gitattributes`, bloc T-01M4JN4ZSWAX5MGSGQNPPYZG68) : sur un poste
+# neuf, une fusion de board peut donc passer sans que personne le sache. Ce hook
+# rend ce silence VISIBLE : une alerte sur stderr, rien d'autre.
+#
+# CE QU'IL FAIT, ET SEULEMENT ÇA :
+#   1. actif seulement si `core.hooksPath` (relatif ou absolu) et
+#      `<toplevel>/.githooks` désignent le MÊME dossier, comparés par
+#      `cd -P … && pwd -P` des deux côtés (mesuré : /var contre /private/var
+#      sous macOS) ; sinon silence — worktree d'un autre arbre compris ;
+#   2. chemins fusionnés : argument 0 → `git diff -z --name-only ORIG_HEAD HEAD`,
+#      argument 1 (`--squash`) → `git diff -z --cached --name-only HEAD`,
+#      argument `commit` (délégation de `post-commit`, commit à deux parents) →
+#      `git diff -z --name-only HEAD^1 HEAD` ;
+#   3. filtre `git check-attr -z --stdin merge` = cadre-enregistrement ; rien de
+#      couvert → silence ;
+#   4. lit `merge.cadre-enregistrement.driver` (config LOCALE) et le DÉCOUPE sans
+#      eval, sans sh -c, sans source : `[[ =~ ]]` sur la forme canonique de
+#      `commande_driver` (fusion_enregistrement.py) — jeton nu ou `'…'` sans
+#      apostrophe —, `%%`→`%`, `\`→`/` par `tr` ; interpréteur absolu
+#      (`/…` ou `X:/…`) exécutable ; copie dont le dossier (`pwd -P`) est celui de
+#      `<git-common-dir>/cadre` ; sinon alerte « forme inconnue » SANS RIEN
+#      EXÉCUTER ;
+#   5. appelle `verifier(racine)` de la COPIE (importlib, `-I -B`), jamais son
+#      `--verifier` : lancé sans racine, la copie chercherait l'arbre depuis son
+#      propre dossier `<git-common-dir>/cadre/`, qui n'en est pas un.
+# rc ≠ 0 → UNE alerte sur stderr. Le hook rend TOUJOURS 0 et n'écrit rien.
+# Décision pilote S-01M5EJ09QHTH9NB1CETDKFZJM4 (découpe, vérification) ;
+# arbitrage orchestrateur S-01M5EKGMX47F9D4QDGBR15G6QH (mandat autonomie) pour
+# la couverture du conflit conclu à la main par `post-commit`.
+#
+# BORNES, écrites pour ne pas être lues comme une couverture :
+#   * toute fusion qui ne finit ni par git merge/git pull ni par un commit à deux
+#     parents : non signalée — rebase sans -r, cherry-pick, revert (mesuré,
+#     ::revert), stash apply/pop, am -3, checkout -m ;
+#   * rebase -r : fusion recréée sans conflit NON signalée à l'écran (post-commit
+#     tourne, mais git n'affiche pas l'alerte du hook) ; recréée après conflit
+#     puis `git rebase --continue` : signalée (mesuré git 2.55, ::rebase_r) ;
+#   * amend d'une fusion : re-signalé (une alerte en plus, ::amend_fusion) ;
+#   * sans `core.hooksPath` → `.githooks`, aucune alerte de fusion : le setup
+#     propose cette activation après contrôle des hooks existants, avec Non par
+#     défaut. S'il détecte des hooks actifs, il refuse l'activation directe :
+#     intégrer les hooks existants dans `.githooks/` (chaîner les noms communs)
+#     ou intégrer ceux du kit dans le répertoire actif (chaîner les deux
+#     `pre-push` si ce nom existe déjà). Sinon git ne lance pas ce hook, ou le
+#     lance depuis un autre dossier ;
+#   * worktree dont `core.hooksPath` vise l'arbre principal : silence ;
+#   * Windows (Git for Windows, chemins `C:\`) : NON MESURÉ — la normalisation
+#     n'est témoignée que sous POSIX (`.githooks/post-merge.test.sh`) ;
+#   * la confiance : ce hook est celui de l'arbre fusionné, comme commit-msg ;
+#     seuls l'interpréteur et la copie sont « figés » ;
+#   * l'affichage : les octets de contrôle C0 (0x00-0x1f) et DEL (0x7f) sont
+#     retirés de chaque texte de l'alerte (::nom_echappement, ::alerte_controle) ;
+#     les octets 0x80-0x9f (C1) ne le sont PAS — un terminal qui les lit comme
+#     des contrôles 8 bits peut encore les interpréter.
+# Témoin : `.githooks/post-merge.test.sh`.
+
+set -u
+# Un CDPATH exporté ferait imprimer son chemin à `cd` (deux lignes dans `_hp_reel`,
+# hook muet) : ::cdpath_exporte.
+unset CDPATH
+
+_MODE="${1:-0}"
+_PILOTE='cadre-enregistrement'
+_CLE="merge.$_PILOTE.driver"
+_REMEDE='python3 .agents/bin/fusion_enregistrement.py --installer (hors de la branche par défaut : --depuis <ref relue> ; geste du pilote, depuis un terminal), puis relire ces chemins'
+
+_top=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -n "$_top" ] || exit 0
+
+# --- 1. actif seulement si core.hooksPath désigne <toplevel>/.githooks
+_hp=$(git config --type=path --get core.hooksPath 2>/dev/null) || exit 0
+[ -n "$_hp" ] || exit 0
+_hp_reel=$(cd "$_top" 2>/dev/null && cd -P -- "$_hp" 2>/dev/null && pwd -P) || exit 0
+_ici=$(cd -P -- "$_top/.githooks" 2>/dev/null && pwd -P) || exit 0
+[ -n "$_hp_reel" ] && [ "$_hp_reel" = "$_ici" ] || exit 0
+
+# --- 2. les chemins fusionnés
+case "$_MODE" in
+  0) _diff=(git diff -z --name-only ORIG_HEAD HEAD) ;;
+  1) _diff=(git diff -z --cached --name-only HEAD) ;;
+  commit) _diff=(git diff -z --name-only 'HEAD^1' HEAD) ;;
+  *) exit 0 ;;
+esac
+
+# --- 3. le filtre d'attribut
+_n=0
+_exemple=''
+while IFS= read -r -d '' _chemin && IFS= read -r -d '' _attr && IFS= read -r -d '' _valeur; do
+  if [ "$_valeur" = "$_PILOTE" ]; then
+    _n=$((_n + 1))
+    [ -n "$_exemple" ] || _exemple="$_chemin"
+  fi
+done < <("${_diff[@]}" 2>/dev/null | git check-attr -z --stdin merge 2>/dev/null)
+[ "$_n" -gt 0 ] || exit 0
+# Le nom vient de l'arbre fusionné : ses octets de contrôle (séquences d'échappement
+# du terminal) ne s'affichent jamais (::nom_echappement).
+_exemple=$(printf '%s' "$_exemple" | LC_ALL=C tr -d '\000-\037\177')
+
+# Le motif vient de la config ou de la copie ($_py, $_copie, $_sortie) : même filtre,
+# un seul, ici (::alerte_controle).
+alerte() {
+  local _m
+  _m=$(printf '%s' "$1" | LC_ALL=C tr -d '\000-\037\177')
+  printf 'cadre : ALERTE pilote de fusion — %s chemin(s) merge=%s fusionné(s) (ex. %s) sans pilote valide : %s — remède : %s\n' \
+    "$_n" "$_PILOTE" "$_exemple" "$_m" "$_REMEDE" >&2
+  exit 0
+}
+
+# --- 4. la découpe de la valeur `driver`, sans rien exécuter
+_val=$(git config --local --get "$_CLE" 2>/dev/null)
+[ -n "$_val" ] || alerte "absent (aucune clé $_CLE en config locale)"
+
+_q="'"
+_jeton="($_q[^$_q]*$_q|[A-Za-z0-9_@%+=:,./-]+)"
+_motif="^$_jeton -I -B $_jeton (.*)\$"
+_queue='%O %A %B %L %S %X %Y; rc=$?; if [ $rc -eq 0 ]; then exit 0; fi; if [ $rc -eq 3 ]; then exit 1; fi; git merge-file --diff-algorithm=histogram --marker-size=%L -L %X -L %S -L %Y %A %O %B'
+_forme='forme inconnue (la valeur n est pas la commande canonique de ce pilote ; rien n a été exécuté)'
+if [[ "$_val" =~ $_motif ]]; then
+  _py_brut="${BASH_REMATCH[1]}"
+  _copie_brut="${BASH_REMATCH[2]}"
+  _reste="${BASH_REMATCH[3]}"
+else
+  alerte "$_forme"
+fi
+[ "$_reste" = "$_queue" ] || alerte "$_forme"
+
+normaliser() {
+  local _v="$1"
+  _v="${_v#$_q}"
+  _v="${_v%$_q}"
+  printf '%s' "$_v" | sed 's/%%/%/g' | tr '\\' '/'
+}
+_py=$(normaliser "$_py_brut")
+_copie=$(normaliser "$_copie_brut")
+
+case "$_py" in
+  /*) ;;
+  [A-Za-z]:/*) ;;
+  *) alerte "$_forme" ;;
+esac
+[ -f "$_py" ] && [ -x "$_py" ] || alerte "interpréteur figé absent ou non exécutable : $_py"
+
+# Existence AVANT le dossier : `.git/cadre` supprimé dit « copie absente », comme
+# `--verifier` (::copie_absente) ; un lien symbolique n'est jamais suivi (::copie_symlien).
+[ ! -L "$_copie" ] && [ -f "$_copie" ] || alerte "copie absente (ou lien symbolique, jamais suivi : supprimer le lien d'abord, puis le remède) : $_copie"
+_commun=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+_cadre=$(cd -P -- "$_commun/cadre" 2>/dev/null && pwd -P)
+_dossier=$(cd -P -- "$(dirname -- "$_copie")" 2>/dev/null && pwd -P)
+[ -n "$_cadre" ] && [ "$_cadre" = "$_dossier" ] || alerte "$_forme"
+
+# --- 5. verifier(racine) de la COPIE
+_charge='import importlib.util, sys
+spec = importlib.util.spec_from_file_location("cadre_fusion_copie", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+sys.exit(module.verifier(sys.argv[2]))'
+_sortie=$("$_py" -I -B -c "$_charge" "$_copie" "$_top" 2>&1)
+_rc=$?
+if [ "$_rc" -ne 0 ]; then
+  alerte "$(printf '%s' "$_sortie" | tr '\n' ' ') (rc=$_rc)"
+fi
+exit 0

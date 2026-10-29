@@ -1,0 +1,53 @@
+# CHAÎNE DE PLAN — ARMÉE PAR DÉFAUT chez l'adoptant : sa seule PRÉSENCE l'arme.
+# Ce que la présence arme : `tasks.py start` refuse de démarrer une tâche sans
+# UN critique de plan (`plan-critic`) et UN plan (`planner`) tracés par l'hôte ;
+# `planner-sonnet` et `plan-critic-sonnet-max` sont HORS CHAÎNE (traces encore
+# acceptées). Une trace de plus de 24 h
+# ne couvre plus un démarrage, et un démarrage CONSOMME les traces.
+# La disponibilité de `plan-critic` (model: claude-opus-5-5) chez l'adoptant est SUPPOSÉE.
+# Sortie tracée : `tasks.py start <id> --sans-chaine "<pourquoi>"` ; la raison
+# reste VISIBLE au board. Quand l'utiliser : coquille, renommage, ticket caduc,
+# `plan-critic` indisponible (quota ; motif `plan-critic indisponible — COVERAGE
+# DEGRADED, verdict absent`) —
+# ou un hôte qui n'écrit pas la trace, motif `hôte sans trace : <hôte>`.
+# Voie DIRECTE (décision du pilote du kit) : une tâche estampillée par
+# `tasks.py direct <id>` démarre SANS chaîne de plan ni porte humaine. Le verbe
+# VÉRIFIE, par code : un write-set DÉCLARÉ de quelques chemins exacts (borne :
+# constante `MAX_FICHIERS_DIRECT` de `.agents/bin/tasks_direct.py`) ; aucun chemin
+# de garde (liste fermée du même fichier) ; ni décision ouverte ni motif
+# `decision-pilote` ; aucune sécurité ouverte (motif, titre, dernier verdict de
+# sécurité de la tâche) ; SPECS lisible. `start` et `done` le rejouent là où
+# l'estampille franchit une garde armée. Une tâche directe ne consomme JAMAIS une
+# trace de chaîne. La marque `[DIRECT SANS PLAN : …]` reste VISIBLE au board.
+# Non vu par le code : ce que ni le titre ni le stage n'écrivent ; un commit
+# posé hors de la branche relevée. Sortie : `done --sans-cible` → `[SANS RELEVÉ : …]`.
+# Son `done` exige le relevé `tasks.py retour` de sa branche fusionnée et un
+# verdict de sécurité tracé après lui, ni bloquant ni absent.
+# Désarmer = retirer ce fichier, geste du pilote du projet.
+#
+# PLAFOND DU CRITIQUE DE PLAN : la ligne `plafond-critique=N` ci-dessous fixe le
+# nombre d'itérations de `plan-critic` avant l'escalade au pilote. Au plafond, sur
+# un NO_GO, le pilote tranche ; l'option « continuer une itération de plus » lui
+# est reproposée à chaque NO_GO suivant. Ce fichier absent, sans la ligne, ou
+# ligne illisible : plafond 2 ; 8 dans le kit seul. Un adoptant qui désarme la
+# chaîne reste donc à 2, et ne relève qu'en réarmant. Relever : éditer N À LA
+# MAIN dans ce marqueur, geste explicite du pilote du projet ; une resynchro du
+# template remet la graine. Lecture : `bash .agents/pyrun.sh .agents/bin/plan_plafond.py`.
+#
+# Statut par hôte et par garde, relevé 2026-10-02, CORRIGÉ le 2026-10-12 pour Codex et Copilot (table complète et datée :
+# README-OTHER-HOSTS.md, section couverture par hôte) — trace de la chaîne :
+#   MESURÉ : Claude Code (script et traces écrites par l'hôte).
+#   CÂBLÉ : Codex (`SubagentStop` et `agent_type` MESURÉS, X4), GitHub Copilot (`subagentStop`).
+#   NON CÂBLÉ : Kimi Code, Gemini CLI, Antigravity — sur ces
+#   hôtes, CHAQUE `start` passe par `--sans-chaine`, c'est certain.
+#   SUPPOSÉ : l'émission réelle de `plan_trace.py` sur Copilot, non rejouée.
+#
+# Protection : ce fichier (graine dans le dépôt du kit, marqueur chez
+# l'adoptant) est protégé PAR SON NOM — Edit/Write et redirection shell sont
+# refusés ; `cp`, `sed -i`, `tee`, `python3 -c` NE le sont PAS. Couverture
+# partielle, comme les autres marqueurs : la protection empêche l'OUBLI, pas la
+# triche (mesuré sur 3 familles de hooks par charges synthétiques ; câblé sur
+# Kimi Code, GitHub Copilot, Antigravity ; émission hôte NON mesurée).
+# Canaux actuels : copie de la branche template ou d'un checkout du kit ;
+# `cadre init` (nom réservé) ne sème rien.
+plafond-critique=2

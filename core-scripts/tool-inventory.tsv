@@ -1,0 +1,136 @@
+# core-scripts/tool-inventory.tsv — L'INVENTAIRE UNIQUE des outils externes du kit (T-00000999, BK-342).
+# Relevé à BASE 40e05c70 (2026-10-06). Ce fichier dit ce qui EST : chaque version, chaque canal
+# d'installation et chaque site de SKIP a été relu dans le dépôt à cette BASE — rien n'y est une intention.
+#
+# FORMAT. Lignes `#` = en-tête ; puis UNE ligne de noms de colonnes ; puis une ligne par entrée.
+#   Séparateur : TABULATION. AUCUNE cellule vide : `-` = sans objet. Lire par `awk -F'\t'`, jamais par
+#   `IFS=$'\t' read`, qui fusionne deux tabulations et décale les colonnes (plan T-00000529, R7).
+#   Colonnes résolues par NOM : en ajouter une ne casse pas un lecteur.
+# COLONNES.
+#   tool        jeton sondé ; `a|b` = alternatives (une suffit) ; `@nom` = une CONDITION (nature=condition)
+#   nature      outil | condition (plateforme ou environnement, jamais sondée par `type -P`, la sonde de core-scripts/doctor.sh)
+#   os          any, ou liste de darwin,linux,windows — là où l'entrée est attendue
+#   class       B = absence => porte NUE du kit ROUGE ; A = absence => SKIP ou COVERAGE DEGRADED, porte verte ;
+#               class vaut en mode KIT — en mode adoptant la porte est porte_adoptant.py, et `cost` le dit
+#   version     contrainte ÉCRITE dans le dépôt (seuil d'une suite ou du paquet) ; `-` = aucune
+#   version_src `<fichier>:<ancre>` où la contrainte est écrite — coupe au PREMIER `:`, ancre lue par grep -F
+#   ci_pin      `<version>@<canal>(<job>)` épinglé par .github/workflows/ci.yml ou
+#               .agents/security/gardes-ci-requirements.txt, `;` entre deux pins ; `-` = non épinglé
+#   apt brew windows   canal d'installation EXÉCUTÉ par le dépôt (ci.yml, jambe docker de verify.sh :
+#               `$CI_APT $RUNNER_PREINSTALLED`) ; `-` = aucun. Un nom de paquet documenté mais jamais
+#               installé par le dépôt n'est PAS écrit ici.
+#   cost        ce que l'absence coûte, sur UNE ligne, jamais en tête `SKIP`
+#   probe       `-`, ou `<fichier>:<ancre>` quand la seule sonde passe par une variable (plan T-00000529, T1)
+#   skips       sites de SKIP rattachés : `<suite>:<l>,<l>;<suite>:<l>` — INDICES DATÉS à BASE, à
+#               relocaliser par le texte du SKIP. Un site à condition disjonctive (« A ou B ») figure sur
+#               les DEUX lignes.
+#   mode_sonde  comment core-scripts/doctor.sh sonde la ligne : `-` = recherche par nom dans le PATH
+#               (`type -P`, puis `[ -x ]`) ; `module:<interpréteur>[|<alternative>]` = l'outil est un
+#               MODULE lancé par son interpréteur, sondé par `<interpréteur> -m <outil> --version` (rc 0)
+#               sur le PREMIER interpréteur trouvé qui répond à --version — un binaire du même nom dans le PATH ne compte pas.
+#
+# SKIP — DÉFINITION ET PÉRIMÈTRE (relevé STATIQUE de chaque site, pas une exécution).
+#   Définition = celle du runner : une ligne de sortie `^[[:space:]]*SKIP` ou `^[[:space:]]*ok:.*\[SKIP`
+#   (core-scripts/run-bash-tests.sh, relevé K2), plus les directives `# optional:` (« optional absent »),
+#   plus `=== linux replay SKIPPED` de core-scripts/verify.sh.
+#   Relevé : 127 sites dans 33 des 51 suites `*.test.sh`, dont 3 DÉFINITIONS de helper `skip()`
+#   (session-reindex-exec.test.sh:64, sca-socket-timeout.test.sh:104, sca-watch.test.sh:64), rattachées
+#   par leurs appels. Rattachés ci-dessous : 124 sites + 3 directives `# optional:` + verify.sh:930
+#   (le SKIP de l'étape « linux replay », relocalisé par ce nom le 2026-10-14 ; 827 à BASE).
+#   EXCLUS ET COMPTÉS : 4 charges de fixture écrites dans un fichier pour un runner imbriqué
+#   (run-bash-tests-parallel.test.sh:49, run-bash-tests.test.sh:332,354,377).
+#   Les « 20 SKIP » du ticket d'origine comptaient des SUITES annonçant un SKIP pendant UNE porte, sur UN
+#   poste : une autre unité que celle-ci (un site, toutes conditions confondues).
+#   Jambe pytest : la porte n'imprime qu'un COMPTE `skipped` (run-pytest-shards.sh), aucune ligne SKIP —
+#   rattachement test par test HORS PÉRIMÈTRE. Borne : ses skips conditionnés par un outil sondent bash
+#   (25 `shutil.which`), git (24), zsh, gitleaks, uv, pwsh|powershell, swift, semgrep, npm, node, gh,
+#   ctags — tous inventoriés ci-dessous.
+# INTERNES — jetons sondés mais NON inventoriés : utilitaires de base et binaires de fixture ou de banc (liste FERMÉE, raison par jeton) :
+#   basename (allows-missing, ci-last-run.test.sh) · sed head cut (context-retro.sh, vérifiés avant usage) ·
+#   sha256sum|shasum (context-retro.sh, alternatives) · rm (allows-missing, semgrep-scan.test.sh) · mkdir (vrai binaire derrière le stub de sca-scan-lock.test.sh) ·
+#   tar (repli de gitleaks-scan.sh) · iconv (sca-watch.sh) · uname (détection de plateforme) ·
+#   getconf|nproc|sysctl (compte de cœurs, alternatives) · locale (shellcheck-scan.sh) ·
+#   cat (context-retro.test.sh, PATH réduit à ce seul binaire) · no-such-tool-t427 (fixture, run-bash-tests.test.sh) ·
+#   date (vrai binaire derrière le stub ralenti de sca-scan-lock.test.sh, arm f5) ·
+#   cadre (test_cadre_uv_tool_install.py, binaire que le banc installe lui-même dans une racine jetable).
+# INSTALLÉ SANS BESOIN MESURÉ : jq (ligne apt de ci.yml) — zéro invocation dans le dépôt ; retrait à ouvrir.
+# NON ÉPINGLÉ PAR DÉCISION : shellcheck (ci.yml, étape « Shell correctness ») — chaque verdict nomme sa version.
+# NON MESURÉ : un paquet apt pour docker (`docker.io` est un candidat, jamais installé par le dépôt) ; un
+#   rapport par outil sous Windows (la jambe windows-latest joue les suites, pas un inventaire).
+# CONSOMMATEURS : core-scripts/doctor.sh (BK-343, T-00001001), le lecteur ; ses deux bancs
+#   core-scripts/doctor.test.sh et core-scripts/doctor-parity.test.sh lisent aussi ce fichier (relevé 2026-10-09).
+# AJOUTS DU 2026-10-18 (T-01M52X1W3WPKCWX1DC36NMKJB6, agent terraform-deployer) : terraform, tflint, checkov,
+#   gcloud, aws, et les coûts de az et trivy étendus au runner .agents/bin/tfdeploy.py. `terraform` SEUL :
+#   aucune ligne tofu (décision pilote Q8, « uniquement terraform »). Coûts écrits d'après le plan approuvé
+#   (annexe, étape 1), livrés avec le runner dans la même tâche.
+# AJOUTS DU 2026-10-22 (T-01M5HEJZSY66VCTP9BNJHPWS6A, agent reverse-engineer) : coûts de node et npx étendus au
+#   runner .agents/bin/rea_run.py, qui lance rea-agents@6.7.0 par npx -y sous npm_config_omit=optional (sauf
+#   run --with-optional sous décision) ; node absent ou hors PLAGE_NODE, ou npx absent : DEGRADED (rc 3) avant
+#   tout lancement de npx. Aucune ligne neuve (rea passe par npx). `version` de node reste `-` :
+#   core-scripts/doctor.sh lit une contrainte non `>=` comme sous-chaîne de `node --version` et rendrait
+#   MAUVAISE VERSION même dans la plage (mesuré le 2026-10-22 : v24.22.0) ; la plage de rea ne vaut d'ailleurs
+#   que pour lui. Coûts relus le 2026-10-22 sur le runner de T-01M5HEJYSJEYA8K3834FZVT60N, livré par une
+#   autre tâche que ce fichier.
+# AJOUT DU 2026-10-26 (T-00000991) : make, outil de scripts/release.sh (pas 2b, `make check`) et du canal
+#   `make release` ; sondé par `shutil.which("make")` dans .agents/evals/test_release_script.py (scripts/
+#   n'est pas balayé). Ligne outil, jamais INTERNES : son absence coûte une release, pas une fixture.
+tool	nature	os	class	version	version_src	ci_pin	apt	brew	windows	cost	probe	skips	mode_sonde
+git	outil	any	B	>=2.34	.agents/bin/post-task-done-index.test.sh:git < 2.34 ou OpenSSH < 8.0	-	git	-	-	« # requires: git » (9 suites) : MISSING DEP, porte ROUGE ; < 2.34 signature ssh non mesurée ; < 2.31 arm 12 de pre-push non jouable	-	.agents/bin/post-task-done-index.test.sh:16,817,846,1183;.agents/evals/session-reindex-exec.test.sh:71;.agents/security/shellcheck-scan-arbre.test.sh:272;.claude/hooks/stop-reindex.test.sh:6;.githooks/pre-push.test.sh:488	-
+bash	outil	any	B	>=4	core-scripts/run-bash-tests.sh:arrived in bash 4.0	-	-	bash	-	absent : aucune suite ne tourne ; sous 3.2 : COVERAGE DEGRADED, les 127 avalés ne sont plus détectés (run-bash-tests.sh)	-	core-scripts/run-bash-tests-parallel.test.sh:131;core-scripts/run-bash-tests.test.sh:317	-
+python3|python|py	outil	any	B	>=3.11	pyproject.toml:requires-python = ">=3.11"	3.14@setup-python(tests);3.12@setup-python(adoptant);3.14@image-python-slim(verify --linux)	-	-	-	jambe pytest absente, suites entières sautées : porte ROUGE ; < 3.11 : tomllib absent, locks TOML non lus	-	.agents/bin/build_index.test.sh:31;.agents/bin/post-task-done-index.test.sh:199,220,269,416,447,464,486,510,1147,1160,1183;.agents/bin/tasks.test.sh:22;.agents/evals/events-wiring.test.sh:103;.agents/evals/session-reindex-exec.test.sh:68;.agents/security/audit_report.test.sh:19;.agents/security/gitleaks-scan.test.sh:1015;.agents/security/sca-python.test.sh:383,739;.agents/security/sca-watch.test.sh:371,591,667,669;.agents/security/semgrep-scan.test.sh:340,357,381;.agents/security/shellcheck-scan-arbre.test.sh:218;.agents/security/shellcheck-scan.test.sh:194,261;.claude/hooks/affirmation-guard.test.sh:57;.claude/hooks/audit-gate.test.sh:44;.claude/hooks/binome-trace.test.sh:41;.claude/hooks/context-retro.test.sh:32;.claude/hooks/safe-bash-em-z.test.sh:26;.claude/hooks/safe-bash-ew-eo.test.sh:26;.claude/hooks/safe-bash-t-y.test.sh:26;.claude/hooks/safe-bash.test.sh:172;core-scripts/apply-mode.test.sh:50;core-scripts/plan_waves.test.sh:36;core-scripts/run-pytest-shards.test.sh:28;core-scripts/verify.test.sh:318	-
+pytest	outil	any	B	-	-	9.1.1@pip-hash(tests)	-	-	-	la jambe python de la porte (run-pytest-shards.sh) n'a plus d'objet	-	core-scripts/run-pytest-shards.test.sh:28	module:python3|python|py
+tee	outil	any	B	-	-	-	-	-	-	le runner bash refuse de tourner (exit 1) : porte ROUGE	-	-	-
+timeout|gtimeout	outil	any	A	GNU	.agents/security/sca-socket-timeout.test.sh:timeout on PATH is not GNU coreutils	-	-	coreutils	-	COVERAGE DEGRADED : suites sans chien de garde (run-bash-tests.sh), cas à délai non joués	-	.agents/evals/session-reindex-exec.test.sh:125,126,244;.agents/security/sca-socket-timeout.test.sh:105,107;.agents/security/semgrep-scan.test.sh:414;core-scripts/run-bash-tests-parallel.test.sh:198,337;core-scripts/run-pytest-shards.test.sh:319,750	-
+gitleaks	outil	any	A	-	-	8.30.1@curl-sha256(adoptant)	-	-	-	COVERAGE DEGRADED : porte secrets en repli déterministe (gitleaks-scan.sh) ; porte adoptant : ROUGE sans CADRE_GARDES_DEGRADEES	-	.agents/security/gitleaks-scan.test.sh:51,62,154,182,280,300,449,688,797,1136,1406	-
+semgrep	outil	any	A	-	-	1.175.0@pip-hash(adoptant)	-	-	-	COVERAGE DEGRADED, exit 0 : SAST non joué (semgrep-scan.sh) ; porte adoptant : ROUGE sans CADRE_GARDES_DEGRADEES	-	.agents/security/semgrep-scan.test.sh:190,204,340,463,499,765,1205	-
+trivy	outil	any	A	-	-	-	-	-	-	COVERAGE DEGRADED : misconfiguration IaC non scannée (sca-scan.sh) ; tfdeploy.py : plan DEGRADED (trivy absent, ou 0.69.4), donc aucun apply (il exige un plan GO) ; installé par aucun job CI	-	.agents/security/trivy-config.test.sh:53,73,129	-
+shellcheck	outil	any	A	-	-	-	shellcheck	-	-	COVERAGE DEGRADED, exit 0 : correction du shell non mesurée (shellcheck-scan.sh)	-	.agents/security/shellcheck-scan-arbre.test.sh:116;.agents/security/shellcheck-scan-locale.test.sh:165;.agents/security/shellcheck-scan.test.sh:74	-
+ctags	outil	any	A	-	-	6.1.0@zip-sha256(tests windows)	universal-ctags	-	ctags-win32-zip	index en repli (backend fallback), extraction shell non exercée	-	.agents/bin/build_index.test.sh:6,494	-
+dependency-check	outil	any	A	-	-	-	-	-	-	SCA Java/Swift : GO (DEGRADED), outil réel non mesuré ; sans base NVD pré-chargée, --noupdate non mesuré	-	.agents/security/sca-java.test.sh:4,739,741	-
+awk	outil	any	A	-	-	-	-	-	-	build-submodule-corpus.test.sh ne tourne pas (directive optional)	-	core-scripts/build-submodule-corpus.test.sh:9,54	-
+ps	outil	any	A	-	-	-	procps	-	-	cas P5 et P22 du runner parallèle non jouables ; verrou SCA (sca-scan.sh) : propriétaire indescriptible, jamais repris — lock-busy	-	core-scripts/run-bash-tests-parallel.test.sh:147,410	-
+pgrep	outil	any	A	-	-	-	procps	-	-	recherche de survivants impossible (run-pytest-shards.test.sh)	-	core-scripts/run-pytest-shards.test.sh:249	-
+unshare	outil	linux	A	-	-	-	-	-	-	(c8) du banc du verrou SCA non joué : un propriétaire vivant d'un autre espace de pids n'y est pas mis à l'épreuve	-	.agents/security/sca-scan-lock.test.sh:905	-
+mktemp	outil	any	A	GNU	.agents/security/shellcheck-scan-arbre.test.sh:mktemp BSD de macOS	-	-	-	-	un mktemp qui ignore TMPDIR : refus mktemp et nettoyage sur TERM/INT du scan d'arbre non mesurés	-	.agents/security/shellcheck-scan-arbre.test.sh:228,342,413	-
+ssh-keygen	outil	any	A	>=8.0	.agents/bin/post-task-done-index.test.sh:git < 2.34 ou OpenSSH < 8.0	-	-	-	-	signature ssh des commits non mesurée (cas 36, 38, 57)	-	.agents/bin/post-task-done-index.test.sh:817,846,1183	-
+uv	outil	any	A	-	-	-	-	-	-	arm z26 de safe-bash non joué sous les autres CPython ; bancs d'installation de cadre sautés	-	.claude/hooks/safe-bash-em-z.test.sh:912	-
+rg	outil	any	A	-	-	-	-	-	-	toute commande rg est REFUSÉE par safe-bash (rg-absent-silent-failure)	.claude/hooks/safe-bash.sh:command -v "$RG_TOK"	.claude/hooks/safe-bash.test.sh:339	-
+docker	outil	any	A	-	-	-	-	-	-	porte nue : sans objet ; sous --linux : jambe conteneur non rejouée, failed=1, la porte ROUGIT	-	core-scripts/verify.sh:930	-
+claude	outil	any	A	-	-	-	-	-	-	sca-watch.sh sans l'hôte : repli ; le cas (c) ne sait pas simuler son absence quand il est sur le PATH	-	.agents/security/sca-watch.test.sh:206	-
+cygpath	outil	windows	A	-	-	-	-	-	-	hors Windows, le cas 15 (arbre /c/) n'est pas jouable, par conception	-	.agents/bin/post-task-done-index.test.sh:303	-
+mvn	outil	any	A	-	-	-	-	-	-	SCA Java : GO (DEGRADED), aucun outil de résolution	-	-	-
+gradle	outil	any	A	-	-	-	-	-	-	SCA Java : GO (DEGRADED), aucun outil de résolution	-	-	-
+pip-audit	outil	any	A	-	-	-	-	-	-	SCA Python : couverture DEGRADED (sca-scan.sh)	-	-	-
+npm	outil	any	A	-	-	-	npm	-	-	SCA npm : couverture DEGRADED (sca-scan.sh) ; porte adoptant : module npm non construit, ROUGE	-	-	-
+pnpm	outil	any	A	-	-	-	-	-	-	SCA npm : repli pnpm indisponible (sca-scan.sh) ; porte adoptant : module à pnpm-lock.yaml non construit, ROUGE nommé (« pnpm absent du PATH »)	-	-	-
+yarn	outil	any	A	-	-	-	-	-	-	mode kit : sans objet (aucun appel) ; porte adoptant : module à yarn.lock non construit, ROUGE nommé (« yarn absent du PATH »)	-	-	-
+corepack	outil	any	A	-	-	-	-	-	-	mode kit : sans objet (aucun appel) ; CI, job adoptant : `corepack enable` échoue, job ROUGE — sans lui pnpm et yarn manquent au PATH (non épinglé : celui de l'image du runner)	-	-	-
+socket	outil	any	A	-	-	-	-	-	-	SCA npm : couche supply-chain Socket absente (sca-scan.sh)	-	-	-
+node	outil	any	A	-	-	-	nodejs	-	-	analyse de la vitrine sautée (cadre.test.sh) ; banc python des epics sauté ; reverse-engineer : .agents/bin/rea_run.py rend DEGRADED (rc 3) sans lancer rea-agents@6.7.0 (node absent ou hors ^22.19.0 || ^24.11.0 || >=26.0.0), aucune Evidence	-	-	-
+npx	outil	any	A	-	-	-	-	-	-	post-edit-check : tsc --noEmit sauté sans un mot sur un .ts édité ; reverse-engineer : .agents/bin/rea_run.py rend DEGRADED (rc 3), rea-agents@6.7.0 non lancé (npx -y, npm_config_omit=optional sauf run --with-optional sous décision), aucune Evidence	-	-	-
+gh	outil	any	A	-	-	-	-	-	-	ci-last-run.sh : COVERAGE DEGRADED, dernier run inconnu ; repli skills par l'API GitHub indisponible	-	-	-
+k6	outil	any	A	-	-	-	-	-	-	loadtest.py : verdict DEGRADED nommé (k6 absent du PATH), aucun run local ; bancs test_loadtest.py sur faux k6, jamais sautés	-	-	-
+lighthouse	outil	any	A	-	-	-	-	-	-	seo_mesure.py : jambe lighthouse « non mesuré : lighthouse absent du PATH », jambes jsonld et balises jouées ; bancs test_seo_mesure.py sur faux lighthouse, jamais sautés	-	-	-
+az	outil	any	A	-	-	-	-	-	-	loadtest.py : exécuteur cloud Azure indisponible, relevé de diagnostic az=null ; run local inchangé ; tfdeploy.py : identity d'une cible azure DEGRADED (az absent), donc aucun apply sur elle (il exige un plan GO)	-	-	-
+terraform	outil	any	A	-	-	-	-	-	-	tfdeploy.py : COVERAGE DEGRADED nommé (terraform absent), aucun plan ni apply ; bancs test_tfdeploy*.py sur faux terraform, jamais sautés	.agents/bin/tfdeploy.py:OUTILS_PROBE = (	-	-
+tflint	outil	any	A	-	-	-	-	-	-	tfdeploy.py : lint tflint non joué au plan (joué seulement s'il est présent)	.agents/bin/tfdeploy.py:OUTILS_PROBE = (	-	-
+checkov	outil	any	A	-	-	-	-	-	-	tfdeploy.py : plan DEGRADED (checkov absent), donc aucun apply (il exige un plan GO) ; installé par aucun job CI	.agents/bin/tfdeploy.py:OUTILS_PROBE = (	-	-
+gcloud	outil	any	A	-	-	-	-	-	-	tfdeploy.py : identity d'une cible gcp DEGRADED (gcloud absent), donc aucun apply sur elle (il exige un plan GO)	.agents/bin/tfdeploy.py:OUTILS_PROBE = (	-	-
+aws	outil	any	A	-	-	-	-	-	-	tfdeploy.py : identity d'une cible aws DEGRADED (aws absent), donc aucun apply sur elle (il exige un plan GO)	.agents/bin/tfdeploy.py:OUTILS_PROBE = (	-	-
+cargo	outil	any	A	-	-	-	-	-	-	post-edit-check : cargo check sauté sans un mot sur un .rs édité	-	-	-
+go	outil	any	A	-	-	-	-	-	-	post-edit-check : go vet sauté sans un mot sur un .go édité	-	-	-
+caffeinate	outil	darwin	A	-	-	-	-	-	-	/night macOS : rc 3, anti-veille indisponible	-	-	-
+systemd-inhibit	outil	linux	A	-	-	-	-	-	-	/night Linux : rc 3, anti-veille indisponible	-	-	-
+pwsh|powershell.exe|powershell	outil	windows	A	-	-	-	-	-	-	/night Windows : rc 3 ; bancs des lanceurs PowerShell sautés	-	-	-
+zsh	outil	any	A	-	-	-	-	-	-	bancs zsh sautés (route docs-only)	-	-	-
+swift	outil	any	A	-	-	-	-	-	-	porte adoptant : module Swift non construit, ROUGE	-	-	-
+make	outil	any	A	-	-	-	-	-	-	scripts/release.sh : pas 2b refusé (« make introuvable »), aucune release ; banc test_release_script.py : cas du pas 2b et de make release sautés, saut annoncé	-	-	-
+@posix-natif	condition	darwin,linux	A	-	-	-	-	-	-	sous Git Bash, les cas propres à un POSIX natif ne sont pas joués, par conception	-	core-scripts/check-stale-justification.test.sh:578,644,688,712;core-scripts/run-bash-tests-parallel.test.sh:147,274,392,410;core-scripts/run-pytest-shards.test.sh:247,390,788,834	-
+@symlink	condition	darwin,linux	A	-	-	-	-	-	-	ln -s refusé par la plateforme : cas 28 et 33 non joués	-	.agents/bin/post-task-done-index.test.sh:582,719	-
+@bash-3.2	condition	darwin	A	3.2	core-scripts/run-bash-tests.sh:macOS ships /bin/bash 3.2.57	-	-	-	-	là où /bin/bash est un bash >= 4, le plancher 3.2 n'est pas mesuré	-	.agents/security/bash-parse-oldest.test.sh:128;.agents/security/gitleaks-scan.test.sh:1136;.agents/security/sca-python.test.sh:829,832;.agents/security/sca-scan.test.sh:104;.agents/security/sca-watch.test.sh:491,493;.agents/security/semgrep-scan.test.sh:1933	-
+@arbre-kit	condition	any	A	-	-	-	-	-	-	hors de l'arbre complet du kit (marqueur .agents/IS_THE_KIT, stores SPECS/LEDGER, hooks de chaque hôte), ces cas ne sont pas joués, par conception	-	.agents/bin/post-task-done-index.test.sh:930;.agents/evals/session-reindex-exec.test.sh:179,280;.agents/security/gitleaks-scan.test.sh:521	-
+@arbre-propre	condition	any	A	-	-	-	-	-	-	défs d'agents modifiées : apply-mode.test.sh ne tourne pas	-	core-scripts/apply-mode.test.sh:68	-
+@racine-sans-espace	condition	any	A	-	-	-	-	-	-	racine portant un espace ou une apostrophe : arm t23 de safe-bash injoignable	-	.claude/hooks/safe-bash-t-y.test.sh:293	-
+@tmp-hors-depot	condition	any	A	-	-	-	-	-	-	TMPDIR sous un dépôt git : racine non git non constructible (cas NGborne)	-	core-scripts/check-stale-justification.test.sh:622	-
+@campagne-complete	condition	any	A	-	-	-	-	-	-	une restriction posée par l'appelant (RBT_PAR_ARMS, RPS_SCENARIOS, override de cible de sca-watch) réduit le banc	-	core-scripts/run-bash-tests-parallel.test.sh:37;core-scripts/run-pytest-shards.test.sh:147;.agents/security/sca-watch.test.sh:279	-
+@signal-int	condition	any	A	-	-	-	-	-	-	une tâche de fond sous set -m qui ignore INT : nettoyage sur INT non mesuré	-	.agents/security/shellcheck-scan-arbre.test.sh:385	-

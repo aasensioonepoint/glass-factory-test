@@ -1,0 +1,543 @@
+# Read by .agents/bin/sync_template.py. One rule per line, `#` comments.
+# Prefixes are repo-root-relative; directory rules MUST end in "/".
+# Precedence: longest prefix wins; a polarity tie at identical prefix is a config error.
+
+# strip: never taken from main; deleted from the template if present THERE —
+# EXCEPT a SEEDED destination: `.agents/state/gates/<NAME>` written by
+# sync_template.py from `.agents/adopter-seed/gates/<NAME>` (the seed channel,
+# below) is written, never deleted.
+strip: .agents/state/
+# Prophylactic (matches nothing today): .gemini/backups/ holds transcript
+# backups (pre_compact_backup.py) and .gemini/ has no .gitignore — if one is
+# ever committed on main it must not travel.
+strip: .gemini/backups/
+# The front-end SOURCE. `.agents/ui/` is the BUILD OUTPUT of `.agents/ui-src/`
+# (React + Vite) and travels, because it is the deliverable a consumer's `/dash`
+# serves. The source does NOT travel: a consumer project gets a working
+# dashboard, not an npm build chain it never asked for and would have to keep
+# green. Rebuilding the front is a KIT maintenance operation, done here on main
+# where the toolchain lives — the same split as `.agents/bin/`, which the kit
+# maintains for itself and vendors as read-only.
+#
+# `node_modules/` is git-ignored on top of this, so the rule guards the tracked
+# half (JSX, vite.config.js, package.json, smoketest.mjs) rather than the bulk.
+#
+# THIS RULE IMPLIES A GUARD (T-00000232). Because only the BUILD travels, sources
+# edited on main and never rebuilt would ship an adopting project a dashboard
+# matching no state of this repo, silently. So `sync_template.py --apply` refuses
+# (exit 19) when main's last `.agents/ui-src/` commit is not an ancestor of its
+# last `.agents/ui/` commit, and names the rebuild — which must happen HERE, on
+# main, since at apply time HEAD is on the template branch where the source does
+# not exist. `--allow-stale-build` is the escape; `--check` never refuses.
+# The guard measures the ORDER OF COMMITS, not the CONTENT of the bundle:
+# committing edited sources and a non-rebuilt bundle in one commit defeats it.
+strip: .agents/ui-src/
+# T-00000199, pilot decision 2026-08-15: the opt-in that makes npm/pnpm audits
+# cover devDependencies. PRESENT in the repos that maintain the kit's own build
+# chain (here, and op-agentic-builder by hand), ABSENT everywhere else — a
+# consumer never asked for that toolchain and must not be gated on advisories it
+# cannot act on. `strip:` is what makes "absent" a guarantee rather than a habit:
+# the file can never be taken from main into the template, so it cannot reach an
+# adopting project by accident. Mirror of `.agents/protected-paths.local` below:
+# the MECHANISM ships from main, the CONTENT lives only where it applies.
+strip: .agents/security/audit-dev-deps.local
+# T-00000513 — le marqueur d'IDENTITÉ du kit, lu par `host_skip_dirs()` dans
+# `.agents/bin/build_index.py` : sa PRÉSENCE dit « cet arbre EST le kit », donc
+# `.claude/`, `.codex/`, `.gemini/` et le paquet V3 (`agentic_v3/` ou
+# `.agents/vendor/agentic_v3/`) y sont du code source et
+# restent indexés. Chez un adoptant ces mêmes répertoires sont de la plomberie
+# vendue, et le marqueur y produirait EXACTEMENT le défaut qu'il corrige ici,
+# en miroir : l'adoptant ré-indexerait sa propre plomberie et ses symboles à lui
+# passeraient dessous. Un fichier, pas un répertoire — donc pas de `/` final.
+# `strip:` et non `own:` : contrairement à `.agents/protected-paths.local`, il n'a
+# aucun sens sur la branche template non plus. Il ne doit exister QU'ICI.
+# Cette règle ne borne que le canal `sync_template.py` ; une copie brute de
+# `.agents/` l'emporterait quand même, ce que le fichier lui-même et
+# QUICK-SETUP.md § 3 nomment tous les deux.
+# Le paquet V3 suivi par Git voyage par TAKE aux deux emplacements : aucune
+# règle `strip:` ne doit viser `.agents/vendor/agentic_v3/`.
+strip: .agents/IS_THE_KIT
+# T-00000330 — `retro/LESSONS.md` is the LOCAL lessons journal of THIS repository:
+# raw retrospective data, the `retro.py` counterpart of `.agents/state/memory/`.
+# THE TOOLING TRAVELS, THE STATE NEVER DOES — `retro.py` and the two skills are
+# deliverables and are TAKEn from main; the journal they write is project state
+# and must not reach an adopting project, which would receive this repo's own
+# incidents as if they were its own. Unlike the state bucket it mirrors, this
+# path is at the repo ROOT and is TRACKED, so no other rule and no `.gitignore`
+# entry covers it: without this line `sync_template.py`'s default polarity
+# (TAKE (new), for a path on main and outside every rule) would ship it.
+# A universal lesson still reaches an adopting project — through the DESTINATION
+# of its promotion (a traveling skill), never through this file.
+strip: retro/
+# T-00000650 — `runs/` porte les exports « run par auteur » (JSONL), état de run
+# PROPRE À CE dépôt : les événements de CE projet ne doivent pas atterrir chez un
+# adoptant comme s'ils étaient les siens. Même raison que `strip: retro/`. La règle
+# ne matche AUCUN fichier aujourd'hui (premier export suivi au backfill de la tâche
+# sœur) — une règle prophylactique est ADMISE (précédent : « matches nothing today »).
+strip: runs/
+# T-00000379 lot F — la VITRINE du kit. `CADRE/` est le site statique qui
+# présente les six piliers du framework : un argumentaire, pas un outil. Un
+# projet adoptant reçoit le kit pour gouverner SON code ; recevoir en plus notre
+# plaquette lui donnerait une page à maintenir, à déployer ou à supprimer, et
+# dont les chiffres parlent de NOTRE arbre — `core-scripts/cadre.test.sh` les dérive
+# d'ici, et n'aurait aucun sens là-bas.
+# `strip:` et non `keep:` : la vitrine évolue avec le kit et n'a aucune raison
+# d'être gelée sur la branche template ; elle ne doit simplement jamais partir.
+strip: CADRE/
+# T-00000425 — le BANC de la vitrine, strippé POUR LA MÊME RAISON que la vitrine,
+# et la mesure qui l'a rendu obligatoire : `core-scripts/cadre.test.sh` était DÉJÀ sur
+# `template/starter-kit` (684ebca) alors que `CADRE/` n'y est pas. Or son §0
+# commence par `[ -f "$PAGE" ] || ko "CADRE/index.html ABSENT"` (:70-72) — sur un
+# arbre d'adoptant la suite sort donc **rc 1**, `run-bash-tests.sh` la découvre par
+# son glob `*.test.sh`, `verify.sh` l'exécute, et LA PORTE DE CHAQUE PROJET ADOPTANT
+# EST ROUGE DÈS LE PREMIER JOUR. Mesuré le 2026-09-03 sur un arbre reconstruit sans
+# les six chemins strippés : `FAIL CADRE/index.html ABSENT`, exit 1.
+#
+# Pourquoi `strip:` plutôt qu'une garde « site absent => on saute » DANS le banc :
+# ce banc ne teste rien qui appartienne à l'adoptant. Il vérifie que NOTRE plaquette
+# dit encore la vérité sur ce kit, et il asserte même la présence de `strip: CADRE/`
+# dans CE fichier (:247-250) — une assertion de maintenance du kit, sans objet
+# ailleurs. Un banc qui se saute lui-même chez tout le monde sauf ici est un banc
+# qui voyage pour rien, et dont le SKIP finirait par masquer une vraie panne.
+# Règle générale dont ceci est un cas : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET.
+strip: core-scripts/cadre.test.sh
+#
+# T-00000505 — CE BLOC PORTAIT UNE EXCEPTION QUI N'A PLUS D'OBJET, et il est
+# réécrit plutôt que supprimé en silence. `scripts/ui-gate.sh` et
+# `scripts/ui-gate.test.sh` voyageaient tous les deux SANS règle (T-00000437) ;
+# décision pilote, ils sont RETIRÉS du dépôt : la porte d'interface (Playwright
+# + axe) ne fait plus partie d'aucune porte de vérification. Il n'y a donc plus
+# rien à excepter ici, et rien à « réparer » en ajoutant un `strip:` pour des
+# chemins qui n'existent plus. Le SOURCE de l'UI, lui, n'a jamais voyagé et ne
+# voyage toujours pas (`strip: .agents/ui-src/` ci-dessus) : il reste sur disque
+# pour qui veut lancer `npx playwright test` à la main, jamais dans ce que le kit
+# envoie. Aucune ligne `strip:` n'est perdue au passage — cette exception n'en a
+# jamais porté, c'était précisément son objet.
+#
+# T-00000425 — le FILET qui mesure la porte d'un projet adoptant, et sa fixture.
+# MÊME RÈGLE GÉNÉRALE QUE LA LIGNE CI-DESSUS : UN BANC NE VOYAGE PAS PLUS LOIN QUE
+# SON SUJET. Ce filet ne teste rien qui appartienne à l'adoptant — il RECONSTRUIT
+# l'arbre que `main` envoie et vérifie que la porte y est verte. Chez l'adoptant,
+# ce travail est déjà fait : l'arbre qu'il reconstruirait est le sien, et son
+# étage B se compare à lui-même. Pire, il en dépend matériellement — `git ls-files`
+# sur CE dépôt, les prefixes `strip:` de CE fichier, les planchers dérivés de NOS
+# comptes (460 voyageurs, 397 fichiers balayés, mesures du 2026-09-03) : chez un
+# projet de vingt fichiers, le plancher de copie seul le rendrait rouge à vie.
+#
+# La fixture est strippée pour la raison la plus simple qui soit : elle n'a de
+# sens que lue par le filet, et un contrôle négatif sans son contrôleur est un
+# fichier de code mort qui ressemble à une suite de tests.
+strip: .agents/evals/test_adopting_gate.py
+strip: .agents/evals/fixtures/adopting_offender.py
+
+# T-00000464 — MÊME RÈGLE GÉNÉRALE, TROISIÈME APPLICATION : UN BANC NE VOYAGE PAS
+# PLUS LOIN QUE SON SUJET. Ce filet compare le modèle de ruleset forge
+# (`.github/rulesets/main-protection.ruleset.json`) aux legs BLOQUANTS dérivés de
+# `.github/workflows/ci.yml` — et ses DEUX opérandes appartiennent à l'adoptant et
+# sont DESTINÉS à diverger : tout adoptant réécrit son `ci.yml` pour sa propre
+# stack, et le kit lui dit lui-même que le modèle de ruleset est INERTE et
+# supprimable. Un filet qui rougit parce que son propriétaire a fait ce qu'on lui a
+# dit de faire est un faux rouge à vie.
+#
+# Pourquoi `strip:` plutôt qu'un SKIP nommé « ruleset absent » : ce SKIP laisserait
+# ROUGE le cas le PIRE — ruleset CONSERVÉ + `ci.yml` réécrit — sur un modèle
+# présenté comme inerte ; et `strip:` se pose au FICHIER, pas à l'arm, donc l'arm
+# devait de toute façon sortir du banc voyageur. Son sujet est « NOTRE modèle dit
+# encore la vérité sur NOTRE ci.yml » : une assertion de maintenance du kit, même
+# classe que `test_adopting_gate.py` ci-dessus.
+strip: .agents/evals/test_forge_ruleset_model.py
+
+# T-012 — MÊME RÈGLE GÉNÉRALE, QUATRIÈME APPLICATION : UN BANC NE VOYAGE PAS PLUS
+# LOIN QUE SON SUJET. Le check `classification_complete` partitionne les surfaces
+# DU KIT — noyau packagé, contrat public, état d'équipe, état machine, outillage —
+# pour la refonte packaging. Ses trois opérandes appartiennent tous à CE dépôt :
+# les 132 règles sont écrites sur NOS chemins, la doc qu'il synchronise est
+# `docs/interne/`, elle-même `strip:`-ée, et le défaut de la partition est
+# l'ÉCHEC. Chez un adoptant, dont l'arbre n'a aucun de ces chemins, le premier
+# test rendrait la totalité de ses fichiers « NON CLASSÉS » : rouge à vie, sur une
+# question qui ne le concerne pas.
+#
+# C'EST `test_adopting_gate.py` QUI L'A TROUVÉ, pas une relecture. Son localisateur
+# refuse qu'une suite VOYAGEUSE nomme un chemin qui NE VOYAGE PAS, et il a pointé
+# la ligne exacte — `DOC = ROOT / "docs" / "interne" / "classification.md"`. Le
+# remède qu'il propose en premier est un SKIP nommé ; `strip:` est préféré ici
+# pour la même raison qu'au-dessus : le SKIP se pose à l'arm, alors que c'est le
+# FICHIER ENTIER qui n'a pas de sujet chez l'adoptant.
+#
+# Les règles sont strippées avec leur banc : un jeu de règles sans le check qui
+# les applique est du code mort qui ressemble à de la configuration.
+strip: .agents/evals/test_classification_complete.py
+strip: .agents/evals/classification_rules.py
+# MEME RAISON, ET ELLE A ETE APPRISE CHER (T-00000585, binome du 14/09) :
+# ce banc AFFIRME que le kit decouvre ses propres suites bash. Chez un
+# adoptant qui n en a aucune il rend ROUGE — donc en le laissant voyager on
+# ne SUPPRIMAIT pas le rouge d accueil, on le DEPLACAIT de la jambe bash
+# vers la jambe pytest. Son predicat de skip testait la presence de
+# `run-bash-tests.sh`, qui est CONTRAT et voyage : il ne discriminait rien.
+strip: .agents/evals/test_bash_suites_discovery.py
+
+# T-00001088 — MÊME MOTIF : ce banc asserte des faits de CE dépôt (un plancher de
+# 24 suites qui construisent un dépôt git, un ensemble fermé de scripts produits) ;
+# chez un adoptant il jugerait un arbre qui n'est pas le sien et y rougirait.
+strip: .agents/evals/test_bash_suites_git_env.py
+
+# T-00001104 / T-00001105 — BANC DU KIT SEUL : il asserte, depuis CE dépôt, des
+# faits de `main` (la règle de poste de `.agents/.gitignore`, les règles de
+# synchro de ce fichier) qui n'ont aucun sujet sur la template, où il rougirait.
+# Il vérifie lui-même cette ligne (`test_T1104_polarites_des_regles_du_lot`),
+# parce qu'un `strip:` qui ne correspond à rien n'est pas une erreur pour la
+# synchro : une coquille ici enverrait le banc sur la template sans bruit.
+strip: .agents/evals/test_ignores_livres.py
+
+# QUATRIÈME APPLICATION DU MÊME MOTIF, et c'est encore le localisateur de
+# `test_adopting_gate.py` qui l'a trouvé — cette fois dans la PORTE, sur un banc
+# écrit une heure plus tôt. Il a pointé la ligne exacte :
+# `MANIFESTE = ROOT / "checks.manifest.json"`, dans un fichier de `.agents/evals/`
+# dont la polarité par défaut est TAKE. Or `checks.manifest.json` est `strip:`-é
+# quinze lignes plus bas : chez un adoptant le fichier n'existe pas, donc ce banc
+# rougirait sa porte le premier jour, sur un registre qui n'est pas le sien.
+#
+# `strip:` et non un SKIP, pour la raison déjà écrite au-dessus : le SKIP se pose
+# à l'arm, alors que c'est le FICHIER ENTIER qui n'a pas de sujet là-bas. Un banc
+# ne voyage pas plus loin que son sujet.
+strip: .agents/evals/test_checks_manifest.py
+
+# T-00000654 — MÊME RÈGLE GÉNÉRALE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET.
+# Ce banc tient l'INSTANTANÉ `docs/interne/spec-clauses.json` en accord avec le
+# registre des clauses de la spec de la refonte, `docs/PROMPT-refonte-packaging-cadre.md`.
+# Ses DEUX opérandes sont déjà `strip:` — l'instantané par `strip: docs/interne/`
+# ci-dessous, la spec par `strip: docs/PROMPT-refonte-packaging-cadre.md`. Chez un
+# adoptant, dont l'arbre n'a ni la spec ni l'instantané, il rougirait sa porte le
+# premier jour sur un registre qui n'est pas le sien : `setUp` lit la spec, et le
+# témoin `test_registre_egal_instantane` compare deux fichiers absents là-bas.
+#
+# `strip:` et non un SKIP, pour la raison déjà écrite plus haut : le SKIP se pose
+# à l'arm, alors que c'est le FICHIER ENTIER qui n'a pas de sujet ailleurs. Le
+# banc voyageur `test_plan_cible_guard.py`, lui, N'EST PAS strippé : son sujet —
+# `plan_cible.py` et la CLI `tasks.py` — voyage, et il reste vert chez l'adoptant.
+strip: .agents/evals/test_spec_clause_registry.py
+
+# T-00000652 — le filet « citation par NOM de clause » nomme deux sujets de
+# Surface A qui ne voyagent pas (`strip: .agents/evals/classification_rules.py`
+# et `strip: docs/interne/`, tous deux dans ce fichier) et lit l'arbre réel : il
+# ne voyage pas. Précédent identique juste au-dessus.
+strip: .agents/evals/test_spec_citation_par_nom.py
+
+# T-01M5DK5XYC lot C — témoin KIT-SEULEMENT : il lit CADRE/index.html (strip),
+# retro/LESSONS.md (strip) et docs/modules/dashboard-api.md (keep), absents chez
+# l'adoptant. Les surfaces voyageuses restent tenues par test_worktree_doctrine.
+strip: .agents/evals/test_surfaces_board_multi_running.py
+
+# T-00000644 — LE REGISTRE KIT-ONLY DES SURFACES DE LEÇONS. Il énumère les quatre
+# surfaces de leçons de CE dépôt (`retro/LESSONS.md`, `LEDGER.json`,
+# `lessons_learned` dans le store V3, le magasin de Phase 2) — des chemins qui
+# NE VOYAGENT PAS (`strip: retro/`, `strip: .agents/state/`) et dont un adoptant
+# n'a que faire : ses surfaces de leçons à lui sont ailleurs. C'est le pendant, en
+# DONNÉES, de `classification_rules.py` et `checks.manifest.json` ci-dessus : un
+# relevé de CE kit, `strip:`-é pour la même raison. Sa classe est OUTILLAGE par le
+# préfixe `.agents/evals/` (aucune ligne à ajouter dans `classification_rules.py`).
+# Lu par `test_cadre_ledger_precedence.py`, qui VOYAGE mais saute sa lecture sur
+# un arbre adoptant (garde `EST_LE_KIT`).
+strip: .agents/evals/lesson_surfaces.json
+
+# T-00000651 — MÊME RÈGLE GÉNÉRALE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON
+# SUJET. Ce banc asserte la sérialisation à clés triées des TROIS STORES DE CE
+# DÉPÔT, que `strip: .agents/state/` (ligne 6) retient déjà. Sur des magasins
+# ABSENTS il ne rougit pas, il SAUTE (et ne prouve rien) ; le vrai risque chez un
+# adoptant est ailleurs : des magasins écrits par un kit ANTÉRIEUR, dans l'ordre
+# d'insertion, qu'il jugerait non conformes alors que ce sont les siens et qu'ils
+# se re-trient d'eux-mêmes à leur première écriture par la version courante.
+strip: .agents/evals/test_etat_partage_fusionnable.py
+
+# T-00000657 — MÊME RÈGLE GÉNÉRALE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET.
+# Le banc de `check_sql_locality` balaie les `.py` suivis de CE dépôt contre une
+# liste CLOSE d'exceptions écrite sur NOS chemins, et exige que chacune soit citée
+# dans `checks.manifest.json`, lui-même `strip:`-é plus bas. Chez un adoptant il
+# balaierait SON code et naîtrait rouge. `strip:` et non un SKIP, comme au-dessus.
+strip: .agents/evals/test_cadre_sql_locality.py
+
+# T-00000773 — MÊME RÈGLE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET. Le banc du cliquet des
+# 1600 lignes (S-00002684, S-00004034) balaie NOS .py contre NOTRE liste ; chez un adoptant il naîtrait rouge. `strip:` et non un SKIP.
+strip: .agents/evals/test_python_file_length.py
+strip: .agents/evals/python_file_length_cliquet.json
+
+# T-01M4VBZFB6KWTW22618C0VWB13 (lot M, C18) — MÊME RÈGLE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET.
+# Le harnais mesure les CLI d'hôte du poste du KIT et son banc joue des cales POSIX (killpg, /bin/sh) en
+# 96 s : chez un adoptant il naîtrait rouge (Windows) ou coûterait sa porte. Harnais classé OUTILLAGE.
+strip: .agents/bin/mesure_parallelisme_hotes.py
+strip: .agents/bin/test_mesure_parallelisme_hotes.py
+
+# T-00000796 — MÊME RÈGLE : un banc ne voyage pas plus loin que son sujet ; sa grammaire
+# et ses témoins vivent dans `install_source_grammar.py` (règle pilote S-00002684, relevée à 1600 par S-00004034 ; d'abord 800
+# lignes par `.py`). Le banc de `install_source_epinglee` balaie le texte suivi de CE
+# dépôt contre des formes d'installation témoignées et des sites nommés sur NOS chemins
+# (README, spec, safe-bash, `docs/usage-target.html`) : chez un adoptant il jugerait SON
+# texte et naîtrait rouge. `strip:` et non un SKIP, comme au-dessus. Même règle, deux lignes.
+strip: .agents/evals/test_install_source_epinglee.py
+strip: .agents/evals/install_source_grammar.py
+
+# T-00000658 — MÊME RÈGLE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET. Le banc de
+# `check_shim_no_logic` balaie les `.py` suivis de CE dépôt contre une liste CLOSE
+# `SHIMS_DU_KIT` écrite sur NOS chemins (`.agents/bin/project_init.py`, dette de
+# T-00000665) qu'il exige citée dans `checks.manifest.json`, `strip:`-é plus bas. Chez
+# un adoptant il naîtrait rouge sur une dette qui n'est pas la sienne. `strip:` et non
+# un SKIP, comme au-dessus. Sa grammaire vit dans `shim_grammar.py` (règle pilote
+# S-00002684, 800 lignes par `.py`, relevée à 1600 par S-00004034), qui PORTE `SHIMS_DU_KIT` — la dette de CE dépôt —
+# et voyage donc aussi peu que le banc qui l'importe : même règle, deux lignes.
+strip: .agents/evals/test_cadre_shim_no_logic.py
+strip: .agents/evals/shim_grammar.py
+
+# T-00000765 (binôme de clôture) — MÊME RÈGLE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET.
+# Les deux bancs MIROIR lisent leur phrase canonique dans le bloc ````text d'un plan de
+# `docs/tasks/` (`T-00000654-plan.md`, `T-00000765-plan.md`), et `docs/tasks/` est `keep:` plus
+# bas : le plan de CE dépôt n'arrive jamais chez l'adoptant, dont les défs portent pourtant la
+# phrase — le banc y rougirait sa porte le premier jour sur un fichier absent. `strip:` et non
+# un SKIP, comme au-dessus. Les bancs de GARDE (`test_plan_cible_guard.py`,
+# `test_plan_depends_guard.py`, `test_depends_add.py`) lisent leur sujet, qui voyage : ils voyagent.
+strip: .agents/evals/test_plan_cible_mirror.py
+strip: .agents/evals/test_plan_depends_mirror.py
+
+# T-01M54BDV4WKPR1RMT96J7C0KJK — MÊME RÈGLE : UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET.
+# Le banc de la grammaire § 4 de `.agents/ref/PLAN_GRAMMAIRE.md` (la ligne `SQL:` d'un plan)
+# importe `FAMILLES` de `test_cadre_sql_locality.py`, `strip:` plus haut : chez l'adoptant sa
+# collecte casserait. Et sa règle vaut dans le kit seul (`.agents/IS_THE_KIT`, `strip:`) : la
+# fiche voyage, son § 4 y reste inerte, le banc n'y aurait pas de sujet. `strip:` et non un
+# SKIP, comme au-dessus ; le banc vérifie lui-même cette ligne.
+strip: .agents/evals/test_plan_sql_grammaire.py
+
+# T-00001093 — LE CANAL SEED. `.agents/adopter-seed/gates/` porte les GRAINES des
+# cinq marqueurs de garde qu'un adoptant reçoit ARMÉS : BINOME_REQUIRED,
+# PLAN_CHAIN_REQUIRED, PLAN_CIBLE_REQUIRED (`spec=docs/PROMPT-projet.md`,
+# `chantier=*`), CHRONO_REQUIRED, CONFIG_QUALITE_PROTEGE (T-01M5C1AHZM41P9C3QH6X7PEQY1 :
+# config lint/format EXISTANTE). Le répertoire ne voyage pas TEL QUEL (`strip:`) :
+# `sync_template.py` écrit chaque graine vers `.agents/state/gates/<NOM>` sur la
+# template, depuis le blob de la source — jamais depuis l'état du kit, qui garde
+# son propre réglage. Les deux bouts du canal DOIVENT être `strip:` (sinon 17),
+# la destination ne sort pas de `.agents/state/gates/` (17), et une source sans
+# ce répertoire, sur une template qui porte des marqueurs, est REFUSÉE (23) —
+# sortie `--allow-unseeding`. Aucun autre fichier n'y vit : un README voisin
+# deviendrait une graine.
+strip: .agents/adopter-seed/
+# The three adopter-facing documents are copied to their public paths by the
+# DOCS channel; their private sources never travel as paths of their own.
+strip: .agents/adopter-docs/
+strip: .agents/evals/test_docs_livrees.py
+# Son banc KIT-SEULEMENT, même règle que `test_adopting_gate.py` dont il hérite :
+# UN BANC NE VOYAGE PAS PLUS LOIN QUE SON SUJET. Il reconstruit l'arbre d'adoption
+# depuis `git ls-files` de CE dépôt et importe `test_adopting_gate` (strippé) —
+# chez l'adoptant il casserait la collecte de pytest. Les trois modules voyageurs
+# du canal (`test_sync_template_seed.py`, `test_plan_cible_star.py`,
+# `test_seed_protection.py`) VOYAGENT : leur sujet voyage avec eux.
+strip: .agents/evals/test_adopting_gate_seed.py
+
+# T-00000464 — L'ABSENCE DE TOUTE RÈGLE SUR `.githooks/` EST UN CHOIX, PAS UN
+# OUBLI. Le hook `pre-push` ET son banc `pre-push.test.sh` VOYAGENT tous les deux,
+# et la polarité TAKE par défaut est exactement ce qu'on veut : le hook est un
+# livrable, et son banc reste vert chez l'adoptant. Ne « répare » pas cette absence
+# apparente en ajoutant un `strip:`.
+#
+# POURQUOI CE BANC-LÀ NE RETOMBE PAS DANS LA PANNE DE `core-scripts/cadre.test.sh`,
+# mesuré plutôt qu'affirmé : il ne lit AUCUN artefact du dépôt hôte pour ses dix
+# premiers arms — il bâtit son propre dépôt bare, son propre clone, y COPIE le hook,
+# l'installe par le geste documenté (`core.hooksPath .githooks`) et fabrique chaque
+# tampon qu'il lit. Son sujet part avec lui. Le onzième arm lit l'index
+# (`git ls-files -s .githooks/pre-push` doit valoir 100755, sinon le hook arrive
+# INERTE sur tout clone Unix) — et ce chemin voyage aussi, donc l'assertion garde
+# son objet chez l'adoptant. SON SUJET VOYAGE AVEC LUI — c'est exactement ce qui le
+# sépare de `cadre.test.sh`, dont le sujet est strippé et qui ne mesurerait donc
+# plus rien à destination.
+#
+# `.githooks/` est classé `"product"` dans `TOP_LEVEL_CLASSIFICATION`
+# (`.agents/evals/test_template_hygiene.py`) : cette partition est fail-CLOSED, un
+# segment de tête non classé y est un rouge bruyant. Les deux fichiers se tiennent.
+
+# T-00000394 — THE ABSENCE OF ANY RULE ON `.kimi-code/` IS A CHOICE, NOT AN
+# OVERSIGHT. It is the 6th host surface (26 verbatim agent defs mirroring
+# `.claude/agents/` without model/effort, plus `.kimi-code/hooks.json`, which
+# cables the `.codex/hooks/*` impls under `AGENTS_HOOK_HOST=kimi`). Like `.codex/`,
+# `.gemini/` and `.github/`, it is a DELIVERABLE, not project state — so the default
+# polarity (TAKE (new), for a path on main outside every rule) makes it TRAVEL to an
+# adopting project, hooks.json included. Adding a `strip:` here would silently strip
+# Kimi Code adoption from every adopting project.
+
+# T-00000163 — THE ABSENCE OF ANY RULE ON `.agents/ref/` IS A CHOICE, NOT AN
+# OVERSIGHT, and it is written here so nobody "fixes" it later. The convention
+# files are TAKEn from main, so the §1 canonical rules travel main -> template.
+# That overwrite is kit-side ONLY: this file is read by sync_template.py, which
+# refuses outright when the local `template/starter-kit` branch is missing — the
+# tell that you are in a consumer clone. So a §2 written by an adopting project
+# is never in reach of this rule set; its refresh is a MERGE (L-015).
+# Adding a `strip:` here would do the opposite of what it looks like: it would
+# freeze every adopting project on the convention text of the day it forked.
+
+# keep: never taken from main; NEVER deleted from the template (frozen).
+# Main's dev docs (design/, tasks/, modules/, specs/, tech/) and the
+# multi-project worksite note are PROJECT STATE and never travel. Pilot
+# decision 2026-07-27 — NARROWED 2026-08-23: the same decision had frozen
+# `docs/` wholesale, so `docs/usage.html` — the user-facing manual of the KIT,
+# not a note about this repo — could only be updated "on the template branch
+# directly". Measured a month later: nobody ever did, and the branch shipped a
+# manual describing a kit that no longer existed (0 of 17 task-board verbs, no
+# CLI section at all). The manual now TRAVELS by default, like every other
+# deliverable; only the five state sub-trees and the worksite note stay frozen.
+# Pilot decision 2026-08-23.
+keep: docs/design/
+keep: docs/tasks/
+keep: docs/modules/
+keep: docs/specs/
+keep: docs/tech/
+keep: docs/multi-projet-RESTANT.md
+
+# T-00001104 — `.agents/.gitignore` GELÉ : la template garde SA version, sans la
+# règle de POSTE que `main` y porte (`protected-paths.local`, le fichier non
+# suivi du poste du pilote). Prise par la synchro, cette règle ferait ignorer,
+# chez qui copie la template, le fichier qu'elle LIVRE (`own:` plus bas), et un
+# `git add -A` d'adoption le perdrait en silence. `keep:` et non `strip:` : la
+# template ne perd pas son fichier, elle cesse d'en recevoir les mises à jour.
+# CONSÉQUENCE DU GEL, que `test_T1104_le_gel_ne_cache_aucune_regle` rend
+# visible : une règle ajoutée plus tard à `.agents/.gitignore` sur `main` ne
+# voyage plus. Une règle qui doit voyager se pose dans le `.gitignore` RACINE —
+# même raison que `node_modules/`.
+# Exception NOMMÉE au croisement classe × voyage : `RETENUS_PAR_CONCEPTION` dans
+# `.agents/evals/test_classification_complete.py`. Témoin :
+# `.agents/evals/test_ignores_livres.py`.
+keep: .agents/.gitignore
+
+# T-012, refonte packaging — LES TROIS SURFACES DU CHANTIER, ET POURQUOI
+# `strip:` PLUTOT QUE `keep:`.
+#
+# `keep:` convient a un repertoire dont la template a sa PROPRE version (ses
+# taches, ses ADR). Ces trois-la n'ont aucune version d'adoptant : ce sont des
+# artefacts du chantier de refonte DU kit. S'ils apparaissent un jour sur la
+# branche template — par un `git add -A` d'adoption, exactement le geste qui a
+# deja re-introduit `protected-paths.local` quatre fois — il faut qu'ils en
+# soient RETIRES, pas conserves. C'est la difference entre les deux polarites,
+# et c'est `strip:` qui la porte.
+#
+#  * `docs/interne/` — la classification des surfaces et les arbitrages de la
+#    refonte. Le document s'ouvre sur « Document interne. Il ne voyage pas ».
+#    NOTE DE COUTURE : `docs` reste classe "product" dans
+#    `TOP_LEVEL_CLASSIFICATION`, alors qu'il porte desormais une exclusion. La
+#    valeur "mixed" ne convient pas — elle exige que la part exclue soit de
+#    l'ETAT et figure dans STATE_BEARING_PREFIXES, ce que `docs/interne/` n'est
+#    pas. La partition n'a pas de valeur pour « mixte dont la part exclue n'est
+#    pas de l'etat » ; l'ecart est ecrit ici plutot que masque.
+#  * `checks.manifest.json` — le registre des checks de la refonte, lu par le
+#    script de release du kit. Classe `kit-only`.
+#  * `PLAN-ETAT.md` — l'etat du chantier, relu a chaque reprise. C'est de
+#    l'histoire accumulee par CE depot, donc classe `state`, et son prefixe
+#    figure dans STATE_BEARING_PREFIXES.
+#  * `docs/governance.html` — la vitrine de gouvernance. `strip:` pour la meme
+#    raison que `CADRE/`, et la raison est MESUREE plutot que supposee : la page
+#    code EN DUR le board et le registre de CE depot (T-00000524, T-00000556,
+#    T-00000559, T-00000560, L-00000345, L-00000347, L-00000368) et ne lit rien
+#    a l'execution — zero `fetch`. C'est un INSTANTANE, deja perime a l'ecriture
+#    puisqu'il montre T-00000560 « en cours » alors que la tache est close. Sans
+#    cette ligne elle VOYAGERAIT — `docs/` n'est plus fige en bloc depuis le
+#    2026-08-23, donc un fichier a la racine de `docs/` part par defaut — et un
+#    adoptant recevrait un tableau de bord affichant les taches d'un autre, avec
+#    l'aplomb d'un livrable. `is_state_bearing` ne l'attrape pas : sa definition
+#    porte sur les marqueurs d'identite machine, pas sur des identifiants de
+#    board (verifie le 2026-09-12, il rend False y compris sur un plan de
+#    `docs/tasks/`).
+#  * `docs/PROMPT-refonte-packaging-cadre.md` — le prompt source du chantier de
+#    refonte, cite par `PLAN-ETAT.md`. Doc interne de CE chantier, meme famille
+#    que `docs/interne/` juste au-dessus.
+strip: docs/interne/
+strip: docs/HISTORIQUE-0.1.0.md
+strip: docs/governance.html
+strip: docs/PROMPT-refonte-packaging-cadre.md
+# LES DOCUMENTS D'ARC DE LA REFONTE — délibération INTERNE, ~2 400 lignes, sans
+# aucune valeur pour l'adoptant et porteurs d'identifiants de tâches du kit.
+# POURQUOI CETTE RÈGLE EXISTE, mesuré le 2026-09-19 : `docs/tasks/` est `keep:`
+# (voir plus bas) alors que la spec qu'ils décrivent est `strip:` ci-dessus.
+# L'adoptant recevait donc la DÉLIBÉRATION sur un fichier qu'il n'a pas — et
+# quand ces documents portaient une attribution de tâche fausse (`T-00000622`
+# au lieu de `T-00000665`, corrigé par `S-00001605`), c'est la FAUTE qui
+# voyageait pendant que la surface fautive restait ici. Inversion exacte de ce
+# qu'on veut. Le préfixe couvrait `-A`, `-B`, `-C`, `-D` et `-DIFF`.
+#
+# CES DEUX RÈGLES ONT ÉTÉ RETIRÉES LE 2026-09-20, et il faut dire pourquoi
+# plutôt que de laisser un lecteur croire à un relâchement : les cinq documents
+# d'arc ont été DÉPLACÉS sous `docs/interne/chantier/arcs/`, et `docs/interne/`
+# est déjà `strip:` en bloc quelques lignes plus haut. Le résultat pour
+# l'adoptant est INCHANGÉ — il ne les reçoit toujours pas — mais il tient
+# désormais par UNE règle de répertoire au lieu de DEUX règles de préfixe qu'il
+# aurait fallu rallonger à chaque arc neuf.
+#
+# CE QUE CE COMMENTAIRE A AFFIRMÉ À TORT, corrigé par le binôme de clôture : on
+# lisait ici qu'une règle `strip:` sans correspondance serait « un désarmement
+# silencieux ». **FAUX, et l'outil dit le contraire** — `sync_template.py:118-120` :
+# « a `strip` rule that matches nothing is not an error (it is normal for a
+# prophylactic rule to guard against something that has not happened yet) and
+# gets one quiet summary line, never a warning ». Ce dépôt en garde d'autres à
+# dessein (`strip: .gemini/backups/`). Les laisser aurait donc été SANS EFFET,
+# pas dangereux. On les retire pour REDONDANCE, rien de plus.
+#
+# ET LA COMMANDE QUI NE PROUVE RIEN ICI : `sync_template.py --check --source
+# <branche>` lit `.template-exclude` au sha de la source, JAMAIS depuis le disque
+# (`:107`, `:296-300`).
+# Sur cette branche il rend le même verdict que ce fichier soit édité ou vidé.
+# Ce qui prouve que l'adoptant est indemne, c'est que AUCUN des 27 fichiers
+# déplacés n'existe sur `template/starter-kit` — mesuré fichier par fichier.
+strip: checks.manifest.json
+strip: PLAN-ETAT.md
+strip: PLAN-ETAT-DETAIL.md
+
+# S-00004099 (ordre pilote) — LA DISTRIBUTION DU KIT NE VOYAGE PAS PAR LA TEMPLATE.
+# `pyproject.toml` déclare la distribution `cadre-kit` (wheel, entry point `cadre`).
+# C'est le manifeste du PRODUIT installable que CE dépôt fabrique : un adoptant ne
+# fabrique pas `cadre-kit`. Reçu par la template, il ferait de chaque projet adoptant
+# un paquet `cadre-kit` 0.1.0.dev0 — son nom, sa version, son entry point — et
+# `module_discovery.py` le rangerait dans la famille `python` sans qu'il l'ait voulu.
+# Un fichier, pas un répertoire : pas de `/` final. AUCUN BANC N'EST STRIPPÉ AVEC
+# LUI, et c'est mesuré (arbre adoptant reconstruit, pytest entier) : les bancs qui
+# le lisent ont tous un sujet qui voyage (`src/cadre`, le contrat). Hors du kit,
+# seuls les arms qui lisent CE manifeste se sautent, en le disant, quand
+# `pyproject.toml` ne déclare pas `cadre-kit` — absent, ou celui de l'adoptant
+# (`test_cadre_package.py`, `test_contract_index.py`) ; dans le kit ils restent
+# exigeants. `test_template_hygiene.py` le classe `kit-only` et rougit s'il repart.
+strip: pyproject.toml
+
+# T-00000991 — LA COMMANDE DE RELEASE DU KIT NE VOYAGE PAS. `scripts/release.sh`
+# et son point d'entrée `Makefile` (`make check`, `make release`) fabriquent la
+# release de CE dépôt : ils lisent `checks.manifest.json` et `pyproject.toml`,
+# eux-mêmes `strip:`-és plus haut, et un adoptant ne fabrique pas `cadre-kit`.
+# Son banc part avec eux : chez un adoptant il n'aurait rien à juger.
+# `test_template_hygiene.py` classe `scripts` et `Makefile` `kit-only` et rougit
+# si l'une de ces règles disparaît.
+strip: scripts/
+strip: Makefile
+strip: .agents/evals/test_release_script.py
+
+# own: exists only on the template; never taken, never deleted.
+own: TEMPLATE.md
+# T-00000031: the project-level protected-paths list. `.agents/bin/` must stay
+# writable in THIS repo (the kit maintains itself — every tool there was
+# written by an agent working here) and be protected in a CONSUMER project,
+# where it is vendored code. So the MECHANISM ships from main (all four host
+# guards read the file) and the CONTENT lives only on the template branch.
+# A tracked file on main would block the kit's own maintenance on day one.
+own: .agents/protected-paths.local
+
+# ---------------------------------------------------------------------------
+# D7 audit (T-00000029), after the dashboard chain D2-D5. Result: NO rule was
+# missing. Verified by classifying every tracked path this work introduced
+# against these rules, not by assuming:
+#   - the 7 state paths (board, ledger, specs, index, gates) are stripped by
+#     `.agents/state/`; `state/events/` and `state/local/` are git-ignored on
+#     top of that, so the project's telemetry is covered twice;
+#   - the deliverables travel: bin/dashboard*.py, bin/events.py, .agents/ui/**,
+#     the 4 hosts' hooks, /dash, .gitattributes' merge=union rule;
+#   - docs/ stays frozen, so the template keeps its own usage.html — updating
+#     it for the dashboard is a change to make ON the template branch (that is
+#     what `keep:` is for, not a gap).
+# What the audit DID find is not a rule problem: a tracked fixture of real
+# captured telemetry carried the pilot's absolute path (OS username + employer)
+# into the distributable. L-025 said a human reading the sync diff was the only
+# detector; that human had reviewed the file and missed it. So the detector is
+# now a test: `.agents/evals/test_template_hygiene.py` asserts both halves —
+# nothing stateful travels, and nothing travelling names a real person. It
+# derives the CURRENT machine's markers at runtime, so it also catches the next
+# contributor's leak rather than only the one already fixed.
+# ---------------------------------------------------------------------------

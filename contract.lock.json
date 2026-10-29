@@ -1,0 +1,558 @@
+{
+  "$comment": [
+    "LE CONTRAT PUBLIC DU KIT CADRE — forme machine. Phase 0bis de T-012.",
+    "",
+    "La doctrine, la justification de CHAQUE promotion et la politique de version",
+    "sont dans docs/contrat/CONTRAT-v0.md. Ce fichier est ce que les checks",
+    "lisent : contract_diff (coherence et unicite en 0bis, introspection de la CLI",
+    "reelle a partir de la Phase 1) et check_changelog_contract.",
+    "",
+    "LA REGLE ET LE CHECK. La regle est politique_version.en_0_x : en 0.x, une",
+    "suppression OU un changement d'entree exige une entree au CHANGELOG, rubrique",
+    "Contrat, ET au moins une montee de mineure de version_contrat ; un correctif",
+    "(0.y.Z) n'ajoute, ne change ni ne retire aucune entree. Le check en tient",
+    "moins : il compare ce fichier a son commit precedent, refuse qu'un element",
+    "quitte `public` sans etre nomme dans la rubrique Contrat, et qu'un element",
+    "`public` apparaisse, disparaisse ou change de type ou de statut sans montee",
+    "de mineure. Un changement qui laisse l'element `public` n'a pas a y etre",
+    "nomme pour passer, et la jambe 1.0 (bump majeur) n'est pas cablee.",
+    "",
+    "PRINCIPE DE PARCIMONIE. Ce qui n'a pas BESOIN d'etre public reste NOYAU. Une",
+    "promotion se justifie par ecrit ou elle n'a pas lieu : un contrat trop large",
+    "est une promesse qu'on ne peut plus tenir a la version 1.0.",
+    "",
+    "STATUTS. `public` = promis ; en 0.x, il ne se retire ni ne change qu'avec une",
+    "entree CHANGELOG rubrique Contrat ET une montee de mineure (jamais par un",
+    "correctif) ; a partir de 1.0, une suppression exige un bump majeur.",
+    "`reserve` = le NOM est pris et ne sera pas reutilise pour",
+    "autre chose, l'implementation n'existe pas. `deprecie` = encore la, part au",
+    "prochain majeur, avec sa date et son remplacant."
+  ],
+  "version_contrat": "0.6.0",
+  "politique_version": {
+    "premiere_release": "0.1.0",
+    "passage_1_0": "decision explicite du pilote, jamais par accumulation",
+    "en_0_x": "une suppression ou un changement d'entree exige une entree au CHANGELOG, rubrique Contrat, et au moins une montee de mineure de version_contrat ; un correctif (0.y.Z) n'ajoute, ne change ni ne retire aucune entree",
+    "a_partir_de_1_0": "une suppression exige un bump majeur"
+  },
+  "elements": [
+    {
+      "element": "cadre",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "L'entry point console. Implemente en Phase 1."
+    },
+    {
+      "element": "cadre init",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Additif et idempotent. Ecrit les declarations natives delimitees, genere les defs de base, ecrit kit.lock. Phase 3."
+    },
+    {
+      "element": "cadre init --upgrade",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Regenere les fichiers marques cadre.managed, ignore les non marques, SIGNALE les marques modifies. Phase 3bis."
+    },
+    {
+      "element": "cadre hook",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "IMPLEMENTE en Phase 3, donc PROMU de `reserve` a `public` dans le meme commit (T-00000862). Le point d'entree des gardes, la commande que les declarations natives appellent : `cadre hook <evenement> --host <hote>`, le payload sur stdin, un objet JSON en UTF-8 strict (un BOM est refuse). Tout refus, d'une garde ou du repartiteur (payload illisible ou qui n'est pas un objet, evenement hors du verrou, evenement que le registre de l'hote ne declare pas, garde en faute — elle leve quoi que ce soit, SystemExit compris, ou rend autre chose que rien ou un refus —, table des gardes en faute, entree standard illisible ; la raison d'une faute nomme son type, jamais son message), sort par le canal de l'hote que fixe contrat-hook:refus-par-hote : claude, la raison sur stderr et code 2, stdout vide ; codex, gemini, copilot, kimi, l'enveloppe hookSpecificOutput.permissionDecision deny sur stdout et code 0, hookEventName portant le nom canonique (l'argument recu pour un evenement inconnu), copilot recevant en plus les cles plates permissionDecision et permissionDecisionReason ; pour kimi l'enveloppe est rendue, son honneur par l'hote n'est pas mesure. `--host` absent ou hors liste, ou une option inconnue : code 2, par la ligne de commande. Refus honore sur PreToolUse chez claude et codex (mesures), copilot en dossier approuve ; gemini et antigravity inertes-mesures ; kimi non mesure ; autres evenements : forme rendue, effet non mesure."
+    },
+    {
+      "element": "cadre hosts",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "list, add, remove. `remove` ne retire que ce qui est marque et ne touche jamais l'etat d'equipe. Phase 3."
+    },
+    {
+      "element": "cadre doctor",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Diagnostic. Nomme chaque defaut plutot que de rendre un booleen. Phase 6."
+    },
+    {
+      "element": "cadre dashboard",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Sert le tableau de bord hors ligne, assets empaquetes. Phase 5."
+    },
+    {
+      "element": "cadre uninstall",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Retire declarations et agents marques ; annonce ce qui subsiste ; ne touche JAMAIS l'etat d'equipe sans confirmation. Phase 6."
+    },
+    {
+      "element": "cadre --version",
+      "type": "cli",
+      "introduit_en": "1",
+      "statut": "public",
+      "note": "AJOUTE au verrou le 2026-09-12, et sa premiere redaction a DEVANCE LA SPEC : elle annoncait « le critere de sortie de la Phase 1 — repondre en editable comme en installe », or docs/PROMPT-refonte-packaging-cadre.md:207 borne ce critere a « le kit tourne depuis un repertoire arbitraire, racines deplacees par variables d'environnement », sans un mot sur editable ni installe. La clause « installe » est nee de CETTE note, pas du plan, et le banc qui pretend la tenir ne joue que le mode source (T-00000573). Corrige le 2026-09-12. L'element etait livre sans aucune entree au contrat, ni `public` ni `reserve`. Rend `cadre.__version__` sur une ligne, code 0."
+    },
+    {
+      "element": "cadre paths",
+      "type": "cli",
+      "introduit_en": "1",
+      "statut": "public",
+      "note": "AJOUTE au verrou le 2026-09-12, meme motif que `cadre --version` : commande REELLE, livree, documentee « sortie machine », et absente du contrat. Affiche les racines resolues. `--json` rend un objet a SCHEMA FIXE — PKG_ROOT, CONFIG_HOME, STATE_HOME, PROJECT_ROOT, AGENTS_DIR, STATE_PROJECT, erreur — TOUJOURS les sept cles : c'est le contrat, une cle non resolue vaut `null` et jamais une absence. Code 1 quand une racine manque, 0 sinon."
+    },
+    {
+      "element": "cadre config explain",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "IMPLEMENTE en Phase 1, donc PROMU de `reserve` a `public` dans le meme commit — un nom qui fait quelque chose et reste `reserve` fait mentir le verrou dans l'autre sens. Dit d'ou vient la valeur effective d'une cle dans la precedence embarque < utilisateur < hote < projet, ET ce qu'elle RECOUVRE : cette seconde moitie est celle qui repond a « pourquoi mon changement ne prend pas »."
+    },
+    {
+      "element": "cadre disarm",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Desarme un levier et TRACE. Contrepartie de la doctrine « tout arme par defaut » posee par le pilote le 2026-09-12."
+    },
+    {
+      "element": "cadre lessons",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "ESPACE DE NOMS RESERVE, non implemente. Reserve pour que le nom ne serve pas a autre chose le jour ou la capitalisation distante arrive. UNE feuille en sort : `cadre lessons promote` est publique et reelle ; l'espace lui-meme reste reserve (spec:282, jamais l'espace entier)."
+    },
+    {
+      "element": "cadre lessons promote",
+      "type": "cli",
+      "introduit_en": "2",
+      "statut": "public",
+      "note": "Promotion humaine revue (T-00000647). Transitionne une forme generalisee en attente vers l'etat d'equipe versionne : un fichier JSON par lecon (.agents/state/lessons/<ulid>.json), cles triees, LF, ecrit AVANT le commit, sans reseau. Tout refus sort en 2 avec sa cause, sans traceback. L'ESPACE `cadre lessons` reste reserve (spec:282). Phase 2."
+    },
+    {
+      "element": "cadre remote",
+      "type": "cli",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "ESPACE DE NOMS RESERVE, non implemente. Meme raison."
+    },
+    {
+      "element": "cadre tasks",
+      "type": "cli",
+      "introduit_en": "3",
+      "statut": "reserve",
+      "note": "POINT D'ENTREE ADOPTANT RESERVE, non implemente : le board, pilote aujourd'hui par .agents/bin/tasks.py. Ajoute au verrou pendant la Phase 3 (LOT-3) : introduit_en suit le moment de l'edition du verrou, jamais la livraison (T-00000626, S-00001601). La phase qui l'APPORTE est celle qu'annonce `cadre tasks` a l'appel, et cette note finit par elle. Phase 4."
+    },
+    {
+      "element": "cadre ledger",
+      "type": "cli",
+      "introduit_en": "3",
+      "statut": "reserve",
+      "note": "POINT D'ENTREE ADOPTANT RESERVE, non implemente : la memoire institutionnelle, pilotee aujourd'hui par .agents/bin/ledger.py ; distincte du magasin de lecons, qui releve de `cadre lessons`. Ajoute au verrou pendant la Phase 3 (LOT-3) : introduit_en suit le moment de l'edition du verrou, jamais la livraison (T-00000626, S-00001601). La phase qui l'APPORTE est celle qu'annonce `cadre ledger` a l'appel, et cette note finit par elle. Phase 4."
+    },
+    {
+      "element": "cadre specs",
+      "type": "cli",
+      "introduit_en": "3",
+      "statut": "reserve",
+      "note": "POINT D'ENTREE ADOPTANT RESERVE, non implemente : les checkpoints par tache, pilotes aujourd'hui par .agents/bin/specs.py. Ajoute au verrou pendant la Phase 3 (LOT-3) : introduit_en suit le moment de l'edition du verrou, jamais la livraison (T-00000626, S-00001601). La phase qui l'APPORTE est celle qu'annonce `cadre specs` a l'appel, et cette note finit par elle. Phase 4."
+    },
+    {
+      "element": "hook:SessionStart",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par les six hotes dans les cinq registres du kit (celui de Gemini CLI et Antigravity, .agents/hooks.json, n'est PAS charge par Gemini CLI : G0) — c'est la DECLARATION qui est relevee, pas le declenchement runtime, dont la couverture reelle est 3 mesures / 0 herite / 1 suppose / 2 inertes-mesures. Universel."
+    },
+    {
+      "element": "hook:PreToolUse",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par les six hotes dans les cinq registres du kit (celui de Gemini CLI et Antigravity, .agents/hooks.json, n'est PAS charge par Gemini CLI : G0) — c'est la DECLARATION qui est relevee, pas le declenchement runtime, dont la couverture reelle est 3 mesures / 0 herite / 1 suppose / 2 inertes-mesures. Le seul evenement que les cinq registres declarent BLOQUANT ; inerte sur Gemini CLI (G0, G1c) et sur Antigravity (charge toolCall)."
+    },
+    {
+      "element": "hook:PostToolUse",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par les six hotes dans les cinq registres du kit (celui de Gemini CLI et Antigravity, .agents/hooks.json, n'est PAS charge par Gemini CLI : G0) — c'est la DECLARATION qui est relevee, pas le declenchement runtime, dont la couverture reelle est 3 mesures / 0 herite / 1 suppose / 2 inertes-mesures."
+    },
+    {
+      "element": "hook:Stop",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par les six hotes dans les cinq registres du kit (celui de Gemini CLI et Antigravity, .agents/hooks.json, n'est PAS charge par Gemini CLI : G0) — c'est la DECLARATION qui est relevee, pas le declenchement runtime, dont la couverture reelle est 3 mesures / 0 herite / 1 suppose / 2 inertes-mesures. Copilot l'epelle `agentStop`."
+    },
+    {
+      "element": "hook:SubagentStop",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par les six hotes dans les cinq registres du kit (celui de Gemini CLI et Antigravity, .agents/hooks.json, n'est PAS charge par Gemini CLI : G0) — c'est la DECLARATION qui est relevee, pas le declenchement runtime, dont la couverture reelle est 3 mesures / 0 herite / 1 suppose / 2 inertes-mesures."
+    },
+    {
+      "element": "hook:PreCompact",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par les six hotes dans les cinq registres du kit (celui de Gemini CLI et Antigravity, .agents/hooks.json, n'est PAS charge par Gemini CLI : G0) — c'est la DECLARATION qui est relevee, pas le declenchement runtime, dont la couverture reelle est 3 mesures / 0 herite / 1 suppose / 2 inertes-mesures."
+    },
+    {
+      "element": "hook:SessionEnd",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par Claude Code SEUL. Un hote sans lui est `assiste` pour les gates qui s'y ancrent."
+    },
+    {
+      "element": "hook:PostCompact",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par Claude Code SEUL."
+    },
+    {
+      "element": "hook:SubagentStart",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par Claude Code SEUL."
+    },
+    {
+      "element": "hook:Notification",
+      "type": "evenement",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "DECLARE par Claude Code SEUL."
+    },
+    {
+      "element": "contrat-hook:payload-stdin-json",
+      "type": "protocole",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Le payload arrive en JSON sur stdin."
+    },
+    {
+      "element": "contrat-hook:verdict-stdout-json",
+      "type": "protocole",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "LIMITE AUX HOTES A ENVELOPPE (Codex, Gemini/Antigravity, Copilot). La revue croisee du 2026-09-12 a MESURE que la premiere redaction etait FAUSSE sur l'hote de reference : les refus Claude Code sortent en texte sur stderr avec exit 2 et n'ecrivent pas un octet sur stdout (protect-paths.sh, safe-bash.sh, audit-gate.sh). Un adoptant qui aurait suivi la promesse aurait emis un JSON que ce refus n'utilise pas, et son edition serait passee en silence."
+    },
+    {
+      "element": "contrat-hook:refus-par-hote",
+      "type": "protocole",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "LA FORME DU REFUS DEPEND DE L'HOTE, et c'est cet element qui fait foi. Claude Code : stderr + exit 2, le seul canal MESURE de bout en bout. Codex, Gemini/Antigravity, Copilot : permissionDecision deny + exit 0. Kimi : NON MESURE — kickoff_guard ne le connait pas comme hote a enveloppe alors que son impl partagee lui rend exit 0. Marqueur absent : les DEUX canaux."
+    },
+    {
+      "element": "AGENTS_HOOK_HOST",
+      "type": "variable",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Selectionne la branche de refus par hote, et elle est citee dans les cinq fichiers de declaration native (Antigravity partage celui de Gemini) : c'est deja un contrat de fait. Le compte d'usages de la premiere redaction, irreproductible, est retire."
+    },
+    {
+      "element": "CADRE_CONFIG_HOME",
+      "type": "variable",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Racine de configuration de l'utilisateur ; a defaut, XDG_CONFIG_HOME puis ~/.config/cadre. PROMUE de `reserve` a `public` le 2026-09-12 : elle est LUE par paths.config_home() depuis la Phase 1, et la regle que ce verrou s'ecrit a lui-meme pour `cadre config explain` — un nom qui fait quelque chose et reste `reserve` fait mentir le verrou dans l'autre sens — n'avait pas ete appliquee aux variables livrees dans le MEME commit (66d15fd)."
+    },
+    {
+      "element": "CADRE_STATE_DIR",
+      "type": "variable",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Racine d'etat MACHINE, hors depot ; a defaut, XDG_STATE_HOME puis ~/.local/state/cadre. PROMUE de `reserve` a `public` le 2026-09-12, meme motif que CADRE_CONFIG_HOME : LUE par paths.state_home() depuis la Phase 1."
+    },
+    {
+      "element": "CADRE_PROJECT_ROOT",
+      "type": "variable",
+      "introduit_en": "1",
+      "statut": "public",
+      "note": "Force la racine de projet, PREMIERE branche de paths.project_root() — devant la racine git et devant la remontee de marqueur. AJOUTEE au verrou le 2026-09-12 : elle etait LUE par le noyau et absente du contrat, donc un adoptant qui la decouvrait n'avait aucune promesse et un mainteneur qui la retirait ne cassait rien de declare. C'est la porte de sortie des bancs, qui pointent un arbre temporaire sans dependre du repertoire courant. SEMANTIQUE PRECISEE le 2026-09-21 (T-00000674, decision pilote S-00001650) : pour un repertoire EXISTANT, la graphie n'est plus conservee telle que tapee — project_root la canonicalise vers la graphie du DISQUE par identite (st_dev, st_ino), donc UNE seule partition d'etat quelle que soit la casse tapee et quelle que soit la branche — branche git incluse, y compris la sortie de git rev-parse sous GIT_WORK_TREE, tenue par le temoin test_la_branche_git_canonicalise_AUSSI_quand_git_rend_une_autre_graphie ; pour un chemin INEXISTANT, la graphie tapee est conservee (canonicalisation non stricte). AUCUNE MIGRATION n'est faite. Borne aujourd'hui par l'absence de consommateur de state_project (checks.manifest.json) — mais STATE_PROJECT est une sortie machine publique (cli.py:190, contract.lock:96) : la partition d'une MEME valeur de $CADRE_PROJECT_ROOT CHANGE quand le repertoire nait sous une autre graphie (clone, archive, git worktree add), et une partition ecrite AVANT ce lot sous la graphie tapee devient ORPHELINE. BORNE WINDOWS NON MESUREE, recopiee : resolve() y rend la casse du disque pour un chemin existant, donc le repli y a peut-etre lieu DE FAIT."
+    },
+    {
+      "element": "NVD_API_KEY",
+      "type": "variable",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Rafraichissement de la base OWASP Dependency-Check. Documente dans README-SECURITY-SCAN-SETUP.md."
+    },
+    {
+      "element": "NVD_DATA_DIR",
+      "type": "variable",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Base pre-chargee, le chemin hors ligne."
+    },
+    {
+      "element": "NVD_OFFLINE",
+      "type": "variable",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Force le mode hors ligne du scan de dependances."
+    },
+    {
+      "element": ".agents/",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "LE NOM EST UN CONTRAT (decision D2). Aucun renommage : PROJECT_ROOT le resout."
+    },
+    {
+      "element": ".agents/state/board/TASKS.json",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Le board. Pilote UNIQUEMENT par tasks.py, jamais edite a la main. DEUX FORMES depuis le contrat 0.2.0 : ce fichier OU le dossier .agents/state/board/tasks/ (et epics/), un fichier par enregistrement ; un board neuf nait monolithe ; les deux formes a la fois sont refusees par nom a l'ecriture (tasks.py) et par plan_pool, plan_waves, check-stale-justification et les gardes de plan (plan_cible, plan_depends) quand elles lisent le board."
+    },
+    {
+      "element": ".agents/state/memory/LEDGER.json",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "La memoire institutionnelle, source de verite (D6). DEUX FORMES depuis le contrat 0.2.0 : ce fichier OU le dossier .agents/state/memory/entries/, un fichier par entree ; un ledger neuf nait monolithe ; les deux formes a la fois sont refusees par nom a l'ecriture (ledger.save) ; a la lecture, ledger.load ne les lit que si elles portent les memes entrees, sinon refus nomme."
+    },
+    {
+      "element": ".agents/state/specs/SPECS.json",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Les points de controle machine par tache. DEUX FORMES depuis le contrat 0.2.0 : ce fichier OU le journal .agents/state/specs/SPECS.jsonl, une entree par ligne, append-only, protege comme lui ; un journal neuf nait monolithe, les deux formes a la fois sont refusees par nom, `specs.py migrate --apply` replie l'une dans l'autre."
+    },
+    {
+      "element": ".agents/hooks/<hote>/<evenement>",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Surcharge de hook adoptant, consultee AVANT le comportement par defaut. Phase 3."
+    },
+    {
+      "element": ".agents/kit.lock",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "JSON format 1, trois cles triees LF : version_contrat (cle du lockstep, SemVer), version_kit (informative, PEP 440), version_format. Sera ecrit par cadre init (reserve) ; la comparaison releve de la Phase 4bis. Commite, il voyage avec les valeurs du kit. Hotes actives, niveau et checksums des definitions : format 2, hors ce lot."
+    },
+    {
+      "element": ".agents/state/gates/",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Les marqueurs d'armement, et leur POLARITE N'EST PAS UNIFORME — la premiere redaction disait « leur presence arme », faux sur trois des cinq. KICKOFF_REQUIRED et UI_GATE.local : la presence ARME une garde. AUDIT_LOG et NIGHT_HEADLESS.allow : la presence AUTORISE, ce sont des listes blanches et l'absence refuse. GITLEAKS_FALLBACK.off : la presence DESARME le repli, polarite inversee. Corrige le 2026-09-12 apres la revue de cloture."
+    },
+    {
+      "element": "format:def-agent",
+      "type": "format",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "UN FICHIER PAR AGENT, DANS LE FORMAT NATIF DE L'HOTE — Markdown pour Claude, Gemini, Copilot et Kimi ; TOML pour Codex. MESURE le 2026-10-25 : 140 .md et 35 .toml, soit 175 fichiers pour 35 roles. L'adoptant depose les siens A COTE, sans declaration."
+    },
+    {
+      "element": "format:frontmatter-cadre-managed",
+      "type": "format",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "cadre.managed, version, checksum. C'est le checksum que check_socle_integrity verifie. Phase 3bis."
+    },
+    {
+      "element": "format:lecon",
+      "type": "format",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "RESERVE, corrige le 2026-09-12 apres la revue croisee. LEDGER.json porte aujourd'hui category, created, id, related, status, tags, text, title — NI portee, NI origine, NI statut de partage, NI forme generalisee. La Phase 2 cree ces champs. Promettre la forme avant qu'elle existe invitait un adoptant a outiller du vide."
+    },
+    {
+      "element": "format:gate-declaratif",
+      "type": "format",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "Commande, code de retour, seuils, bloquant ou non. Insertion a ancrages nommes seulement. Phase 3bis."
+    },
+    {
+      "element": "core-scripts/verify.sh",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "LA PORTE, et elle voyage. `--at` ancre le verdict a un SHA ; `--linux` rejoue la jambe conteneur. Les deux sont ORTHOGONAUX et voyagent ensemble avant un push."
+    },
+    {
+      "element": "workflow:kickoff",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "La pipeline sur une tache. `/kickoff` sur Claude Code, `$kickoff` ailleurs."
+    },
+    {
+      "element": "workflow:audit",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Audit securite multi-module."
+    },
+    {
+      "element": "workflow:index",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Reconstruction de l'index."
+    },
+    {
+      "element": "workflow:skills-sync",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Resolution des skills de la stack detectee."
+    },
+    {
+      "element": "workflow:docs-sync",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Curation de docs/tech/."
+    },
+    {
+      "element": "workflow:specs-sync",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Synchronisation de docs/specs/ avec le store V3."
+    },
+    {
+      "element": "workflow:planning",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Pool de plans prets."
+    },
+    {
+      "element": "workflow:planning-all",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Lot ordonne : ferme le perimetre sur depends_on, planifie vague par vague, rend UNE ligne a taper."
+    },
+    {
+      "element": "workflow:dash",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Tableau de bord local."
+    },
+    {
+      "element": "workflow:lang",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Tracage Langfuse et OpenTelemetry."
+    },
+    {
+      "element": "workflow:night",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "CLAUDE CODE SEUL. Refuse ailleurs par une ligne EXACTE, citee telle quelle."
+    },
+    {
+      "element": "workflow:jira",
+      "type": "commande",
+      "introduit_en": "3",
+      "statut": "public",
+      "note": "Verification Jira en lecture seule ; la configuration reste au terminal du pilote."
+    },
+    {
+      "element": "workflow:setup",
+      "type": "commande",
+      "introduit_en": "3",
+      "statut": "public",
+      "note": "Preparation du projet depuis l'assistant ; les questions et le jeton restent au terminal du pilote."
+    },
+    {
+      "element": "dashboard:hors-ligne",
+      "type": "surface",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "RESERVE : les assets ne sont pas encore empaquetes et la migration des acces directs est la Phase 5. La tracabilite hors ligne n'est pas tenue aujourd'hui."
+    },
+    {
+      "element": "niveau-hote:enforce",
+      "type": "surface",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "RESERVE : definition et regle de classement a la section 3.10 de CONTRAT-v0.md ; .agents/vendor/cadre/data/capacites_hotes.json classe chaque hote, aucune commande ne la lit."
+    },
+    {
+      "element": "niveau-hote:assiste",
+      "type": "surface",
+      "introduit_en": "0bis",
+      "statut": "reserve",
+      "note": "RESERVE : meme raison. La mention « mode assiste » n'est affichee nulle part ; ce qu'un hote assiste devient a l'activation n'est pas tranche (section 3.10)."
+    },
+    {
+      "element": ".agents/skills/",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "SOUS-PROMESSE CORRIGEE le 2026-09-12 : AGENTS.md dit ce repertoire DECOUVERT NATIVEMENT par Codex, Gemini et Copilot. ANTIGRAVITY EN EST L'EXCEPTION — son repertoire est <workspace>/.agent/skills/, au SINGULIER, et .agents/skills/ n'y est PAS supporte ; les skills l'atteignent par CHEMIN depuis GEMINI.md. Sans entree au contrat, la Phase 1 pouvait le deplacer et casser trois hotes sans un seul rouge. L'adoptant y depose AUSSI les siennes."
+    },
+    {
+      "element": ".claude/skills/",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Deuxieme surface de skills, lue par Claude Code ET par Copilot. Meme raison : l'adoptant y ajoute les siennes."
+    },
+    {
+      "element": ".github/skills/",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Troisieme surface de skills de Copilot, mesuree. Un nom duplique entre les trois est une collision de precedence NON DOCUMENTEE."
+    },
+    {
+      "element": ".github/instructions/",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "Surface d'instruction Copilot, editee par l'adoptant."
+    },
+    {
+      "element": ".agents/protected-paths.local",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "L'EXTENSION ADOPTANT des chemins proteges, lue par les gardes des quatre hotes. Suivie sur la branche template, jamais sur main."
+    },
+    {
+      "element": ".gitleaks.toml",
+      "type": "format",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "gitleaks-scan.sh dicte a l'adoptant la forme TOML exacte de son allowlist. La forme est donc deja un contrat de fait ; la taire laissait la Phase 2 libre de la changer sous lui."
+    },
+    {
+      "element": ".githooks/pre-push",
+      "type": "commande",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "La garde de push VOYAGE — aucune regle dans .template-exclude, donc polarite TAKE, et le banc d'hygiene classe le segment `product`. L'adoptant l'installe par core.hooksPath."
+    },
+    {
+      "element": ".agents/state/gates/GITLEAKS_FALLBACK.off",
+      "type": "arborescence",
+      "introduit_en": "0bis",
+      "statut": "public",
+      "note": "L'EXTINCTEUR DU REPLI GITLEAKS, et le seul marqueur du kit dont la PRESENCE DESARME. Lu par .agents/security/gitleaks-scan.sh. Nomme au contrat parce qu'une polarite inversee non ecrite est exactement ce qu'un adoptant applique a l'envers."
+    }
+  ]
+}

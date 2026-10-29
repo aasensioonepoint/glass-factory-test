@@ -1,0 +1,33 @@
+# CHRONO DU TOUR DE PLAN — ARMÉ PAR DÉFAUT chez l'adoptant : sa seule PRÉSENCE l'arme.
+# Ce que la présence arme : `specs.py add` refuse (rc 2) un verdict de boucle
+# titré `plan-critic …` dont le texte ne porte pas le chrono du tour,
+# `chrono: planner=<durée>/<jetons> plan-critic=<durée>/<jetons>` ; un champ
+# présent mais illisible est refusé, armé ou non. `specs.py chrono` relit ces
+# champs : tours, durée et jetons par tâche, médiane et p90.
+# Sur Claude Code, l'hôte rend l'agentId de chaque agent : l'exécuteur passe
+# `--chrono-aid planner=<agentId> --chrono-aid plan-critic=<agentId>` et
+# `specs.py` écrit le champ depuis le journal des hooks ; un aid inconnu ou sans
+# fin mesurée est refusé, jamais remplacé par une valeur nulle.
+# Sortie tracée : `specs.py add … --sans-chrono "<pourquoi>"` ; la raison
+# rejoint le texte de l'entrée, VISIBLE dans l'entrée (`specs.py list`). Quand
+# l'utiliser : un hôte qui ne donne pas ces chiffres, motif
+# `hôte sans trace : <hôte>`, quand le champ n'est pas écrit à la main.
+# Désarmer = retirer ce fichier, geste du pilote du projet.
+#
+# Statut par hôte et par garde, relevé 2026-10-19 (table des autres gardes,
+# datée : README-OTHER-HOSTS.md, section couverture par hôte) — chrono du tour :
+#   MESURÉ : le refus de `specs.py add`, code commun à tout hôte, par ses bancs.
+#   CÂBLÉ : Claude Code (`--chrono-aid`, journal écrit par SubagentStart et SubagentStop).
+#   NON CÂBLÉ : Codex, GitHub Copilot, Gemini CLI, Kimi Code, Antigravity — aucun
+#   agentId : champ `chrono:` écrit à la main, ou `--sans-chrono`.
+#   SUPPOSÉ : l'émission réelle du journal par Claude Code chez l'adoptant, non
+#   mesurée à ce relevé.
+#
+# Protection : ce fichier (graine dans le dépôt du kit, marqueur chez
+# l'adoptant) est protégé PAR SON NOM — Edit/Write et redirection shell sont
+# refusés ; `cp`, `sed -i`, `tee`, `python3 -c` NE le sont PAS. Couverture
+# partielle, comme les autres marqueurs : la protection empêche l'OUBLI, pas la
+# triche (mesuré sur 3 familles de hooks par charges synthétiques ; câblé sur
+# Kimi Code, GitHub Copilot, Antigravity ; émission hôte NON mesurée).
+# Canaux actuels : copie de la branche template ou d'un checkout du kit ;
+# `cadre init` (nom réservé) ne sème rien.

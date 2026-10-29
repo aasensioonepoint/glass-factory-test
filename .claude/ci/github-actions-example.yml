@@ -1,0 +1,17 @@
+# Example workflow — copy to .github/workflows/claude-analyze.yml
+# Requires ANTHROPIC_API_KEY secret. Traces flow to Langfuse if /lang was configured
+# via env vars in the runner (LANGFUSE_* + hook, or the observability plugin).
+name: claude-pr-analysis
+on: [pull_request]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: bash .claude/ci/pr-analyze.sh "origin/${{ github.base_ref }}...HEAD" > analysis.json
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with: { name: claude-analysis, path: analysis.json }

@@ -1,0 +1,40 @@
+MIT License
+
+Copyright (c) Vercel Labs
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+PROVENANCE DE CE FICHIER — a lire avant de le citer comme une copie de l'amont.
+
+L'amont, vercel-labs/agent-skills au commit 7c180d9044c9ae2b442b567aad4e42a28dd5ed62,
+DECLARE MIT a deux endroits concordants (README.md section License, et le
+frontmatter `license: MIT` du SKILL.md (ligne 21)) mais ne fournit AUCUN fichier de licence
+et ne NOMME AUCUN TITULAIRE de copyright.
+
+Ce fichier n'est donc PAS une copie d'un fichier amont : c'est le texte canonique
+de MIT, dont la ligne de copyright porte le PROPRIETAIRE DU DEPOT — Vercel Labs —
+et AUCUNE ANNEE, parce que l'amont n'en declare pas et qu'inventer l'une ou
+l'autre serait une affirmation que rien ne soutient.
+
+Le depot frere du meme organisme, vercel-labs/web-interface-guidelines, fournit
+lui un LICENSE portant « Copyright (c) 2025 Vercel Labs » — c'est ce qui rend le
+titulaire retenu ici FONDE plutot que devine, mais l'annee reste non transposee.
+
+`NOTICE`, a cote, porte le releve complet et ses deux emplacements de preuve.

@@ -1,0 +1,78 @@
+{
+  "_doc": "Exemple FICTIF de configuration du runner de deploiement Terraform (.agents/bin/tfdeploy.py ; contrat : docstring du runner ; mode d'emploi : skill terraform-deploy). Copiez ce fichier vers .agents/deploy/targets.json (propre a votre projet, absent du kit), COMMITEZ-LE, puis remplacez les cibles. Il ne porte AUCUN secret, et une cle ou une valeur a forme de secret est refusee (config_secret) ; l'authentification vient de l'environnement (az login, gcloud auth, profil ou variables AWS). Les cles qui commencent par _ sont ignorees. workdir est un sous-dossier dedie (jamais la racine). backend : un backend DISTANT (type + identifiants non secrets, passes en -backend-config a init). Une cible env prod admet plan, drift et verify, jamais apply. Une cible aws exige allowed_account_ids = [account_id] dans chaque bloc provider aws du code. verify : argv en LECTURE seule (az show/list/get-*, gcloud describe/list, aws describe-*/list-*/get-*), expect = chemin JSON pointe -> valeur attendue ; output = nom d'une sortie terraform (une sortie sensible ne se compare jamais).",
+  "targets": [
+    {
+      "name": "exemple-azure-staging",
+      "provider": "azure",
+      "env": "staging",
+      "workdir": "infra/azure",
+      "workspace": "default",
+      "region": "westeurope",
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "subscription_id": "00000000-0000-0000-0000-000000000001",
+      "resource_group": "rg-exemple-staging",
+      "backend": {
+        "type": "azurerm",
+        "resource_group_name": "rg-exemple-tfstate",
+        "storage_account_name": "stexempletfstate",
+        "container_name": "tfstate",
+        "key": "exemple-staging.tfstate",
+        "use_azuread_auth": true
+      },
+      "auth_mode": "cli",
+      "verify": [
+        {
+          "argv": ["az", "group", "show", "--name", "rg-exemple-staging", "--subscription", "00000000-0000-0000-0000-000000000001", "--output", "json"],
+          "expect": {"properties.provisioningState": "Succeeded"}
+        },
+        {
+          "output": "resource_group_name",
+          "expect": {"": "rg-exemple-staging"}
+        }
+      ]
+    },
+    {
+      "name": "exemple-gcp-preprod",
+      "provider": "gcp",
+      "env": "preprod",
+      "workdir": "infra/gcp",
+      "region": "europe-west1",
+      "project_id": "exemple-projet-000",
+      "backend": {
+        "type": "gcs",
+        "bucket": "exemple-tfstate-000",
+        "prefix": "exemple/preprod"
+      },
+      "auth_mode": "adc",
+      "verify": [
+        {
+          "argv": ["gcloud", "projects", "describe", "exemple-projet-000", "--format=json"],
+          "expect": {"lifecycleState": "ACTIVE"}
+        }
+      ]
+    },
+    {
+      "name": "exemple-aws-prod",
+      "provider": "aws",
+      "env": "prod",
+      "workdir": "infra/aws",
+      "region": "eu-west-3",
+      "account_id": "000000000000",
+      "profile": "exemple-prod",
+      "backend": {
+        "type": "s3",
+        "bucket": "exemple-tfstate-000",
+        "key": "exemple/prod.tfstate",
+        "region": "eu-west-3",
+        "use_lockfile": true
+      },
+      "auth_mode": "profile",
+      "verify": [
+        {
+          "argv": ["aws", "sts", "get-caller-identity", "--output", "json"],
+          "expect": {"Account": "000000000000"}
+        }
+      ]
+    }
+  ]
+}

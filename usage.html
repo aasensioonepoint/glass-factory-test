@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Démarrer la Glass Factory</title>
+<meta name="description" content="Installer la Glass Factory, lui décrire sa première tâche et suivre l'usine dans le dashboard.">
+<meta name="theme-color" content="#060810">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-padding-top:90px}
+  body,h1,h2,h3,h4,p,ul,ol,pre,dl,dd,figure{margin:0}
+  :root{
+    --bg:#060810; --s1:#11131F; --s2:#181B2B;
+    --line:rgba(162,148,227,.14); --line2:rgba(162,148,227,.32);
+    --text:#F2F3FA; --muted:#A294E3; --dim:rgba(162,148,227,.6);
+    --accent:#6E6BFF; --accent-d:#4A3FFF; --azure:#88BBFF; --chip:#AFADFE;
+    --human:#F8B432; --ok:#22DDBB; --loop:#BB88FF; --danger:#FF6B7A;
+    --sans:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --ease:cubic-bezier(.2,.8,.2,1);
+    color-scheme:dark;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .glow{position:fixed;z-index:0;pointer-events:none;width:900px;height:900px;border-radius:50%;filter:blur(120px);opacity:.18}
+  .glow.a{background:var(--accent-d);top:-420px;right:-260px}
+  .glow.b{background:#2a1f8f;bottom:-520px;left:-300px;opacity:.22}
+  header,main,footer{position:relative;z-index:1}
+  a{color:var(--azure);text-underline-offset:3px}
+  :focus-visible{outline:2px solid var(--azure);outline-offset:3px;border-radius:6px}
+  code{font-family:var(--mono);font-size:.86em}
+  p code,li code,td code,summary code,span code{background:var(--s2);border:1px solid var(--line);padding:.06em .4em;border-radius:6px;color:var(--chip)}
+  strong{font-weight:600}
+
+  /* En-tête */
+  header{position:sticky;top:0;z-index:30;background:rgba(6,8,16,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .hd{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px}
+  .hd svg.op{height:20px;width:auto}
+  .hd .sep{width:1px;height:20px;background:var(--line2)}
+  .hd b{font-weight:500;letter-spacing:.16em;font-size:14px}
+  .tabs{margin-left:auto;display:flex;gap:4px}
+  .tabs button{font:inherit;font-size:14px;color:var(--muted);background:none;border:1px solid transparent;border-radius:12px;padding:7px 14px;cursor:pointer;transition:all .2s var(--ease)}
+  .tabs button:hover{color:var(--text)}
+  .tabs button[aria-selected="true"]{color:#fff;border-color:var(--accent);background:var(--accent-d);box-shadow:0 0 18px rgba(74,63,255,.45)}
+  @media (max-width:760px){.hd b,.hd .sep{display:none}.tabs button{padding:6px 8px;font-size:12.5px;white-space:nowrap}}
+
+  main{max-width:1080px;margin:0 auto;padding:0 20px 90px}
+
+  /* Hero */
+  .hero{padding:72px 0 30px}
+  .eyebrow{font-size:13px;color:var(--dim);letter-spacing:.04em}
+  .eyebrow span{color:var(--muted)}
+  h1{font-size:clamp(34px,5.4vw,58px);line-height:1.08;font-weight:600;letter-spacing:.01em;margin-top:14px;
+     background:linear-gradient(#fff,#A294E3);-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance}
+  .hero p.lede{color:var(--muted);font-size:18px;margin-top:16px;max-width:36rem}
+  .hero p.lede b{color:var(--text);font-weight:500}
+
+  /* Parcours en 3 stations */
+  .journey{margin-top:40px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+  .journey::after{content:"";position:absolute;left:62.5%;right:12.5%;top:31px;border-top:2px dashed rgba(136,187,255,.55)}
+  .journey::before{content:"";position:absolute;left:12.5%;right:37.5%;top:31px;height:2px;background:linear-gradient(90deg,var(--accent),var(--loop),var(--ok));opacity:.6}
+  .st{text-align:center;padding:0 10px;cursor:pointer;background:none;border:0;color:inherit;font:inherit}
+  .st .orb{width:64px;transition:transform .3s var(--ease),filter .3s;height:64px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:20px;position:relative;
+           background:radial-gradient(circle at 35% 30%,#8E8BFF,var(--accent-d));box-shadow:0 0 0 6px rgba(110,107,255,.12),0 0 40px rgba(110,107,255,.45);transition:transform .3s var(--ease)}
+  .st:nth-child(2) .orb{background:radial-gradient(circle at 35% 30%,#D2B2FF,#7B4BE0);box-shadow:0 0 0 6px rgba(187,136,255,.12),0 0 40px rgba(187,136,255,.45)}
+  .st:nth-child(3) .orb{background:radial-gradient(circle at 35% 30%,#6FF2DA,#0E9C83);box-shadow:0 0 0 6px rgba(34,221,187,.12),0 0 40px rgba(34,221,187,.4)}
+  .st h2,.st p{opacity:.5;transition:opacity .25s var(--ease)}
+  .st .orb{z-index:1;filter:saturate(.45) brightness(.6)}
+  .st:hover h2,.st:hover p,.st[aria-current="step"] h2,.st[aria-current="step"] p{opacity:1}
+  .st:hover .orb,.st[aria-current="step"] .orb{filter:none}
+  .st:nth-child(4) .orb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:1.5px dashed rgba(136,187,255,.6)}
+  .st:nth-child(4) .orb{background:radial-gradient(circle at 35% 30%,#B5D3FF,#3E6FD8);box-shadow:0 0 0 6px rgba(136,187,255,.12),0 0 40px rgba(136,187,255,.4)}
+  .st:hover .orb{transform:translateY(-4px) scale(1.05)}
+  .st[aria-current="step"]{opacity:1}
+  .st[aria-current="step"] .orb{transform:scale(1.18);outline:2px solid #fff;outline-offset:6px}
+  .st .here{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:2px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
+  .st:hover .here{border-color:var(--accent);color:var(--text)}
+  .st[aria-current="step"] .here{background:#fff;color:#0A0C16;border-color:#fff;font-weight:500}
+  .hint{text-align:center;margin-top:22px;font-size:13.5px;color:var(--dim)}
+  /* Suite */
+  .next{margin-top:56px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .next button{font:inherit;cursor:pointer;border-radius:16px;padding:14px 20px;text-align:left;border:1px solid var(--line2);background:var(--s1);color:var(--text);transition:all .2s var(--ease)}
+  .next button small{display:block;font-size:12px;color:var(--muted)}
+  .next button b{font-weight:600;font-size:17px}
+  .next button.fw{margin-left:auto;background:linear-gradient(135deg,var(--accent-d),#7B4BE0);border-color:transparent;box-shadow:0 0 30px rgba(74,63,255,.35)}
+  .next button.fw small{color:rgba(255,255,255,.75)}
+  .next button:hover{transform:translateY(-2px)}
+  .next button.opt{margin-left:auto;border:1.5px dashed rgba(136,187,255,.6);background:none}
+  .next button.opt small{color:var(--azure)}
+  .st h2{font-size:19px;font-weight:600;margin-top:16px}
+  .st p{color:var(--muted);font-size:14px;margin-top:2px}
+  .st code{display:none;font-size:13px;background:var(--s1);border:1px solid var(--line2);color:var(--chip);padding:3px 10px;border-radius:8px}
+  @media (max-width:760px){.journey{grid-template-columns:repeat(2,1fr);gap:26px}.journey::before,.journey::after{display:none}}
+
+  /* Tuto animé */
+  .video{margin-top:28px}
+  .video .vh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .video h2{font-size:20px;font-weight:600}
+  .video .vh span{font-size:13.5px;color:var(--muted)}
+  .video .frame{position:relative;aspect-ratio:16/9;border-radius:20px;overflow:hidden;border:1px solid var(--line2);background:#060810;box-shadow:0 30px 80px rgba(0,0,0,.45),0 0 60px rgba(74,63,255,.15)}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .video .vh span{margin-right:auto}
+  .fs{font:inherit;font-size:13px;color:var(--text);background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:5px 12px;cursor:pointer}
+  .fs:hover{border-color:var(--accent)}
+  .video .frame:fullscreen{aspect-ratio:auto;border-radius:0;border:0}
+  .video .frame:-webkit-full-screen{aspect-ratio:auto;border-radius:0;border:0}
+
+  /* Approbation des hooks Codex */
+  .trust{margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid rgba(248,180,50,.45);background:rgba(248,180,50,.05);font-size:14px;color:var(--muted)}
+  .trust .tt{color:var(--human);font-weight:600;font-size:14.5px}
+  .trust p + p,.trust ul{margin-top:8px}
+  .trust ul{padding-left:18px}
+  .trust b{color:var(--text)}
+  .dlg{margin-top:10px;background:#2B2E38;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.7;display:grid;color:#E6E7F5}
+  .dlg b{font-weight:600}
+  .dlg .y{color:#E3C77B}.dlg .g{color:#8A8F9C;margin-bottom:8px}
+  .dlg .sel{background:#6E8FE0;color:#0A0C16;margin:0 -6px;padding:0 6px;border-radius:4px}
+  .dlg .no{color:#8A8F9C}
+
+  /* Avancé */
+  .adv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media (max-width:820px){.adv{grid-template-columns:minmax(0,1fr)}}
+  .ac{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:18px}
+  .ac.star{border-color:rgba(110,107,255,.5);box-shadow:0 0 30px rgba(110,107,255,.12);grid-column:1/-1}
+  .ac.cc{border-color:rgba(187,136,255,.4)}
+  .ac .sig{font-family:var(--mono);font-size:15.5px;color:var(--text);font-weight:500}
+  .ac .sig em{font-style:normal;color:var(--muted);font-weight:400;font-size:13.5px}
+  .ac p{font-size:14.5px;color:var(--text);margin-top:8px}
+  .ac ul{margin-top:8px;padding-left:18px;font-size:14px;color:var(--muted)}
+  .ac li + li{margin-top:3px}
+  .ac .w{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--chip);border:1px solid var(--line2);border-radius:999px;padding:1px 9px}
+
+  /* En savoir plus */
+  .more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;align-items:start}
+  @media (max-width:820px){.more{grid-template-columns:minmax(0,1fr)}}
+  details.mc{margin:0;background:var(--s1);border:1px solid var(--line);border-radius:18px;transition:border-color .2s}
+  details.mc[open]{border-color:var(--line2);grid-column:1/-1}
+  details.mc > summary{display:block;padding:16px 18px;color:var(--text)}
+  details.mc > summary::before{float:right;margin:2px 0 0 10px}
+  details.mc > summary b{display:block;font-size:16px;font-weight:600}
+  details.mc > summary span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+  details.mc > .in{border-left:0;margin:0;padding:0 18px 18px;color:var(--muted)}
+  details.mc .in p,details.mc .in ul,details.mc .in ol,details.mc .in table,details.mc .in .code{margin-top:10px}
+  details.mc .in b{color:var(--text)}
+  details.mc table th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:400;padding:12px 12px 4px}
+  ol.qs{padding-left:20px}
+  ol.qs li + li,details.mc ul li + li{margin-top:4px}
+  .warn{padding:10px 14px;border-radius:12px;border:1px solid rgba(248,180,50,.4);background:rgba(248,180,50,.06)}
+  .warn b{color:var(--human)!important}
+  .dodont{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .dodont ul{list-style:none;padding:12px 14px;border-radius:12px;border:1px solid var(--line);margin:0}
+  .dodont li{padding-left:22px;position:relative}
+  .dodont .do li::before{content:"✓";position:absolute;left:0;color:var(--ok)}
+  .dodont .dont li::before{content:"✕";position:absolute;left:0;color:var(--danger)}
+  @media (max-width:560px){.dodont{grid-template-columns:1fr}}
+  .plus-link{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px;padding:16px 20px;border-radius:18px;border:1px dashed var(--line2);color:var(--muted);cursor:pointer;background:none;font:inherit;width:100%;text-align:left;transition:all .2s var(--ease)}
+  .plus-link:hover{border-color:var(--accent);color:var(--text)}
+  .plus-link b{display:block;color:var(--text);font-weight:600;font-size:16px}
+  .plus-link span{font-size:13.5px}
+  .plus-link i{font-style:normal;font-size:22px;color:var(--chip)}
+  footer button{font:inherit;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+  /* Sections */
+  .panel{padding-top:56px}
+  .panel[hidden]{display:none}
+  .sec-k{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .panel > h2{font-size:clamp(28px,3.6vw,38px);font-weight:600;line-height:1.15;margin-top:6px;
+     background:linear-gradient(#fff,#A294E3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .panel > .lead{color:var(--muted);margin-top:8px;max-width:40rem}
+  h3.sub{font-size:21px;font-weight:600;margin:56px 0 14px}
+  .card{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:22px}
+  .muted{color:var(--muted)}
+
+  /* Système + progression */
+  .toolbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:26px}
+  .seg{display:inline-flex;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:4px}
+  .seg button{font:inherit;font-size:14px;border:0;background:none;color:var(--muted);padding:6px 16px;border-radius:10px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--s2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+  .prog{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}
+  .prog .tr{width:160px;height:6px;border-radius:9px;background:var(--s2);overflow:hidden}
+  .prog .fl{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--ok));transition:width .35s var(--ease)}
+  [data-os],[data-host]{display:none}
+  body.os-mac [data-os~="mac"],body.os-linux [data-os~="linux"],body.os-win [data-os~="win"]{display:block}
+  body.h-cc [data-host~="cc"],body.h-copilot [data-host~="copilot"],body.h-codex [data-host~="codex"]{display:revert}
+  .toolbar .lbl2{font-size:12.5px;color:var(--dim);margin-right:-8px}
+
+  /* Étapes */
+  ol.steps{list-style:none;padding:0;margin-top:18px;display:grid;gap:12px}
+  .step{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:20px;display:grid;grid-template-columns:44px minmax(0,1.15fr) minmax(0,1fr);gap:6px 18px;align-items:start;transition:border-color .3s}
+  .step.done{border-color:rgba(34,221,187,.45)}
+  .num{width:36px;height:36px;border-radius:50%;background:var(--accent-d);display:grid;place-items:center;font-weight:600;box-shadow:0 0 20px rgba(74,63,255,.5)}
+  .step.done .num{background:var(--ok);color:#04241e;box-shadow:0 0 20px rgba(34,221,187,.4)}
+  .step h4{font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;font-weight:400}
+  .tag.cc{color:var(--chip);border-color:rgba(110,107,255,.5)}
+  .step .why{color:var(--muted);font-size:14.5px;margin-top:2px}
+  .see{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+  .see .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+  .see .v{font-family:var(--mono);font-size:13px;color:var(--ok);margin-top:4px;display:flex;gap:8px}
+  .see .v::before{content:"✓"}
+  .see p{color:var(--muted);font-size:13.5px;margin-top:4px}
+  .check{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;color:var(--muted);cursor:pointer}
+  .check input{width:17px;height:17px;accent-color:var(--ok)}
+  @media (max-width:820px){.step{grid-template-columns:40px minmax(0,1fr)}.step .see{grid-column:2}}
+  @media (max-width:480px){.step{grid-template-columns:minmax(0,1fr)}.step .see{grid-column:1}}
+
+  /* Code */
+  .code{position:relative;margin-top:12px;background:#0A0C16;border:1px solid var(--line2);border-radius:12px}
+  .code pre{font-family:var(--mono);font-size:13px;line-height:1.7;padding:12px 84px 12px 14px;overflow-x:auto;color:#E6E7F5}
+  .code .c{color:var(--dim)}
+  .code .a{color:var(--chip)}
+  .code .h{color:var(--human)}
+  .code .k{color:var(--ok)}
+  .copy{position:absolute;top:8px;right:8px;font:inherit;font-size:12px;padding:3px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--s2);color:var(--text);cursor:pointer}
+  .copy:hover{border-color:var(--accent)}
+
+  /* Replis */
+  details{margin-top:10px}
+  details > summary{cursor:pointer;font-size:13.5px;color:var(--muted);list-style:none;display:block}
+  details > summary::-webkit-details-marker{display:none}
+  details > summary::before{content:"›";font-size:16px;transition:transform .2s;display:inline-block;margin-right:8px;width:8px}
+  details[open] > summary::before{transform:rotate(90deg)}
+  details > summary:hover{color:var(--text)}
+  details > .in{padding:8px 0 4px 14px;border-left:1px solid var(--line2);margin:8px 0 0 4px;font-size:14px;color:var(--muted)}
+  details > .in ul{padding-left:18px}
+  details > .in p + p{margin-top:6px}
+
+  /* Schémas */
+  figure.dg{margin-top:16px;background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:22px 18px 16px;overflow-x:auto}
+  figure.dg svg{display:block;width:100%;height:auto}
+  figure.dg.wide svg{min-width:760px}
+  figure.dg figcaption{font-size:13px;color:var(--dim);margin-top:10px;display:flex;gap:18px;flex-wrap:wrap}
+  .lg{display:inline-flex;align-items:center;gap:6px}
+  .lg i{width:12px;height:12px;border-radius:4px;display:inline-block}
+  svg text{font-family:var(--sans)}
+  svg .t{fill:#F2F3FA;font-size:14px;font-weight:600}
+  svg .s{fill:#A294E3;font-size:11.5px;font-family:var(--mono)}
+  svg .m{fill:#E6E7F5;font-size:12.5px;font-family:var(--mono)}
+  svg .lb{fill:rgba(162,148,227,.75);font-size:10.5px;font-family:var(--mono);letter-spacing:.08em}
+
+  .note{margin-top:14px;font-size:14.5px;color:var(--muted);padding:12px 16px;border-radius:14px;background:var(--s1);border:1px solid var(--line)}
+  .note b{color:var(--text)}
+  .note.human{border-color:rgba(248,180,50,.35)}
+  .note.human b{color:var(--human)}
+
+  /* Commandes */
+  .cmds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+  .cmd{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:18px;transition:border-color .2s,transform .2s var(--ease)}
+  .cmd:hover{border-color:var(--line2);transform:translateY(-2px)}
+  .cmd code{font-size:16px;color:var(--text);background:none;border:0;padding:0}
+  .cmd code em{color:var(--muted);font-style:normal}
+  .cmd p{font-size:14px;color:var(--muted);margin-top:6px}
+  .cmd .w{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--chip);border:1px solid var(--line2);border-radius:999px;padding:1px 9px}
+  .cmd.star{border-color:rgba(110,107,255,.5);box-shadow:0 0 30px rgba(110,107,255,.12)}
+  @media (max-width:820px){.cmds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:520px){.cmds{grid-template-columns:minmax(0,1fr)}}
+
+  .yours{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+  .yours div{background:var(--s1);border:1px solid rgba(248,180,50,.28);border-radius:16px;padding:14px}
+  .yours b{display:block;font-size:14.5px;color:var(--human);font-weight:600}
+  .yours span{display:block;font-size:13.5px;color:var(--muted);margin-top:4px}
+  @media (max-width:820px){.yours{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:480px){.yours{grid-template-columns:minmax(0,1fr)}}
+
+  dl.glos{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px}
+  dl.glos dt{color:var(--text);font-weight:500}
+  @media (max-width:520px){dl.glos{grid-template-columns:1fr}}
+
+  /* Maquette dashboard */
+  .mock{margin-top:16px;border:1px solid var(--line2);border-radius:20px;overflow:hidden;background:var(--s1)}
+  .mock .top{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--s2)}
+  .mock .dot{width:10px;height:10px;border-radius:50%;background:var(--line2)}
+  .mock .url{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px 10px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mock .wrap{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:290px}
+  .mock aside{border-right:1px solid var(--line);padding:14px 10px}
+  .mock h5{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:12px 8px 4px;font-weight:400}
+  .mock h5:first-child{margin-top:0}
+  .mock aside button{display:block;width:100%;text-align:left;font:inherit;font-size:13.5px;padding:4px 8px;border-radius:8px;color:var(--muted);background:none;border:0;cursor:pointer}
+  .mock aside button:hover{color:var(--text)}
+  .mock aside button[aria-pressed="true"]{background:rgba(110,107,255,.16);color:var(--text)}
+  .mock .view{padding:22px}
+  .mock .view h4{font-size:18px;font-weight:600}
+  .mock .view p{color:var(--muted);font-size:14.5px;margin-top:4px}
+  .mock .view .q{margin-top:12px;font-size:14px;color:var(--text)}
+  .mock .view .q span{color:var(--human)}
+  .sk{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+  .sk div{height:52px;border-radius:12px;background:var(--s2);border:1px solid var(--line)}
+  .sk div.w{grid-column:span 3;height:76px;background:linear-gradient(90deg,var(--s2),rgba(110,107,255,.12),var(--s2))}
+  @media (max-width:640px){.mock .wrap{grid-template-columns:1fr}.mock aside{border-right:0;border-bottom:1px solid var(--line)}}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--muted)}
+  td:first-child{color:var(--text);white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  @media (max-width:560px){td:first-child{white-space:normal}}
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+  footer{max-width:1080px;margin:0 auto;padding:22px 20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--dim)}
+</style>
+</head>
+<body class="os-mac h-cc">
+<canvas class="stars" aria-hidden="true"></canvas>
+<div class="glow a" aria-hidden="true"></div><div class="glow b" aria-hidden="true"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo-op" viewBox="62.1 58.8 477.6 93.7"><g fill="#fff"><path d="M96.288,74.215c-18.659,0-32.168,13.942-32.168,30.452s13.401,30.239,31.953,30.239c18.655,0,32.166-13.939,32.166-30.453s-13.4-30.238-31.951-30.238ZM96.288,117.642c-7.185,0-12.332-6.111-12.332-13.188,0-6.968,4.718-12.973,12.117-12.973,7.181,0,12.329,6.112,12.329,13.187,0,6.97-4.716,12.974-12.114,12.974Z"/><path d="M354.8,74.215c-18.659,0-32.168,13.942-32.168,30.452s13.401,30.239,31.953,30.239c18.655,0,32.166-13.939,32.166-30.453s-13.4-30.238-31.951-30.238ZM354.8,117.642c-7.185,0-12.332-6.111-12.332-13.188,0-6.968,4.718-12.973,12.117-12.973,7.181,0,12.329,6.112,12.329,13.187,0,6.97-4.716,12.974-12.114,12.974Z"/><path d="M132.528,75.505h20.372v8.15c3.751-4.829,9.116-9.44,17.368-9.44,12.332,0,19.731,8.149,19.731,21.34v37.959h-20.372v-31.417c0-6.327-3.324-9.758-8.149-9.758-4.933,0-8.578,3.432-8.578,9.758v31.417h-20.372v-58.009Z"/><path d="M252.405,105.955c0-17.05-9.222-31.739-29.272-31.739-17.156,0-29.274,13.514-29.274,30.452,0,18.014,12.868,30.239,31.095,30.239,11.579,0,19.624-4.72,25.199-11.795l-11.259-9.33c-4.182,4.075-8.043,5.896-12.867,5.896-6.326,0-10.937-3.215-12.546-9.539h38.815c.108-1.394.108-2.898.108-4.184ZM213.161,99.736c1.072-6.327,4.716-10.506,10.078-10.506,5.577,0,9.329,4.075,10.079,10.506h-20.157Z"/><path d="M294.758,74.215c-8.683,0-13.615,4.183-17.582,9.011v-7.721h-20.372v75.163h20.372v-24.231c3.752,4.395,8.9,8.361,17.691,8.361,13.718,0,25.622-11.577,25.622-30.452,0-18.551-11.903-30.131-25.73-30.131ZM288.54,117.75c-6.541,0-11.795-5.574-11.795-13.297,0-7.612,5.254-13.189,11.795-13.189,6.645,0,11.902,5.577,11.902,13.189,0,7.829-5.257,13.297-11.902,13.297Z"/><path d="M391.473,75.505h20.372v58.009h-20.372v-58.009Z"/><path d="M418.921,75.505h20.372v8.15c3.752-4.829,9.114-9.44,17.368-9.44,12.332,0,19.732,8.149,19.732,21.34v37.959h-20.375v-31.417c0-6.327-3.324-9.758-8.147-9.758-4.934,0-8.578,3.432-8.578,9.758v31.417h-20.372v-58.009Z"/><path d="M483.808,133.514V60.814h20.371v14.691h13.326v16.405h-13.326v41.604h-20.371Z"/></g><path fill="#0092cb" d="M537.987,122.461c0,6.873-5.572,12.445-12.447,12.445s-12.446-5.573-12.446-12.445,5.573-12.449,12.446-12.449,12.447,5.571,12.447,12.449Z"/></symbol>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8E8BFF"/></marker>
+    <marker id="arl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#FF6B7A"/></marker>
+    <marker id="arh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#F8B432"/></marker>
+    <marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#22DDBB"/></marker>
+    <filter id="gl" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+</svg>
+
+<header>
+  <div class="hd">
+    <svg class="op" viewBox="0 0 477.6 93.7" aria-label="onepoint"><use href="#logo-op" width="477.6" height="93.7"/></svg>
+    <span class="sep"></span><b>LA GLASS FACTORY</b>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="t-installer" aria-controls="p-installer" aria-selected="true">1 · Installer</button>
+      <button role="tab" id="t-travailler" aria-controls="p-travailler" aria-selected="false">2 · Travailler</button>
+      <button role="tab" id="t-dashboard" aria-controls="p-dashboard" aria-selected="false">3 · Dashboard</button>
+      <button role="tab" id="t-avance" aria-controls="p-avance" aria-selected="false">4 · Avancé</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">Hackathon · <span>Ta première heure avec l'usine</span></p>
+    <h1>Installe. Décris. Regarde l'usine travailler.</h1>
+    <p class="lede">Une équipe d'agents dans ton dépôt, depuis Claude Code, Copilot ou Codex. Tu dis <b>ce que tu veux</b>, elle planifie, code et se fait relire.</p>
+    <div class="journey">
+      <button class="st" data-go="installer"><div class="orb">1</div><h2>Installer</h2><p>Une fois, dans un terminal</p><span class="here">Ouvrir</span></button>
+      <button class="st" data-go="travailler"><div class="orb">2</div><h2>Travailler</h2><p>Tu décris, tu valides</p><span class="here">Ouvrir</span></button>
+      <button class="st" data-go="dashboard"><div class="orb">3</div><h2>Suivre</h2><p>Tout voir, sans lire le terminal</p><span class="here">Ouvrir</span></button>
+      <button class="st" data-go="avance"><div class="orb">4</div><h2>Avancé</h2><p>Si tu as le temps</p><span class="here">Ouvrir</span></button>
+    </div>
+    <p class="hint">Clique sur une étape pour l'ouvrir. Commence par la 1.</p>
+  </section>
+
+  <!-- ================= 1. INSTALLER ================= -->
+  <section class="panel" id="p-installer" role="tabpanel" aria-labelledby="t-installer">
+    <p class="sec-k">01</p>
+    <h2>Installer</h2>
+    <p class="lead">Cinq étapes, une seule fois. Coche au fur et à mesure.</p>
+
+    <div class="toolbar">
+      <span class="lbl2">Ton assistant</span>
+      <div class="seg" role="group" aria-label="Ton assistant">
+        <button type="button" data-set-host="cc" aria-pressed="true">Claude Code</button>
+        <button type="button" data-set-host="copilot" aria-pressed="false">Copilot</button>
+        <button type="button" data-set-host="codex" aria-pressed="false">Codex</button>
+      </div>
+      <span class="lbl2">Ton système</span>
+      <div class="seg" role="group" aria-label="Ton système">
+        <button type="button" data-set-os="mac" aria-pressed="true">macOS</button>
+        <button type="button" data-set-os="linux" aria-pressed="false">Linux</button>
+        <button type="button" data-set-os="win" aria-pressed="false">Windows</button>
+      </div>
+      <div class="prog"><div class="tr"><div class="fl" id="fill"></div></div><span id="count">0 / 5</span></div>
+    </div>
+
+    <ol class="steps">
+      <li class="step reveal" data-step="1">
+        <span class="num">1</span>
+        <div>
+          <h4>Copie le kit dans ton dépôt <span class="tag">terminal</span></h4>
+          <p class="why">Agents, commandes et gardes, commités avec ton code.</p>
+          <div class="code"><button class="copy" type="button">Copier</button><pre>d=$(mktemp -d)
+git clone --depth 1 --branch main \
+  https://gitlab.groupeonepoint.com/glass-factory/glass-factory-kit.git "$d"
+rm -rf "$d/.git" "$d/TEMPLATE.md" &amp;&amp; cp -Rn "$d/." .
+git add -A &amp;&amp; git commit -m "chore: adopte le kit agentique"
+git config core.hooksPath .githooks</pre></div>
+          <details data-os="win"><summary>Sous Windows</summary><div class="in">Installe git (<code>winget install --id Git.Git -e</code>) et tape tout dans <strong>Git Bash</strong>.</div></details>
+          <details><summary>Ton dépôt avait déjà un <code>CLAUDE.md</code> ou un <code>.claude/settings.json</code></summary><div class="in">La copie n'écrase rien. Fusionne depuis <code>"$d"</code> : la ligne <code>@AGENTS.md</code>, le bloc <code>hooks</code> et le <code>.gitignore</code>.</div></details>
+          <label class="check"><input type="checkbox"> C'est fait</label>
+        </div>
+        <div class="see"><div class="lbl">Tu dois voir</div><div class="v">5 fichiers dans .agents/state/gates</div><p>Ce sont les gardes, armées.</p></div>
+      </li>
+
+      <li class="step reveal" data-step="2">
+        <span class="num">2</span>
+        <div>
+          <h4>Équipe ton poste <span class="tag">terminal</span></h4>
+          <p class="why">Python, pytest, et les deux scanners de sécurité.</p>
+          <div class="code" data-os="mac"><button class="copy" type="button">Copier</button><pre>bash core-scripts/setup.sh
+brew install gitleaks semgrep jq
+bash core-scripts/doctor.sh</pre></div>
+          <div class="code" data-os="linux"><button class="copy" type="button">Copier</button><pre>bash core-scripts/setup.sh
+sudo apt-get install -y jq pipx &amp;&amp; pipx install semgrep==1.175.0
+bash core-scripts/doctor.sh</pre></div>
+          <div class="code" data-os="win"><button class="copy" type="button">Copier</button><pre><span class="c"># PowerShell</span>
+powershell -NoProfile -ExecutionPolicy Bypass -File core-scripts\setup.ps1
+winget install gitleaks; pip install semgrep==1.175.0
+<span class="c"># Git Bash</span>
+bash core-scripts/doctor.sh</pre></div>
+          <details><summary>Il manque encore quelque chose</summary><div class="in"><ul>
+            <li>Le script nomme ce qui manque et la commande à taper. Relance-le ensuite : il ne réinstalle rien.</li>
+            <li>Lance-le dans un terminal ordinaire, pas depuis ton assistant.</li>
+            <li data-os="linux">gitleaks sous Linux : <a href="https://github.com/gitleaks/gitleaks/releases">binaire de la release</a> dans <code>/usr/local/bin</code>.</li>
+          </ul></div></details>
+          <label class="check"><input type="checkbox"> C'est fait</label>
+        </div>
+        <div class="see"><div class="lbl">Tu dois voir</div><div class="v">manque encore=aucun</div><div class="v">B manquants=aucun</div></div>
+      </li>
+
+      <li class="step reveal" data-step="3">
+        <span class="num">3</span>
+        <div>
+          <h4>Prépare le projet <span class="tag cc">ton assistant</span></h4>
+          <p class="why">Ouvre ton assistant à la racine du dépôt. Identité, board des tâches, index du code : relançable sans risque.</p>
+          <div class="code"><button class="copy" type="button">Copier</button><pre><span class="a"><span class="pfx">/</span>setup</span></pre></div>
+          <details><summary>Une ligne dit <code>KO</code></summary><div class="in">Le remède est sur la même ligne. Applique-le, puis relance <code><span class="pfx">/</span>setup</code> : il n'écrase rien. Le pilote de fusion du board ne se propose que dans un terminal : sous <code><span class="pfx">/</span>setup</code>, l'agent te donne la commande à taper dans ton terminal (<code>python3 .agents/bin/setup_projet.py</code>), qui pose la question ; réponds <code>o</code>.</div></details>
+          <label class="check"><input type="checkbox"> C'est fait</label>
+        </div>
+        <div class="see"><div class="lbl">Tu dois voir</div><p>Le bilan du projet, jambe par jambe. Une jambe en échec porte son remède.</p></div>
+      </li>
+
+      <li class="step reveal" data-step="4">
+        <span class="num">4</span>
+        <div>
+          <h4>Branche ton assistant <span class="tag">réglages</span></h4>
+          <p class="why">Pour voir le coût dans le dashboard. Board et gardes y remontent déjà sans réglage.</p>
+          <div data-host="cc">
+          <p class="why" style="margin-top:12px"><b>a.</b> Complète <code>~/.claude/settings.json</code> avec ces clés, sans retirer les tiennes : affichage plein écran, notifications quand l'usine t'attend, coût envoyé au dashboard. Le modèle et l'effort de la session restent ton choix : le kit n'en impose aucun ; <code>README-CLAUDE.md</code> décrit ces réglages.</p>
+          <div class="code" data-os="mac linux"><button class="copy" type="button">Copier</button><pre>{
+  "autoCompactWindow": 600000,
+  "tui": "fullscreen", "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true, "agentPushNotifEnabled": true,
+  "env": {
+    "CONTEXT_RETRO_PCT": "50", "CLAUDE_CODE_SHELL": "bash",
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp", "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://127.0.0.1:4318",
+    "OTEL_METRIC_EXPORT_INTERVAL": "5000"
+  }
+}</pre></div>
+          <div class="code" data-os="win"><button class="copy" type="button">Copier</button><pre>{
+  "autoCompactWindow": 600000,
+  "tui": "fullscreen", "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true, "agentPushNotifEnabled": true,
+  "env": {
+    "CONTEXT_RETRO_PCT": "50", "CLAUDE_CODE_USE_POWERSHELL_TOOL": "0",
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp", "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://127.0.0.1:4318",
+    "OTEL_METRIC_EXPORT_INTERVAL": "5000"
+  }
+}</pre></div>
+          <p class="why" style="margin-top:14px"><b>b.</b> Rattache ta dépense à ce projet.</p>
+          <div class="code" data-os="mac linux"><button class="copy" type="button">Copier</button><pre>f=.claude/settings.local.json
+grep -q '[^[:space:]]' "$f" 2&gt;/dev/null || echo '{}' &gt; "$f"
+t=$(mktemp) &amp;&amp; o=$(mktemp) &amp;&amp; python3 .agents/bin/project_init.py --print-otel-env --format json &gt; "$o" \
+  &amp;&amp; jq -s '.[0] * {env: {OTEL_RESOURCE_ATTRIBUTES: .[1].env.OTEL_RESOURCE_ATTRIBUTES}}' "$f" "$o" &gt; "$t" \
+  &amp;&amp; cat "$t" &gt; "$f"; rm -f "$t" "$o"</pre></div>
+          <div class="code" data-os="win"><button class="copy" type="button">Copier</button><pre>powershell -NoProfile -ExecutionPolicy Bypass -File core-scripts/attribution-locale.ps1</pre></div>
+          </div>
+          <div data-host="copilot">
+          <p class="why" style="margin-top:12px">Dans le shell qui lance Copilot, avant de le lancer :</p>
+          <div class="code"><button class="copy" type="button">Copier</button><pre>export COPILOT_OTEL_ENABLED=true
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
+export "$(python3 .agents/bin/project_init.py --print-otel-env --format shell | grep '^OTEL_RESOURCE_ATTRIBUTES=')"</pre></div>
+          </div>
+          <div data-host="codex">
+          <p class="why" style="margin-top:12px">Ajoute ce bloc à <code>~/.codex/config.toml</code> :</p>
+          <div class="code"><button class="copy" type="button">Copier</button><pre>[otel]
+environment = "dev"
+log_user_prompt = false
+exporter = { otlp-http = { endpoint = "http://127.0.0.1:4318/v1/logs", protocol = "json" } }</pre></div>
+          </div>
+          <label class="check"><input type="checkbox"> C'est fait</label>
+        </div>
+        <div class="see">
+          <div data-host="cc"><div class="lbl">Tu dois voir</div><div class="v">agentkit.project_id=…</div><p>dans <code>.claude/settings.local.json</code>. Puis redémarre Claude Code.</p></div>
+          <div data-host="copilot"><div class="lbl">À savoir</div><p>Relance Copilot depuis ce shell. La remontée du coût n'est vérifiée que sous Claude Code.</p></div>
+          <div data-host="codex"><div class="lbl">À savoir</div><p>Sous Codex, le coût n'est pas rattaché au projet, et sa remontée reste à vérifier.</p></div>
+        </div>
+      </li>
+
+      <li class="step reveal" data-step="5">
+        <span class="num">5</span>
+        <div>
+          <h4>Premier lancement <span class="tag cc">ton assistant</span></h4>
+          <p class="why">L'usine installe les skills de ta stack. Ensuite, décris simplement ce que tu veux : elle lance le kickoff toute seule.</p>
+          <div class="code"><button class="copy" type="button">Copier</button><pre><span class="a"><span class="pfx">/</span>skills-sync</span>
+<span class="c"># puis, en langage naturel :</span>
+Permets de réserver une salle depuis l'accueil…</pre></div>
+          <div class="trust" data-host="codex">
+            <p class="tt">Codex : approuve les hooks au premier lancement</p>
+            <div class="dlg"><b>Les hooks sont à relire (« Hooks need review »)</b><span class="y">Codex dit combien de hooks sont nouveaux ou changés.</span><span class="g">Une fois approuvés, les hooks peuvent tourner hors du bac à sable.</span><span>1. Relire les hooks (« Review hooks »)</span><span class="sel">2. Tout approuver et continuer (« Trust all and continue »)</span><span class="no">3. Continuer sans approuver : les hooks ne tournent pas</span></div>
+            <p>Les dernières versions de Codex isolent les hooks : sans ton accord, ils ne tournent pas. Or ce sont eux qui écrivent les preuves que lisent les gardes (plan tracé, critique tracée).</p>
+            <ul><li><b>1</b> pour les relire, ou <b>2</b> pour les approuver : ce sont les hooks du kit, dans ton dépôt.</li><li><b>Jamais 3</b> : la factory planifie, puis bloque au démarrage, faute de preuves.</li><li>À refaire sur chaque poste, et après chaque mise à jour du kit (les hooks ont changé).</li></ul>
+          </div>
+          <details><summary>Et <code><span class="pfx">/</span>index</code> ?</summary><div class="in">Pas besoin : l'étape 3 construit l'index, et chaque session le met à jour. Garde-le pour après un gros refactor.</div></details>
+          <details><summary>Dépôt encore vide</summary><div class="in">Lance <code><span class="pfx">/</span>skills-sync</code> une fois la stack posée (<code>package.json</code>, <code>pyproject.toml</code>…).</div></details>
+          <label class="check"><input type="checkbox"> C'est fait</label>
+        </div>
+        <div class="see"><div class="lbl">Tu dois voir</div><div class="v">▸ agent ⚙ …</div><p>Des bannières défilent, puis l'usine attend ton « go ».</p></div>
+      </li>
+    </ol>
+    <div class="next"><button class="fw" data-go="travailler"><small>Installé ? Étape suivante</small><b>2 · Travailler avec la Glass →</b></button></div>
+  </section>
+
+  <!-- ================= 2. TRAVAILLER ================= -->
+  <section class="panel" id="p-travailler" role="tabpanel" aria-labelledby="t-travailler" hidden>
+    <p class="sec-k">02</p>
+    <h2>Travailler avec la Glass</h2>
+    <p class="lead">Tu parles à la factory : elle lance le kickoff toute seule. Tu interviens trois fois, elle fait le reste.</p>
+    <div class="toolbar"><span class="lbl2">Ton assistant</span><div class="seg" role="group" aria-label="Ton assistant">
+      <button type="button" data-set-host="cc" aria-pressed="true">Claude Code</button><button type="button" data-set-host="copilot" aria-pressed="false">Copilot</button>
+        <button type="button" data-set-host="codex" aria-pressed="false">Codex</button>
+    </div><span class="lbl2" style="margin-left:4px">Commandes : <code>/</code> sous Claude Code, <code>$</code> sous Copilot et Codex.</span></div>
+
+    <div class="video">
+      <div class="vh"><h2>Le tuto en 45 secondes</h2><span>Écrire sa demande, valider, suivre dans le dashboard</span><button class="fs" id="fs" type="button">⛶ Plein écran</button></div>
+      <div class="frame"><iframe srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;fr&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;Glass Factory en mouvement&lt;/title&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap&quot;&gt;
+&lt;style&gt;
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#060810;overflow:hidden}
+  :root{
+    --bg:#060810; --s1:#11131F; --s2:#181B2B; --line:rgba(162,148,227,.14); --line2:rgba(162,148,227,.32);
+    --text:#F2F3FA; --muted:#A294E3; --dim:rgba(162,148,227,.55); --accent:#6E6BFF; --accent-d:#4A3FFF; --chip:#AFADFE;
+    --human:#F8B432; --ok:#22DDBB; --danger:#FF6B7A;
+    --sans:&quot;Poppins&quot;,system-ui,sans-serif; --mono:&quot;JetBrains Mono&quot;,ui-monospace,Menlo,monospace;
+    --ease:cubic-bezier(.2,.8,.2,1);
+  }
+  body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiased}
+  canvas.stars{position:fixed;inset:0}
+  .fit{position:fixed;inset:0;overflow:hidden}
+  .stage{width:1280px;height:720px;position:absolute;left:50%;top:50%;transform-origin:center}
+  .glow{position:absolute;width:700px;height:700px;border-radius:50%;filter:blur(110px);opacity:.22;pointer-events:none}
+  .glow.a{background:#4A3FFF;top:-380px;right:-200px}
+  .glow.b{background:#2a1f8f;bottom:-420px;left:-240px}
+  .fade{opacity:0;transition:opacity .6s var(--ease),transform .7s var(--ease)}
+  .show{opacity:1!important;transform:none!important}
+
+  /* Titre et fin */
+  .title{position:absolute;inset:0;display:grid;place-items:center;text-align:center;transform:scale(.96)}
+  .title h1{margin:0;font-size:68px;font-weight:600;line-height:1.08;background:linear-gradient(#fff,#A294E3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .title p{margin:18px 0 0;font-size:22px;color:var(--muted)}
+  .title code{font-family:var(--mono);color:var(--chip);background:var(--s1);border:1px solid var(--line2);padding:4px 14px;border-radius:12px;margin:0 6px;font-size:26px}
+  .logo{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:26px}
+  .logo svg{height:26px;width:auto}
+  .logo span{width:1px;height:24px;background:var(--line2)}
+  .logo b{font-weight:500;letter-spacing:.18em;font-size:15px}
+
+  /* Fenêtres */
+  .win{position:absolute;background:rgba(17,19,31,.92);border:1px solid var(--line2);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 60px rgba(74,63,255,.12)}
+  .win .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--s2)}
+  .win .bar i{width:10px;height:10px;border-radius:50%;background:var(--line2)}
+  .win .bar span{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  #term{left:56px;top:92px;width:600px;height:430px;transform:translateY(24px)}
+  #term .body{padding:16px 18px;font-family:var(--mono);font-size:14px;line-height:1.75;height:388px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+  .ln{white-space:pre-wrap;opacity:0;transform:translateY(6px);animation:ln .3s var(--ease) forwards}
+  @keyframes ln{to{opacity:1;transform:none}}
+  .ln .p{color:var(--chip)} .ln .d{color:var(--dim)} .ln .h{color:var(--human)} .ln .k{color:var(--ok)} .ln .r{color:var(--danger)} .ln .a{color:var(--muted)}
+  .cur{display:inline-block;width:8px;height:16px;background:var(--chip);vertical-align:-3px;margin-left:2px;animation:bl 1s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+
+  /* Dashboard */
+  #dash{left:700px;top:92px;width:524px;height:430px;transform:translateX(60px)}
+  #dash .in{display:grid;grid-template-columns:118px 1fr;height:388px}
+  #dash aside{border-right:1px solid var(--line);padding:14px 10px;font-size:12.5px;color:var(--muted)}
+  #dash aside div{padding:4px 8px;border-radius:8px}
+  #dash aside div.on{background:rgba(110,107,255,.18);color:var(--text)}
+  #dash aside h6{margin:10px 8px 4px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--dim);font-weight:400}
+  #dash .main{padding:14px 16px;display:grid;gap:12px;align-content:start}
+  .pane{background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .pane h5{margin:0 0 8px;font-size:11px;font-family:var(--mono);letter-spacing:.08em;color:var(--dim);font-weight:400;text-transform:uppercase}
+  .board{position:relative;height:84px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .board .col{border:1px dashed var(--line2);border-radius:10px;font-size:10.5px;color:var(--dim);padding:5px 7px;font-family:var(--mono)}
+  .card{position:absolute;top:26px;height:46px;width:98px;border-radius:9px;background:var(--s1);border:1px solid var(--accent);padding:6px 8px;font-size:11.5px;transition:left .8s var(--ease),border-color .4s,box-shadow .4s}
+  .card b{display:block;font-family:var(--mono);font-size:10.5px;color:var(--chip);font-weight:400}
+  .card.c0{left:6px} .card.c1{left:124px} .card.c2{left:242px}
+  .card.ok{border-color:var(--ok);box-shadow:0 0 18px rgba(34,221,187,.35)}
+  .card.ok b{color:var(--ok)}
+  .agents{display:flex;flex-wrap:wrap;gap:6px}
+  .agents span{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--dim);transition:all .35s}
+  .agents span.on{color:var(--text);border-color:var(--accent);background:rgba(110,107,255,.2);box-shadow:0 0 14px rgba(110,107,255,.4)}
+  .agents span.done{color:var(--muted);border-color:var(--line2);background:none;box-shadow:none}
+  .bars{display:grid;gap:7px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .bars .row{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:8px}
+  .bars .tr{height:9px;border-radius:9px;background:var(--bg);position:relative;overflow:hidden}
+  .bars .fc{position:absolute;inset:0 22% 0 0;border:1px dashed var(--muted);border-radius:9px}
+  .bars .fl{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:9px;background:linear-gradient(90deg,var(--accent),var(--ok));transition:width 1.2s var(--ease)}
+
+  /* Conseils */
+  #coach{left:700px;top:92px;width:524px;height:430px;transform:translateX(40px)}
+  #coach .cb{padding:20px 22px}
+  #coach h3{margin:0;font-size:24px;font-weight:600;background:linear-gradient(#fff,#A294E3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #coach .sub{margin:4px 0 14px;font-size:14px;color:var(--muted)}
+  #coach .tips{display:grid;gap:8px}
+  .ti{display:grid;grid-template-columns:108px 1fr auto;gap:10px;align-items:center;padding:7px 12px;border-radius:12px;background:var(--s2);border:1px solid var(--line);opacity:0;transform:translateX(16px);transition:opacity .45s var(--ease),transform .45s var(--ease),border-color .4s}
+  .ti.show{opacity:1;transform:none}
+  .ti.cur{border-color:var(--accent);box-shadow:0 0 18px rgba(110,107,255,.25)}
+  .ti b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--chip)}
+  .ti span{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ti em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;white-space:nowrap}
+  .ti.hu{border-color:rgba(248,180,50,.45)} .ti.hu b{color:var(--human)} .ti.hu em{color:var(--human);border-color:rgba(248,180,50,.45)}
+  .vs{display:grid;gap:12px;margin-top:6px}
+  .vs div{padding:14px 16px;border-radius:14px;background:var(--s2);border:1px solid var(--line);opacity:0;transform:translateY(10px);transition:all .5s var(--ease)}
+  .vs div.show{opacity:1;transform:none}
+  .vs .no{border-color:rgba(255,107,122,.45)} .vs .yes{border-color:rgba(34,221,187,.45)}
+  .vs .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+  .vs .no .k{color:var(--danger)} .vs .yes .k{color:var(--ok)}
+  .vs p{margin:4px 0 0;font-size:15px}
+  .vs small{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+  .big{margin-top:10px;padding:18px;border-radius:16px;border:1px solid rgba(248,180,50,.45);background:rgba(248,180,50,.06)}
+  .big p{margin:0;font-size:17px;line-height:1.5}
+  .big ul{margin:12px 0 0;padding-left:18px;color:var(--muted);font-size:14.5px;line-height:1.7}
+
+  /* Pipeline */
+  #pipe{position:absolute;left:56px;right:56px;top:560px;height:120px;transform:translateY(20px)}
+  #pipe .row{display:flex;align-items:center;justify-content:space-between}
+  .nd{width:98px;height:58px;border-radius:12px;border:1px solid var(--line2);background:var(--s1);display:grid;place-content:center;text-align:center;font-size:13.5px;font-weight:600;color:var(--dim);transition:all .4s var(--ease);position:relative}
+  .nd small{display:block;font-family:var(--mono);font-size:10px;font-weight:400;color:var(--dim)}
+  .nd.hu{border-radius:29px;border-color:rgba(248,180,50,.4)}
+  .nd.on{color:var(--text);border-color:var(--accent);background:var(--s2);box-shadow:0 0 22px rgba(110,107,255,.35)}
+  .nd.on small{color:var(--muted)}
+  .nd.hu.on{border-color:var(--human);box-shadow:0 0 22px rgba(248,180,50,.35)}
+  .nd.wait{color:var(--human);border-color:var(--human);animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 32px rgba(248,180,50,.65);transform:scale(1.06)}}
+  .nd.ok{color:var(--ok);border-color:var(--ok);box-shadow:0 0 26px rgba(34,221,187,.5)}
+  .nd.bad{border-color:var(--danger);box-shadow:0 0 22px rgba(255,107,122,.5)}
+  .ar{flex:1;height:2px;margin:0 6px;background:var(--line2);position:relative;overflow:hidden;border-radius:2px}
+  .ar::after{content:&quot;&quot;;position:absolute;inset:0;background:linear-gradient(90deg,var(--accent),var(--chip));transform:translateX(-101%);transition:transform .45s var(--ease)}
+  .ar.on::after{transform:none}
+  .tag{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--human);white-space:nowrap}
+
+  .caption{position:absolute;left:56px;top:36px;font-size:15px;color:var(--muted);font-family:var(--mono)}
+  .caption b{color:var(--text);font-weight:500}
+  .replay{position:fixed;right:16px;bottom:14px;font:13px var(--sans);color:var(--muted);background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:6px 12px;cursor:pointer;z-index:5}
+  .replay:hover{color:var(--text)}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;canvas class=&quot;stars&quot; aria-hidden=&quot;true&quot;&gt;&lt;/canvas&gt;
+&lt;svg width=&quot;0&quot; height=&quot;0&quot; style=&quot;position:absolute&quot; aria-hidden=&quot;true&quot;&gt;&lt;symbol id=&quot;logo-op&quot; viewBox=&quot;62.1 58.8 477.6 93.7&quot;&gt;&lt;g fill=&quot;#fff&quot;&gt;&lt;path d=&quot;M96.288,74.215c-18.659,0-32.168,13.942-32.168,30.452s13.401,30.239,31.953,30.239c18.655,0,32.166-13.939,32.166-30.453s-13.4-30.238-31.951-30.238ZM96.288,117.642c-7.185,0-12.332-6.111-12.332-13.188,0-6.968,4.718-12.973,12.117-12.973,7.181,0,12.329,6.112,12.329,13.187,0,6.97-4.716,12.974-12.114,12.974Z&quot;/&gt;&lt;path d=&quot;M354.8,74.215c-18.659,0-32.168,13.942-32.168,30.452s13.401,30.239,31.953,30.239c18.655,0,32.166-13.939,32.166-30.453s-13.4-30.238-31.951-30.238ZM354.8,117.642c-7.185,0-12.332-6.111-12.332-13.188,0-6.968,4.718-12.973,12.117-12.973,7.181,0,12.329,6.112,12.329,13.187,0,6.97-4.716,12.974-12.114,12.974Z&quot;/&gt;&lt;path d=&quot;M132.528,75.505h20.372v8.15c3.751-4.829,9.116-9.44,17.368-9.44,12.332,0,19.731,8.149,19.731,21.34v37.959h-20.372v-31.417c0-6.327-3.324-9.758-8.149-9.758-4.933,0-8.578,3.432-8.578,9.758v31.417h-20.372v-58.009Z&quot;/&gt;&lt;path d=&quot;M252.405,105.955c0-17.05-9.222-31.739-29.272-31.739-17.156,0-29.274,13.514-29.274,30.452,0,18.014,12.868,30.239,31.095,30.239,11.579,0,19.624-4.72,25.199-11.795l-11.259-9.33c-4.182,4.075-8.043,5.896-12.867,5.896-6.326,0-10.937-3.215-12.546-9.539h38.815c.108-1.394.108-2.898.108-4.184ZM213.161,99.736c1.072-6.327,4.716-10.506,10.078-10.506,5.577,0,9.329,4.075,10.079,10.506h-20.157Z&quot;/&gt;&lt;path d=&quot;M294.758,74.215c-8.683,0-13.615,4.183-17.582,9.011v-7.721h-20.372v75.163h20.372v-24.231c3.752,4.395,8.9,8.361,17.691,8.361,13.718,0,25.622-11.577,25.622-30.452,0-18.551-11.903-30.131-25.73-30.131ZM288.54,117.75c-6.541,0-11.795-5.574-11.795-13.297,0-7.612,5.254-13.189,11.795-13.189,6.645,0,11.902,5.577,11.902,13.189,0,7.829-5.257,13.297-11.902,13.297Z&quot;/&gt;&lt;path d=&quot;M391.473,75.505h20.372v58.009h-20.372v-58.009Z&quot;/&gt;&lt;path d=&quot;M418.921,75.505h20.372v8.15c3.752-4.829,9.114-9.44,17.368-9.44,12.332,0,19.732,8.149,19.732,21.34v37.959h-20.375v-31.417c0-6.327-3.324-9.758-8.147-9.758-4.934,0-8.578,3.432-8.578,9.758v31.417h-20.372v-58.009Z&quot;/&gt;&lt;path d=&quot;M483.808,133.514V60.814h20.371v14.691h13.326v16.405h-13.326v41.604h-20.371Z&quot;/&gt;&lt;/g&gt;&lt;path fill=&quot;#0092cb&quot; d=&quot;M537.987,122.461c0,6.873-5.572,12.445-12.447,12.445s-12.446-5.573-12.446-12.445,5.573-12.449,12.446-12.449,12.447,5.571,12.447,12.449Z&quot;/&gt;&lt;/symbol&gt;&lt;/svg&gt;
+&lt;div class=&quot;fit&quot;&gt;&lt;div class=&quot;stage&quot; id=&quot;stage&quot; role=&quot;img&quot; aria-label=&quot;Animation : décrire sa demande, valider, suivre dans le dashboard jusqu&#x27;à la livraison&quot;&gt;
+  &lt;div class=&quot;glow a&quot;&gt;&lt;/div&gt;&lt;div class=&quot;glow b&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;title fade&quot; id=&quot;intro&quot;&gt;
+    &lt;div&gt;
+      &lt;div class=&quot;logo&quot;&gt;&lt;svg viewBox=&quot;0 0 477.6 93.7&quot;&gt;&lt;use href=&quot;#logo-op&quot; width=&quot;477.6&quot; height=&quot;93.7&quot;/&gt;&lt;/svg&gt;&lt;span&gt;&lt;/span&gt;&lt;b&gt;LA GLASS FACTORY&lt;/b&gt;&lt;/div&gt;
+      &lt;h1&gt;Tu décris.&lt;br&gt;L&#x27;usine livre.&lt;/h1&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;caption fade&quot; id=&quot;cap&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;win fade&quot; id=&quot;term&quot;&gt;
+    &lt;div class=&quot;bar&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;span&gt;ton assistant · mon-projet&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;body&quot; id=&quot;tb&quot;&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;win fade&quot; id=&quot;dash&quot;&gt;
+    &lt;div class=&quot;bar&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;span&gt;127.0.0.1 · dashboard&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;in&quot;&gt;
+      &lt;aside&gt;&lt;h6&gt;PILOTER&lt;/h6&gt;&lt;div class=&quot;on&quot;&gt;Board&lt;/div&gt;&lt;div&gt;Timeline&lt;/div&gt;&lt;h6&gt;EXÉCUTION&lt;/h6&gt;&lt;div id=&quot;sx&quot;&gt;Sessions&lt;/div&gt;&lt;h6&gt;CONTRÔLE&lt;/h6&gt;&lt;div id=&quot;cx&quot;&gt;Coût&lt;/div&gt;&lt;div&gt;Sécurité&lt;/div&gt;&lt;/aside&gt;
+      &lt;div class=&quot;main&quot;&gt;
+        &lt;div class=&quot;pane&quot;&gt;&lt;h5&gt;Board&lt;/h5&gt;&lt;div class=&quot;board&quot;&gt;&lt;div class=&quot;col&quot;&gt;en attente&lt;/div&gt;&lt;div class=&quot;col&quot;&gt;en cours&lt;/div&gt;&lt;div class=&quot;col&quot;&gt;done&lt;/div&gt;&lt;div class=&quot;card c0&quot; id=&quot;card&quot;&gt;&lt;b&gt;T-1&lt;/b&gt;Réservation de salle&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;div class=&quot;pane&quot;&gt;&lt;h5&gt;Sessions · agents actifs&lt;/h5&gt;&lt;div class=&quot;agents&quot; id=&quot;ag&quot;&gt;&lt;span&gt;planner&lt;/span&gt;&lt;span&gt;plan-critic&lt;/span&gt;&lt;span&gt;dev-multi&lt;/span&gt;&lt;span&gt;exec-critic&lt;/span&gt;&lt;span&gt;security-code-review&lt;/span&gt;&lt;span&gt;critic-opus&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;div class=&quot;pane&quot;&gt;&lt;h5&gt;Coût · prévu / réel&lt;/h5&gt;&lt;div class=&quot;bars&quot;&gt;&lt;div class=&quot;row&quot;&gt;FORECAST&lt;div class=&quot;tr&quot;&gt;&lt;div class=&quot;fc&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;row&quot;&gt;réel&lt;div class=&quot;tr&quot;&gt;&lt;div class=&quot;fl&quot; id=&quot;cost&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;win fade&quot; id=&quot;coach&quot;&gt;&lt;div class=&quot;bar&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;span&gt;conseil&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;cb&quot; id=&quot;cb&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;fade&quot; id=&quot;pipe&quot;&gt;&lt;div class=&quot;row&quot; id=&quot;pr&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;title fade&quot; id=&quot;outro&quot;&gt;
+    &lt;div&gt;
+      &lt;div class=&quot;logo&quot;&gt;&lt;svg viewBox=&quot;0 0 477.6 93.7&quot;&gt;&lt;use href=&quot;#logo-op&quot; width=&quot;477.6&quot; height=&quot;93.7&quot;/&gt;&lt;/svg&gt;&lt;span&gt;&lt;/span&gt;&lt;b&gt;LA GLASS FACTORY&lt;/b&gt;&lt;/div&gt;
+      &lt;h1&gt;Décris. Valide.&lt;br&gt;Regarde l&#x27;usine livrer.&lt;/h1&gt;
+      &lt;p&gt;Parle à la factory · &lt;code&gt;/dash&lt;/code&gt; pour suivre&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;&lt;/div&gt;
+&lt;button class=&quot;replay&quot; id=&quot;replay&quot; type=&quot;button&quot;&gt;Rejouer&lt;/button&gt;
+
+&lt;script&gt;
+(function(){
+  // Étoiles
+  var cv=document.querySelector(&#x27;.stars&#x27;),st=[],a=20261022&gt;&gt;&gt;0;
+  function r(){a=(a+0x6D2B79F5)&gt;&gt;&gt;0;var t=a;t=Math.imul(t^(t&gt;&gt;&gt;15),t|1);t^=t+Math.imul(t^(t&gt;&gt;&gt;7),t|61);return((t^(t&gt;&gt;&gt;14))&gt;&gt;&gt;0)/4294967296}
+  for(var i=0;i&lt;200;i++)st.push({x:r(),y:r(),r:.4+r()*1.1,o:.2+r()*.6,p:r()*6.28});
+  var reduce=matchMedia(&#x27;(prefers-reduced-motion: reduce)&#x27;).matches;
+  function draw(t){var d=Math.min(devicePixelRatio||1,2),w=innerWidth,h=innerHeight;if(cv.width!==w*d){cv.width=w*d;cv.height=h*d;cv.style.width=w+&#x27;px&#x27;;cv.style.height=h+&#x27;px&#x27;}
+    var c=cv.getContext(&#x27;2d&#x27;);c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,w,h);
+    st.forEach(function(s){c.globalAlpha=s.o*(reduce?1:.65+.35*Math.sin((t||0)/1300+s.p));c.fillStyle=&#x27;#EDEFFF&#x27;;c.beginPath();c.arc(s.x*w,s.y*h,s.r,0,6.283);c.fill()});
+    if(!reduce)requestAnimationFrame(draw)}
+  draw();
+
+  // Mise à l&#x27;échelle 16:9
+  var stage=document.getElementById(&#x27;stage&#x27;);
+  function fit(){var k=Math.min(innerWidth/1280,innerHeight/720);stage.style.transform=&#x27;translate(-50%,-50%) scale(&#x27;+k+&#x27;)&#x27;;cv.width=0;if(reduce)draw()}
+  addEventListener(&#x27;resize&#x27;,fit);fit();
+
+  // Pipeline
+  var N=[[&#x27;Demande&#x27;,&#x27;tu décris&#x27;,1],[&#x27;Cadrage&#x27;,&#x27;estimation&#x27;],[&#x27;« go »&#x27;,&#x27;toi&#x27;,1],[&#x27;Plan&#x27;,&#x27;planner&#x27;],[&#x27;Critique&#x27;,&#x27;plan-critic&#x27;],[&#x27;Accord&#x27;,&#x27;toi&#x27;,1],[&#x27;Dev&#x27;,&#x27;lots ∥&#x27;],[&#x27;Revues&#x27;,&#x27;3 relectures&#x27;],[&#x27;Porte&#x27;,&#x27;verify.sh&#x27;],[&#x27;Done&#x27;,&#x27;au board&#x27;]];
+  var pr=document.getElementById(&#x27;pr&#x27;);
+  N.forEach(function(n,i){if(i){var e=document.createElement(&#x27;div&#x27;);e.className=&#x27;ar&#x27;;pr.appendChild(e)}
+    var d=document.createElement(&#x27;div&#x27;);d.className=&#x27;nd&#x27;+(n[2]?&#x27; hu&#x27;:&#x27;&#x27;);d.innerHTML=n[0]+&#x27;&lt;small&gt;&#x27;+n[1]+&#x27;&lt;/small&gt;&#x27;;pr.appendChild(d)});
+  var nodes=[].slice.call(pr.querySelectorAll(&#x27;.nd&#x27;)),arrows=[].slice.call(pr.querySelectorAll(&#x27;.ar&#x27;));
+  function lit(i,cls){nodes[i].classList.remove(&#x27;wait&#x27;,&#x27;bad&#x27;);nodes[i].classList.add(cls||&#x27;on&#x27;);if(i&amp;&amp;!cls)arrows[i-1].classList.add(&#x27;on&#x27;)}
+
+  var $=function(id){return document.getElementById(id)},tb=$(&#x27;tb&#x27;),run=0;
+  function sleep(ms){var my=run;return new Promise(function(res,rej){setTimeout(function(){my===run?res():rej()},ms)})}
+  function line(html){var d=document.createElement(&#x27;div&#x27;);d.className=&#x27;ln&#x27;;d.innerHTML=html;tb.appendChild(d);while(tb.children.length&gt;14)tb.removeChild(tb.firstChild);return d}
+  async function type(prefix,text,cls,speed){var d=line(prefix+&#x27;&lt;span class=&quot;&#x27;+(cls||&#x27;&#x27;)+&#x27;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;cur&quot;&gt;&lt;/span&gt;&#x27;),s=d.children[d.children.length-2];
+    for(var i=0;i&lt;text.length;i++){s.textContent+=text[i];await sleep(speed||22)}d.querySelector(&#x27;.cur&#x27;).remove();return d}
+  function cap(t){var c=$(&#x27;cap&#x27;);c.classList.remove(&#x27;show&#x27;);setTimeout(function(){c.innerHTML=t;c.classList.add(&#x27;show&#x27;)},200)}
+  function agent(n,state){[].forEach.call($(&#x27;ag&#x27;).children,function(s){if(s.textContent===n){s.className=state}})}
+
+  function reset(){tb.innerHTML=&#x27;&#x27;;[&#x27;intro&#x27;,&#x27;cap&#x27;,&#x27;term&#x27;,&#x27;dash&#x27;,&#x27;pipe&#x27;,&#x27;outro&#x27;,&#x27;coach&#x27;].forEach(function(id){$(id).classList.remove(&#x27;show&#x27;)});
+    nodes.forEach(function(n){n.className=n.className.replace(/ (on|wait|ok|bad)/g,&#x27;&#x27;)});arrows.forEach(function(a){a.classList.remove(&#x27;on&#x27;)});
+    $(&#x27;card&#x27;).className=&#x27;card c0&#x27;;[].forEach.call($(&#x27;ag&#x27;).children,function(s){s.className=&#x27;&#x27;});$(&#x27;cost&#x27;).style.width=&#x27;0&#x27;}
+
+  var cb=null;
+  function coach(title,sub,html){cb=$(&#x27;cb&#x27;);cb.innerHTML=&#x27;&lt;h3&gt;&#x27;+title+&#x27;&lt;/h3&gt;&lt;p class=&quot;sub&quot;&gt;&#x27;+sub+&#x27;&lt;/p&gt;&#x27;+(html||&#x27;&#x27;)}
+  function tip(lbl,txt,who,hu){var d=document.createElement(&#x27;div&#x27;);d.className=&#x27;ti&#x27;+(hu?&#x27; hu&#x27;:&#x27;&#x27;);d.innerHTML=&#x27;&lt;b&gt;&#x27;+lbl+&#x27;&lt;/b&gt;&lt;span&gt;&#x27;+txt+&#x27;&lt;/span&gt;&lt;em&gt;&#x27;+who+&#x27;&lt;/em&gt;&#x27;;
+    var box=cb.querySelector(&#x27;.tips&#x27;);[].forEach.call(box.children,function(c){c.classList.remove(&#x27;cur&#x27;)});box.appendChild(d);requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.add(&#x27;show&#x27;,&#x27;cur&#x27;)})})}
+
+  async function play(){
+    reset();
+    $(&#x27;intro&#x27;).classList.add(&#x27;show&#x27;);await sleep(2000);$(&#x27;intro&#x27;).classList.remove(&#x27;show&#x27;);await sleep(500);
+
+    cap(&#x27;&lt;b&gt;1.&lt;/b&gt; Tu écris ta demande&#x27;);
+    $(&#x27;term&#x27;).classList.add(&#x27;show&#x27;);$(&#x27;pipe&#x27;).classList.add(&#x27;show&#x27;);
+    coach(&#x27;Une bonne demande&#x27;,&#x27;Parle à la factory. Plus tu es net, plus le plan arrive juste.&#x27;,&#x27;&lt;div class=&quot;vs&quot;&gt;&lt;div class=&quot;no&quot;&gt;&lt;span class=&quot;k&quot;&gt;✕ TROP VAGUE&lt;/span&gt;&lt;p&gt;« Ajoute la réservation de salles »&lt;/p&gt;&lt;small&gt;L\&#x27;usine devra deviner l\&#x27;écran, les règles, les tests.&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;yes&quot;&gt;&lt;span class=&quot;k&quot;&gt;✓ UTILISABLE&lt;/span&gt;&lt;p&gt;Un objectif, des critères vérifiables, tes contraintes.&lt;/p&gt;&lt;small&gt;Le plan arrive juste du premier coup.&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&#x27;);
+    $(&#x27;coach&#x27;).classList.add(&#x27;show&#x27;);await sleep(400);
+    cb.querySelector(&#x27;.no&#x27;).classList.add(&#x27;show&#x27;);await sleep(1600);
+    cb.querySelector(&#x27;.yes&#x27;).classList.add(&#x27;show&#x27;);await sleep(2600);
+
+    coach(&#x27;Une rubrique, un agent&#x27;,&#x27;Chaque ligne de ta demande sert à quelqu\&#x27;un.&#x27;,&#x27;&lt;div class=&quot;tips&quot;&gt;&lt;/div&gt;&#x27;);
+    await type(&#x27;&lt;span class=&quot;p&quot;&gt;› &lt;/span&gt;&#x27;,&#x27;Permets de réserver une salle depuis l\&#x27;accueil&#x27;,&#x27;p&#x27;,20);
+    var R=[[&#x27;Objectif&#x27;,&#x27;choisir une salle libre et confirmer&#x27;,&#x27;Ce que l\&#x27;utilisateur pourra faire&#x27;,&#x27;planner&#x27;],
+           [&#x27;Hors périmètre&#x27;,&#x27;annulation, e-mails&#x27;,&#x27;Ce que l\&#x27;usine ne doit pas faire&#x27;,&#x27;planner&#x27;],
+           [&#x27;Contraintes&#x27;,&#x27;React + FastAPI, pas de nouvelle dépendance&#x27;,&#x27;Stack, dépendances, zones interdites&#x27;,&#x27;plan-critic&#x27;],
+           [&#x27;Attendu&#x27;,&#x27;409 si créneau pris · 3 tests&#x27;,&#x27;Des critères vérifiables&#x27;,&#x27;exec-critic&#x27;],
+           [&#x27;Pour vérifier&#x27;,&#x27;pytest vert + parcours à la main&#x27;,&#x27;Comment tu sauras que c\&#x27;est bon&#x27;,&#x27;porte&#x27;],
+           [&#x27;Découpage&#x27;,&#x27;on est 4, une tâche chacun&#x27;,&#x27;En groupe : une seule personne le lance&#x27;,&#x27;cadrage&#x27;,1]];
+    for(var i=0;i&lt;R.length;i++){var x=R[i];line(&#x27;&lt;span class=&quot;&#x27;+(x[4]?&#x27;h&#x27;:&#x27;a&#x27;)+&#x27;&quot;&gt;  &#x27;+x[0]+&#x27;&lt;/span&gt; : &#x27;+x[1]);tip(x[0],x[2],x[3],x[4]);await sleep(1500)}
+    lit(0);await sleep(700);
+
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ orchestrator ⚙&lt;/span&gt; /kickoff lancé pour toi&#x27;);await sleep(500);line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ orchestrator ⚙&lt;/span&gt; cadrage · FORECAST&#x27;);lit(1);await sleep(500);
+    cap(&#x27;&lt;b&gt;2.&lt;/b&gt; Tu confirmes le cadrage&#x27;);
+    coach(&#x27;Ton « go »&#x27;,&#x27;Premier arrêt : l\&#x27;usine attend ton feu vert.&#x27;,&#x27;&lt;div class=&quot;big&quot;&gt;&lt;p&gt;Relis le cadrage avant de dire go.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;taille de la tâche et fichiers touchés&lt;/li&gt;&lt;li&gt;coût prévu (FORECAST)&lt;/li&gt;&lt;li&gt;pas d\&#x27;accord ? corrige ta demande&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&#x27;);
+    line(&#x27;&lt;span class=&quot;h&quot;&gt;→ en attente de ton « go »&lt;/span&gt;&#x27;);nodes[2].classList.add(&#x27;wait&#x27;);await sleep(2600);
+    await type(&#x27;&lt;span class=&quot;p&quot;&gt;› &lt;/span&gt;&#x27;,&#x27;go&#x27;,&#x27;h&#x27;,90);lit(2);await sleep(300);
+
+    coach(&#x27;Plan et critique&#x27;,&#x27;Un agent écrit, un autre attaque. Tu n\&#x27;as rien à faire.&#x27;,&#x27;&lt;div class=&quot;tips&quot;&gt;&lt;/div&gt;&#x27;);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ planner ⚙&lt;/span&gt; écrit le plan&#x27;);lit(3);tip(&#x27;planner&#x27;,&#x27;écrit les étapes, les risques, les tests&#x27;,&#x27;agent&#x27;);await sleep(900);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ plan-critic ⚙&lt;/span&gt; &lt;span class=&quot;r&quot;&gt;NO_GO&lt;/span&gt; · le plan repart&#x27;);nodes[4].classList.add(&#x27;bad&#x27;);tip(&#x27;plan-critic&#x27;,&#x27;NO_GO : le plan repart, sans toi&#x27;,&#x27;boucle&#x27;);await sleep(1000);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ planner ⚙&lt;/span&gt; révise&#x27;);await sleep(500);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ plan-critic ⚙&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;GO&lt;/span&gt;&#x27;);lit(4);tip(&#x27;plan-critic&#x27;,&#x27;GO : le plan tient&#x27;,&#x27;agent&#x27;);await sleep(700);
+    cap(&#x27;&lt;b&gt;3.&lt;/b&gt; Tu approuves le plan, la seule validation&#x27;);
+    coach(&#x27;Ton accord&#x27;,&#x27;La seule validation humaine. Rien n\&#x27;est codé avant.&#x27;,&#x27;&lt;div class=&quot;big&quot;&gt;&lt;p&gt;Relis le plan comme une revue de code.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;les étapes respectent tes contraintes ?&lt;/li&gt;&lt;li&gt;chaque critère a son test ?&lt;/li&gt;&lt;li&gt;en groupe : une tâche par personne, fichiers séparés&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&#x27;);
+    line(&#x27;&lt;span class=&quot;h&quot;&gt;→ ton accord sur le plan ?&lt;/span&gt;&#x27;);nodes[5].classList.add(&#x27;wait&#x27;);await sleep(3000);
+    await type(&#x27;&lt;span class=&quot;p&quot;&gt;› &lt;/span&gt;&#x27;,&#x27;approuvé&#x27;,&#x27;h&#x27;,55);lit(5);await sleep(350);
+
+    cap(&#x27;&lt;b&gt;4.&lt;/b&gt; &lt;b&gt;/dash&lt;/b&gt; : tu regardes l\&#x27;usine travailler&#x27;);
+    $(&#x27;coach&#x27;).classList.remove(&#x27;show&#x27;);
+    await type(&#x27;&lt;span class=&quot;p&quot;&gt;› &lt;/span&gt;&#x27;,&#x27;/dash&#x27;,&#x27;p&#x27;,60);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;  http://127.0.0.1:…/?token=…&lt;/span&gt;&#x27;);
+    await sleep(300);$(&#x27;dash&#x27;).classList.add(&#x27;show&#x27;);await sleep(700);
+
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ dev-multi ⚙&lt;/span&gt; lot A ∥ lot B&#x27;);lit(6);$(&#x27;card&#x27;).className=&#x27;card c1&#x27;;agent(&#x27;planner&#x27;,&#x27;done&#x27;);agent(&#x27;plan-critic&#x27;,&#x27;done&#x27;);agent(&#x27;dev-multi&#x27;,&#x27;on&#x27;);$(&#x27;cost&#x27;).style.width=&#x27;38%&#x27;;await sleep(1100);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ exec-critic ∥ security-code-review&lt;/span&gt;&#x27;);lit(7);agent(&#x27;dev-multi&#x27;,&#x27;done&#x27;);agent(&#x27;exec-critic&#x27;,&#x27;on&#x27;);agent(&#x27;security-code-review&#x27;,&#x27;on&#x27;);$(&#x27;cost&#x27;).style.width=&#x27;56%&#x27;;await sleep(900);
+    line(&#x27;&lt;span class=&quot;d&quot;&gt;▸ critic-opus ⚙&lt;/span&gt; revue de clôture&#x27;);agent(&#x27;exec-critic&#x27;,&#x27;done&#x27;);agent(&#x27;security-code-review&#x27;,&#x27;done&#x27;);agent(&#x27;critic-opus&#x27;,&#x27;on&#x27;);$(&#x27;cost&#x27;).style.width=&#x27;70%&#x27;;await sleep(800);
+    line(&#x27;&lt;span class=&quot;k&quot;&gt;VERIFY OK @ 3f9c2e1&lt;/span&gt;&#x27;);lit(8);agent(&#x27;critic-opus&#x27;,&#x27;done&#x27;);await sleep(500);
+    line(&#x27;&lt;span class=&quot;k&quot;&gt;✓ T-1 done au board&lt;/span&gt;&#x27;);lit(9);nodes[9].classList.add(&#x27;ok&#x27;);$(&#x27;card&#x27;).className=&#x27;card c2 ok&#x27;;$(&#x27;cost&#x27;).style.width=&#x27;74%&#x27;;
+    cap(&#x27;&lt;b&gt;5.&lt;/b&gt; Livré, relu, vérifié&#x27;);await sleep(1600);
+    cap(&#x27;Avant de pousser : &lt;b&gt;verify.sh --at HEAD&lt;/b&gt; doit dire VERIFY OK&#x27;);await sleep(2600);
+
+    [&#x27;cap&#x27;,&#x27;term&#x27;,&#x27;dash&#x27;,&#x27;pipe&#x27;].forEach(function(id){$(id).classList.remove(&#x27;show&#x27;)});await sleep(600);
+    $(&#x27;outro&#x27;).classList.add(&#x27;show&#x27;);await sleep(3200);
+    $(&#x27;outro&#x27;).classList.remove(&#x27;show&#x27;);await sleep(700);
+    return play();
+  }
+  function start(){run++;play().catch(function(){})}
+  $(&#x27;replay&#x27;).onclick=start;
+  if(reduce){reset();[&#x27;term&#x27;,&#x27;dash&#x27;,&#x27;pipe&#x27;].forEach(function(id){$(id).classList.add(&#x27;show&#x27;)});nodes.forEach(function(n,i){lit(i)});$(&#x27;card&#x27;).className=&#x27;card c2 ok&#x27;;$(&#x27;cost&#x27;).style.width=&#x27;74%&#x27;}
+  else start();
+})();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+" title="Tuto animé : du kickoff à la livraison" allowfullscreen></iframe></div>
+    </div>
+
+    <h3 class="sub">Ce qui se passe après ta demande</h3>
+    <figure class="dg wide reveal">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Cycle d'un kickoff : ta demande, cadrage, ton go, plan, critique, ton accord, développement, revues, porte, done">
+        <!-- boucle critique -->
+        <path d="M 446 92 C 446 40, 348 40, 348 92" fill="none" stroke="#FF6B7A" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#arl)"/>
+        <text x="397" y="34" text-anchor="middle" class="s" style="fill:#FF6B7A">NO_GO → nouveau plan</text>
+        <!-- boucle revues -->
+        <path d="M 743 158 C 743 212, 644 212, 644 158" fill="none" stroke="#FF6B7A" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#arl)"/>
+        <text x="694" y="232" text-anchor="middle" class="s" style="fill:#FF6B7A">constat → corrigé, rejoué</text>
+        <!-- flèches -->
+        <g stroke="#8E8BFF" stroke-width="1.5" marker-end="url(#ar)">
+          <line x1="91" y1="125" x2="103" y2="125"/><line x1="190" y1="125" x2="202" y2="125"/><line x1="289" y1="125" x2="301" y2="125"/>
+          <line x1="388" y1="125" x2="400" y2="125"/><line x1="487" y1="125" x2="499" y2="125"/><line x1="586" y1="125" x2="598" y2="125"/>
+          <line x1="685" y1="125" x2="697" y2="125"/><line x1="784" y1="125" x2="796" y2="125"/><line x1="883" y1="125" x2="895" y2="125"/>
+        </g>
+        <!-- étiquettes humaines -->
+        <g class="lb" style="fill:#F8B432"><text x="47" y="80" text-anchor="middle">TOI</text><text x="245" y="80" text-anchor="middle">TOI</text><text x="542" y="80" text-anchor="middle">TOI · VALIDATION</text></g>
+        <!-- noeuds -->
+        <g>
+          <rect x="4" y="92" width="87" height="66" rx="33" fill="rgba(248,180,50,.08)" stroke="#F8B432" stroke-width="1.6" filter="url(#gl)"/>
+          <text x="47" y="122" text-anchor="middle" class="t">Demande</text><text x="47" y="140" text-anchor="middle" class="s">tu décris</text>
+          <rect x="103" y="92" width="87" height="66" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="146" y="122" text-anchor="middle" class="t">Cadrage</text><text x="146" y="140" text-anchor="middle" class="s">estimation</text>
+          <rect x="202" y="92" width="87" height="66" rx="33" fill="rgba(248,180,50,.08)" stroke="#F8B432" stroke-width="1.6" filter="url(#gl)"/>
+          <text x="245" y="122" text-anchor="middle" class="t">« go »</text><text x="245" y="140" text-anchor="middle" class="s">confirme</text>
+          <rect x="301" y="92" width="87" height="66" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="344" y="122" text-anchor="middle" class="t">Plan</text><text x="344" y="140" text-anchor="middle" class="s">planner</text>
+          <rect x="400" y="92" width="87" height="66" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="443" y="122" text-anchor="middle" class="t">Critique</text><text x="443" y="140" text-anchor="middle" class="s">plan-critic</text>
+          <rect x="499" y="92" width="87" height="66" rx="33" fill="rgba(248,180,50,.12)" stroke="#F8B432" stroke-width="2.2" filter="url(#gl)"/>
+          <text x="542" y="122" text-anchor="middle" class="t">Accord</text><text x="542" y="140" text-anchor="middle" class="s">sur le plan</text>
+          <rect x="598" y="92" width="87" height="66" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="641" y="122" text-anchor="middle" class="t">Dev</text><text x="641" y="140" text-anchor="middle" class="s">lots ∥</text>
+          <rect x="697" y="92" width="87" height="66" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="740" y="122" text-anchor="middle" class="t">Revues</text><text x="740" y="140" text-anchor="middle" class="s">3 relectures</text>
+          <rect x="796" y="92" width="87" height="66" rx="12" fill="#11131F" stroke="#F2F3FA" stroke-width="1.4"/>
+          <text x="839" y="122" text-anchor="middle" class="t">Porte</text><text x="839" y="140" text-anchor="middle" class="s">verify.sh</text>
+          <rect x="895" y="92" width="100" height="66" rx="12" fill="rgba(34,221,187,.08)" stroke="#22DDBB" stroke-width="1.6" filter="url(#gl)"/>
+          <text x="945" y="122" text-anchor="middle" class="t" style="fill:#22DDBB">✓ Done</text><text x="945" y="140" text-anchor="middle" class="s">au board</text>
+        </g>
+      </svg>
+      <figcaption><span class="lg"><i style="border:1.5px solid #F8B432"></i>l'usine t'attend</span><span class="lg"><i style="border:1.5px dashed #FF6B7A"></i>boucle automatique</span><span class="lg"><i style="border:1.5px solid #22DDBB"></i>vérifié</span></figcaption>
+    </figure>
+    <p class="note" data-host="copilot codex"><b>Hors Claude Code</b>, les lots du dev passent l'un après l'autre au lieu de tourner en parallèle.</p>
+    <p class="note"><b>Petite tâche ?</b> 5 fichiers au plus, rien de sensible : voie directe, sans plan ni accord. Revues et porte restent.</p>
+
+    <h3 class="sub">Écrire une bonne demande</h3>
+    <p class="muted">Chaque rubrique de ta demande nourrit un agent précis.</p>
+    <figure class="dg wide reveal">
+      <svg viewBox="0 0 980 360" role="img" aria-label="Chaque rubrique de la demande et l'agent qui s'en sert">
+        <text x="0" y="14" class="lb">TA DEMANDE</text><text x="720" y="14" class="lb">QUI S'EN SERT</text>
+        <g>
+          <rect x="0" y="28" width="540" height="44" rx="10" fill="#0A0C16" stroke="rgba(162,148,227,.32)"/>
+          <text x="16" y="55" class="m"><tspan style="fill:#AFADFE">Objectif</tspan>  réserver une salle libre depuis l'accueil</text>
+          <rect x="0" y="82" width="540" height="44" rx="10" fill="#0A0C16" stroke="rgba(162,148,227,.32)"/>
+          <text x="16" y="109" class="m"><tspan style="fill:#AFADFE">Hors périmètre</tspan>  annulation, e-mails</text>
+          <rect x="0" y="136" width="540" height="44" rx="10" fill="#0A0C16" stroke="rgba(162,148,227,.32)"/>
+          <text x="16" y="163" class="m"><tspan style="fill:#AFADFE">Contraintes</tspan>  React + FastAPI, pas de nouvelle dép.</text>
+          <rect x="0" y="190" width="540" height="44" rx="10" fill="#0A0C16" stroke="rgba(162,148,227,.32)"/>
+          <text x="16" y="217" class="m"><tspan style="fill:#AFADFE">Attendu</tspan>  409 si créneau pris · formulaire · 3 tests</text>
+          <rect x="0" y="244" width="540" height="44" rx="10" fill="#0A0C16" stroke="rgba(162,148,227,.32)"/>
+          <text x="16" y="271" class="m"><tspan style="fill:#AFADFE">Pour vérifier</tspan>  pytest vert + parcours à la main</text>
+          <rect x="0" y="298" width="540" height="44" rx="10" fill="rgba(248,180,50,.06)" stroke="#F8B432"/>
+          <text x="16" y="325" class="m"><tspan style="fill:#F8B432">Découpage</tspan>  on est 4 : une tâche chacun, fichiers séparés</text>
+        </g>
+        <g fill="none" stroke-width="1.5">
+          <path d="M540 50 C 630 50, 630 60, 716 60" stroke="#8E8BFF" marker-end="url(#ar)"/>
+          <path d="M540 104 C 630 104, 630 60, 716 60" stroke="#8E8BFF" marker-end="url(#ar)"/>
+          <path d="M540 158 C 630 158, 630 130, 716 130" stroke="#8E8BFF" marker-end="url(#ar)"/>
+          <path d="M540 212 C 630 212, 630 200, 716 200" stroke="#8E8BFF" marker-end="url(#ar)"/>
+          <path d="M540 266 C 630 266, 630 270, 716 270" stroke="#22DDBB" marker-end="url(#aro)"/>
+          <path d="M540 320 C 630 320, 630 330, 716 330" stroke="#F8B432" marker-end="url(#arh)"/>
+        </g>
+        <g>
+          <rect x="720" y="36" width="260" height="48" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="736" y="57" class="t">planner</text><text x="736" y="74" class="s">écrit le plan dans ce cadre</text>
+          <rect x="720" y="106" width="260" height="48" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="736" y="127" class="t">plan-critic</text><text x="736" y="144" class="s">refuse un plan qui en sort</text>
+          <rect x="720" y="176" width="260" height="48" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+          <text x="736" y="197" class="t">exec-critic</text><text x="736" y="214" class="s">rejoue chaque critère</text>
+          <rect x="720" y="246" width="260" height="48" rx="12" fill="rgba(34,221,187,.06)" stroke="#22DDBB"/>
+          <text x="736" y="267" class="t">porte</text><text x="736" y="284" class="s">verify.sh, le verdict final</text>
+          <rect x="720" y="306" width="260" height="48" rx="12" fill="rgba(248,180,50,.06)" stroke="#F8B432"/>
+          <text x="736" y="327" class="t">cadrage</text><text x="736" y="344" class="s">découpe en tâches séparées</text>
+        </g>
+      </svg>
+    </figure>
+    <div class="code reveal"><button class="copy" type="button">Copier l'exemple</button><pre style="white-space:pre-wrap;padding-right:130px">Permets de réserver une salle depuis la page d'accueil.
+<span class="a">Objectif</span> : un utilisateur connecté choisit une salle libre et un créneau, puis confirme.
+<span class="a">Hors périmètre</span> : annulation, notifications par e-mail.
+<span class="a">Contraintes</span> : stack existante (React + FastAPI), aucune nouvelle dépendance, ne pas toucher à l'authentification.
+<span class="a">Attendu</span> : POST /reservations renvoie 409 si le créneau est pris ; formulaire avec confirmation ; tests créneau libre, créneau pris, non connecté.
+<span class="a">Pour vérifier</span> : pytest vert, puis le parcours à la main sur localhost:3000.
+<span class="h">Découpage</span> : on est 4. Une tâche par personne, sans fichier en commun (formulaire, API, données, tests de bout en bout).</pre></div>
+    <details><summary>Une règle vaut pour tout le projet ?</summary><div class="in">Mets-la dans <code>docs/PROMPT-projet.md</code>. Ta demande porte les règles de la tâche, ce fichier celles du projet.</div></details>
+    <details><summary>Et <code><span class="pfx">/</span>kickoff</code> ?</summary><div class="in">La factory le lance pour toi dès que tu décris une tâche. Tu peux toujours le taper devant ta demande pour forcer la chaîne complète.</div></details>
+
+    <h3 class="sub">En groupe : une seule personne fait le plan</h3>
+    <figure class="dg wide reveal">
+      <svg viewBox="0 0 980 300" role="img" aria-label="Une personne fait la demande avec découpage, pousse le board, chaque coéquipier lance sa tâche">
+        <!-- pilote -->
+        <circle cx="70" cy="150" r="44" fill="rgba(248,180,50,.1)" stroke="#F8B432" stroke-width="2" filter="url(#gl)"/>
+        <circle cx="70" cy="132" r="11" fill="#F8B432"/><path d="M48 176 Q48 150 70 150 Q92 150 92 176 Z" fill="#F8B432"/>
+        <text x="70" y="222" text-anchor="middle" class="t">1 personne</text>
+        <text x="70" y="240" text-anchor="middle" class="s">les autres attendent</text>
+        <line x1="116" y1="150" x2="176" y2="150" stroke="#F8B432" stroke-width="1.5" marker-end="url(#arh)"/>
+        <!-- kickoff -->
+        <rect x="180" y="112" width="190" height="76" rx="14" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+        <text x="275" y="143" text-anchor="middle" class="t">Demande + Découpage</text>
+        <text x="275" y="163" text-anchor="middle" class="s">valide le découpage</text>
+        <line x1="370" y1="150" x2="426" y2="150" stroke="#8E8BFF" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="398" y="140" text-anchor="middle" class="lb">PUSH</text>
+        <!-- board -->
+        <rect x="430" y="60" width="170" height="180" rx="16" fill="#11131F" stroke="#6E6BFF" stroke-width="1.5" filter="url(#gl)"/>
+        <text x="515" y="88" text-anchor="middle" class="t">Board</text>
+        <text x="515" y="105" text-anchor="middle" class="s">partagé par git</text>
+        <g class="m"><rect x="452" y="118" width="126" height="24" rx="6" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="464" y="135">T-1 formulaire</text>
+        <rect x="452" y="148" width="126" height="24" rx="6" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="464" y="165">T-2 API</text>
+        <rect x="452" y="178" width="126" height="24" rx="6" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="464" y="195">T-3 données</text>
+        <rect x="452" y="208" width="126" height="24" rx="6" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="464" y="225">T-4 tests e2e</text></g>
+        <!-- fan out -->
+        <g fill="none" stroke="#22DDBB" stroke-width="1.5" marker-end="url(#aro)">
+          <path d="M600 130 C 660 130, 660 46, 716 46"/><path d="M600 150 C 660 150, 660 116, 716 116"/>
+          <path d="M600 160 C 660 160, 660 186, 716 186"/><path d="M600 180 C 660 180, 660 256, 716 256"/>
+        </g>
+        <text x="655" y="292" text-anchor="middle" class="lb">PULL</text>
+        <g>
+          <rect x="720" y="22" width="258" height="48" rx="24" fill="rgba(34,221,187,.06)" stroke="#22DDBB"/><text x="744" y="51" class="m">Toi      <tspan style="fill:#22DDBB"><tspan class="pfx">/</tspan>kickoff T-1</tspan></text>
+          <rect x="720" y="92" width="258" height="48" rx="24" fill="rgba(34,221,187,.06)" stroke="#22DDBB"/><text x="744" y="121" class="m">Équipier <tspan style="fill:#22DDBB"><tspan class="pfx">/</tspan>kickoff T-2</tspan></text>
+          <rect x="720" y="162" width="258" height="48" rx="24" fill="rgba(34,221,187,.06)" stroke="#22DDBB"/><text x="744" y="191" class="m">Équipier <tspan style="fill:#22DDBB"><tspan class="pfx">/</tspan>kickoff T-3</tspan></text>
+          <rect x="720" y="232" width="258" height="48" rx="24" fill="rgba(34,221,187,.06)" stroke="#22DDBB"/><text x="744" y="261" class="m">Équipier <tspan style="fill:#22DDBB"><tspan class="pfx">/</tspan>kickoff T-4</tspan></text>
+        </g>
+      </svg>
+      <figcaption><span>Chacun repart du plan validé : il n'est pas refait.</span></figcaption>
+    </figure>
+    <p class="note human"><b>Pourquoi une seule ?</b> Le board vit dans git. Deux plans lancés en même temps, ce sont des tâches en double et des conflits. Ensuite, <code>python3 .agents/bin/aiguillage.py</code> dit à chacun ce qu'il peut prendre en parallèle.</p>
+
+
+    <h3 class="sub">Ce qui reste à toi</h3>
+    <div class="yours">
+      <div class="reveal"><b>« go »</b><span>Après le cadrage, ou tu corriges ta demande.</span></div>
+      <div class="reveal"><b>Accord du plan</b><span>Rien n'est codé avant.</span></div>
+      <div class="reveal"><b>Garde qui bloque</b><span>Lis sa raison. La passer reste ta décision, écrite au board.</span></div>
+      <div class="reveal"><b>Avant de pousser</b><span><code>verify.sh --at HEAD</code> doit dire <code>VERIFY OK</code>.</span></div>
+    </div>
+    <details><summary>Les mots de l'usine</summary><div class="in"><dl class="glos">
+      <dt>Board</dt><dd>Les tâches et leur état, dans git.</dd>
+      <dt>Cadrage</dt><dd>La première estimation : taille, fichiers, faut-il découper.</dd>
+      <dt>Critique</dt><dd>Un agent qui relit le travail d'un autre : GO ou NO_GO.</dd>
+      <dt>Lot</dt><dd>Un morceau du plan, codé en parallèle des autres.</dd>
+      <dt>Garde</dt><dd>Un contrôle qui refuse une étape sautée.</dd>
+      <dt>Porte</dt><dd><code>verify.sh</code> : build, tests, scanners. Pas de push sans elle.</dd>
+      <dt>Ledger</dt><dd>La mémoire du projet, relue à chaque session.</dd>
+    </dl></div></details>
+    <button class="plus-link" data-go="avance" type="button"><div><b>Toutes les commandes</b><span>Ce que fait chacune, quand la taper, ses options : onglet 4 · Avancé</span></div><i>→</i></button>
+
+    <div class="next"><button data-go="installer"><small>← Étape précédente</small><b>1 · Installer</b></button><button class="fw" data-go="dashboard"><small>Étape suivante</small><b>3 · Le dashboard →</b></button></div>
+  </section>
+
+  <!-- ================= 3. DASHBOARD ================= -->
+  <section class="panel" id="p-dashboard" role="tabpanel" aria-labelledby="t-dashboard" hidden>
+    <p class="sec-k">03</p>
+    <h2>Le dashboard</h2>
+    <p class="lead">Où en est la tâche, qui travaille, ce que ça coûte. Tape <code><span class="pfx">/</span>dash</code> et ouvre l'adresse rendue.</p>
+
+    <figure class="dg wide reveal">
+      <svg viewBox="0 0 980 240" role="img" aria-label="Ton assistant envoie la télémétrie au démon local, qui lit aussi le board ; le navigateur affiche le dashboard">
+        <rect x="0" y="40" width="220" height="80" rx="14" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+        <text x="20" y="72" class="t">Ton assistant</text><text x="20" y="92" class="s">jetons, coût (étape 4)</text>
+        <rect x="0" y="146" width="220" height="80" rx="14" fill="#181B2B" stroke="rgba(162,148,227,.32)"/>
+        <text x="20" y="178" class="t">Ton dépôt</text><text x="20" y="198" class="s">board · mémoire · specs</text>
+        <path d="M220 80 C 300 80, 300 120, 376 120" fill="none" stroke="#8E8BFF" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="296" y="74" text-anchor="middle" class="lb">TÉLÉMÉTRIE</text>
+        <path d="M220 186 C 300 186, 300 140, 376 140" fill="none" stroke="#8E8BFF" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="296" y="212" text-anchor="middle" class="lb">LECTURE</text>
+        <rect x="380" y="70" width="230" height="120" rx="18" fill="#11131F" stroke="#6E6BFF" stroke-width="1.5" filter="url(#gl)"/>
+        <text x="495" y="118" text-anchor="middle" class="t">Démon local</text>
+        <text x="495" y="138" text-anchor="middle" class="s">127.0.0.1 · un par projet</text>
+        <text x="495" y="158" text-anchor="middle" class="s">s'arrête après 4 h</text>
+        <line x1="610" y1="130" x2="726" y2="130" stroke="#22DDBB" stroke-width="1.5" marker-end="url(#aro)"/>
+        <text x="668" y="120" text-anchor="middle" class="lb"><tspan class="pfx">/</tspan>dash</text>
+        <rect x="730" y="70" width="250" height="120" rx="18" fill="rgba(34,221,187,.06)" stroke="#22DDBB" stroke-width="1.5"/>
+        <text x="855" y="118" text-anchor="middle" class="t">Ton navigateur</text>
+        <text x="855" y="138" text-anchor="middle" class="s">URL à jeton</text>
+        <text x="855" y="158" text-anchor="middle" class="s">visible de ta machine seule</text>
+      </svg>
+    </figure>
+
+    <h3 class="sub">Les vues, et quand les regarder</h3>
+    <div class="mock reveal">
+      <div class="top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">127.0.0.1 · Glass Factory · mon-projet</span></div>
+      <div class="wrap">
+        <aside id="dnav">
+          <h5>Piloter</h5>
+          <button type="button" data-v="accueil" aria-pressed="true">Accueil</button>
+          <button type="button" data-v="board">Board</button>
+          <button type="button" data-v="timeline">Timeline</button>
+          <h5>Exécution</h5>
+          <button type="button" data-v="sessions">Sessions</button>
+          <button type="button" data-v="terminal">Terminal</button>
+          <h5>Contrôle</h5>
+          <button type="button" data-v="cout">Coût</button>
+          <button type="button" data-v="gouv">Gouvernance</button>
+          <button type="button" data-v="secu">Sécurité</button>
+          <button type="button" data-v="couv">Couverture</button>
+          <h5>Connaissance</h5>
+          <button type="button" data-v="memoire">Mémoire</button>
+          <button type="button" data-v="specs">Specs</button>
+          <button type="button" data-v="plateforme">Plateforme</button>
+        </aside>
+        <div class="view" id="dview" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <h3 class="sub">Si quelque chose manque</h3>
+    <div class="card reveal"><table>
+      <tr><td>Aucun coût</td><td>Étape 4 pas faite, ou assistant pas relancé. Hors Claude Code, la remontée n'est pas encore garantie.</td></tr>
+      <tr><td>« unattributed »</td><td>Rattachement au projet pas fait (étape 4). Normal sous Codex.</td></tr>
+      <tr><td>Page muette</td><td>Le démon s'est arrêté. Relance <code><span class="pfx">/</span>dash</code> : l'adresse change.</td></tr>
+    </table></div>
+    <div class="next"><button data-go="travailler"><small>← Étape précédente</small><b>2 · Travailler</b></button><button class="opt" data-go="avance"><small>Si tu as le temps</small><b>4 · Avancé : toutes les commandes →</b></button></div>
+  </section>
+  <!-- ================= 4. AVANCÉ ================= -->
+  <section class="panel" id="p-avance" role="tabpanel" aria-labelledby="t-avance" hidden>
+    <p class="sec-k">04</p>
+    <h2>Avancé : toutes les commandes</h2>
+    <p class="lead">L'usine lance la plupart d'entre elles pour toi. Voici ce que fait chacune, quand la taper, et ses options.</p>
+    <p class="muted" style="margin-top:6px;font-size:14px">Préfixe : <code>/</code> sous Claude Code, <code>$</code> sous Copilot et Codex.</p>
+
+    <h3 class="sub">Comment elles s'enchaînent</h3>
+    <figure class="dg wide reveal">
+      <svg viewBox="0 0 1000 300" role="img" aria-label="Enchaînement des commandes : équiper, travailler, préparer, la nuit, suivre">
+        <text x="0" y="16" class="lb">UNE FOIS</text><text x="250" y="16" class="lb">CHAQUE TÂCHE</text><text x="560" y="16" class="lb">PRÉPARER, PUIS LA NUIT</text><text x="845" y="16" class="lb">À CÔTÉ</text>
+        <g>
+          <rect x="0" y="34" width="200" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="16" y="56" class="t"><tspan class="pfx">/</tspan>setup</text><text x="16" y="73" class="s">prépare le projet</text>
+          <rect x="0" y="104" width="200" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="16" y="126" class="t"><tspan class="pfx">/</tspan>skills-sync</text><text x="16" y="143" class="s">skills de ta stack</text>
+          <rect x="0" y="174" width="200" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="16" y="196" class="t"><tspan class="pfx">/</tspan>index</text><text x="16" y="213" class="s">après un gros refactor</text>
+        </g>
+        <path d="M200 129 C 225 129, 225 129, 246 129" fill="none" stroke="#8E8BFF" stroke-width="1.5" marker-end="url(#ar)"/>
+        <g>
+          <rect x="250" y="94" width="230" height="70" rx="35" fill="rgba(248,180,50,.08)" stroke="#F8B432" stroke-width="1.6" filter="url(#gl)"/>
+          <text x="365" y="124" text-anchor="middle" class="t">Ta demande</text><text x="365" y="143" text-anchor="middle" class="s">→ <tspan class="pfx">/</tspan>kickoff automatique</text>
+          <rect x="250" y="204" width="230" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="266" y="226" class="t"><tspan class="pfx">/</tspan>kickoff T-…</text><text x="266" y="243" class="s">un plan déjà prêt</text>
+          <rect x="250" y="34" width="230" height="44" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="266" y="61" class="t"><tspan class="pfx">/</tspan>audit</text><text x="340" y="61" class="s">avant la démo</text>
+        </g>
+        <g>
+          <rect x="560" y="34" width="230" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="576" y="56" class="t"><tspan class="pfx">/</tspan>planning [N]</text><text x="576" y="73" class="s">plans prêts, sans code</text>
+          <rect x="560" y="124" width="230" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="576" y="146" class="t"><tspan class="pfx">/</tspan>planning-all</text><text x="576" y="163" class="s">un lot ordonné</text>
+          <rect x="560" y="194" width="230" height="40" rx="20" fill="rgba(248,180,50,.08)" stroke="#F8B432"/><text x="675" y="219" text-anchor="middle" class="m" style="fill:#F8B432">tu tapes night_approve</text>
+          <rect x="560" y="250" width="230" height="44" rx="12" fill="#11131F" stroke="#BB88FF" stroke-width="1.4"/><text x="576" y="277" class="t">/night</text><text x="640" y="277" class="s">Claude Code seul</text>
+        </g>
+        <g fill="none" stroke-width="1.5">
+          <path d="M560 59 C 520 59, 520 229, 484 229" stroke="#8E8BFF" stroke-dasharray="5 5" marker-end="url(#ar)"/>
+          <line x1="675" y1="174" x2="675" y2="190" stroke="#8E8BFF" marker-end="url(#ar)"/>
+          <line x1="675" y1="234" x2="675" y2="246" stroke="#F8B432" marker-end="url(#arh)"/>
+        </g>
+        <g>
+          <rect x="845" y="34" width="155" height="70" rx="14" fill="rgba(34,221,187,.06)" stroke="#22DDBB" stroke-width="1.5"/><text x="861" y="62" class="t"><tspan class="pfx">/</tspan>dash</text><text x="861" y="82" class="s">tout suivre</text>
+          <rect x="845" y="124" width="155" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="861" y="146" class="t"><tspan class="pfx">/</tspan>lang</text><text x="861" y="163" class="s">traces Langfuse</text>
+          <rect x="845" y="194" width="155" height="50" rx="12" fill="#181B2B" stroke="rgba(162,148,227,.32)"/><text x="861" y="216" class="t"><tspan class="pfx">/</tspan>docs-sync</text><text x="861" y="233" class="s">· <tspan class="pfx">/</tspan>specs-sync</text>
+        </g>
+      </svg>
+      <figcaption><span class="lg"><i style="border:1.5px solid #F8B432"></i>ton geste</span><span class="lg"><i style="border:1.5px solid #BB88FF"></i>Claude Code seul</span><span class="lg"><i style="border:1.5px solid #22DDBB"></i>suivi</span></figcaption>
+    </figure>
+
+    <h3 class="sub">Équiper</h3>
+    <div class="adv">
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>setup</div><p>Prépare le projet : identité, board des tâches, index du code, specs.</p><ul><li>Dit jambe par jambe ce qui est créé, déjà là ou en échec, avec le remède.</li><li>Relançable : il n'écrase rien. Le pilote de fusion du board se règle dans ton terminal, par la commande que donne le bilan.</li><li>Le poste, lui, s'équipe avant, avec <code>core-scripts/setup.sh</code> dans un terminal.</li></ul><span class="w">une fois par projet et par clone</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>skills-sync</div><p>Détecte ta stack et installe les skills audités qui vont avec.</p><ul><li><code>language-detector</code> lit les manifestes, <code>skills-resolver</code> propose.</li><li>S'arrête pour ton accord avant toute installation, puis demande de relancer la session.</li></ul><span class="w">quand la stack change</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>index</div><p>Reconstruit l'index du dépôt (structure, symboles), puis l'annote.</p><ul><li>Inutile au départ : le setup le construit, chaque session le tient à jour.</li><li>Sans modèle pour l'extraction ; un agent léger n'annote que ce qui a bougé.</li></ul><span class="w">après un gros refactor</span></div>
+    </div>
+
+    <h3 class="sub">Travailler</h3>
+    <div class="adv">
+      <div class="ac star reveal"><div class="sig"><span class="pfx">/</span>kickoff <em>[-s true|false] [--defer-night] &lt;demande&gt;</em></div><p>Toute la chaîne pour une tâche. Lancée pour toi dès que tu décris une tâche ; tape-la pour la forcer.</p><ul><li>Cadrage, puis arrêt pour ton « go ».</li><li>Plan et critique (NO_GO : le plan repart, 2 tours chez toi), puis ton accord.</li><li>Dev en lots parallèles, revues, porte <code>verify.sh</code>, done au board.</li><li><code>-s false</code> : les alertes de dépendances sont notées sans bloquer (celles du code bloquent toujours).</li><li><code>--defer-night</code> : approuve le plan sans lancer le dev, pour la nuit.</li></ul><span class="w">chaque tâche</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>kickoff <em>T-…</em></div><p>Lance une tâche du board dont le plan est prêt : le plan n'est pas refait, ton accord reste demandé.</p><ul><li>En groupe : chacun lance sa part du découpage.</li><li>Après <code><span class="pfx">/</span>planning</code> : consomme un plan du pool.</li></ul><span class="w">en groupe</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>planning <em>[N|all]</em></div><p>Prépare des plans critiqués d'avance, sans toucher au code.</p><ul><li>Propose une liste (5 par défaut, 10 au plus, <code>tout</code> lève le plafond) et s'arrête pour ton accord.</li><li>Chaque plan est écrit dans <code>docs/tasks/</code>, tamponné et critiqué.</li></ul><span class="w">pendant qu'une tâche tourne</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>planning-all <em>[T-… | --workstream X]</em></div><p>Planifie un lot entier, dans l'ordre de ses dépendances, vague par vague.</p><ul><li>Tire les dépendances manquantes, s'arrête sur le graphe proposé.</li><li>Te rend une ligne <code>night_approve.py</code> : la taper toi-même est la validation.</li></ul><span class="w">avant la nuit</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>audit <em>[-global]</em></div><p>Audit de sécurité en lecture seule, rendu en rapport HTML.</p><ul><li>Par défaut : le changement en cours. <code>-global</code> : tout le dépôt.</li></ul><span class="w">avant la démo</span></div>
+    </div>
+
+    <h3 class="sub">Suivre</h3>
+    <div class="adv">
+      <div class="ac star reveal"><div class="sig"><span class="pfx">/</span>dash</div><p>Ouvre le dashboard : démarre le service local s'il manque et rend une adresse à jeton.</p><ul><li>Visible de ta machine seule (127.0.0.1), un service par projet.</li><li>S'arrête seul après 4 h sans activité : relance <code><span class="pfx">/</span>dash</code>.</li></ul><span class="w">toute la journée</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>lang</div><p>Branche les traces Langfuse, en local ou auto-hébergé, en plus du dashboard.</p><span class="w">si tu utilises Langfuse</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>jira</div><p>Vérifie Jira en lecture seule : configuration, connexion et droits.</p><ul><li>La configuration se fait dans ton terminal, par <code>jira_setup.py configure</code>, jamais par l'agent.</li></ul><span class="w">si ton équipe suit dans Jira</span></div>
+    </div>
+
+    <h3 class="sub">Connaissance</h3>
+    <div class="adv">
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>docs-sync</div><p>Range les documents déposés dans <code>docs/tech/</code> dans la mémoire des agents.</p><span class="w">quand tu ajoutes de la doc</span></div>
+      <div class="ac reveal"><div class="sig"><span class="pfx">/</span>specs-sync</div><p>Versionne les sections de tes spécifications Markdown. Ne détecte pas les suppressions.</p><span class="w">si tu pars d'une spec</span></div>
+    </div>
+
+    <h3 class="sub">Claude Code seul</h3>
+    <div class="adv">
+      <div class="ac cc reveal"><div class="sig">/night <em>[--end HH:MM] [--target HH:MM] [--headless] [--dry-run]</em></div><p>Enchaîne la nuit les tâches que tu as approuvées.</p><ul><li>Rien n'entre sans ta ligne <code>night_approve.py</code>.</li><li>La nuit livre mais ne clôt pas : le matin, revue de clôture puis done.</li><li><code>--dry-run</code> n'écrit rien.</li></ul><span class="w">en fin de journée</span></div>
+    </div>
+
+    <h3 class="sub" id="plus-sec">En savoir plus</h3>
+    <p class="muted">Pas besoin pour démarrer. Ouvre une carte quand la question se pose.</p>
+    <div class="more">
+      <details class="mc"><summary><b>Quand une garde bloque</b><span>Les cinq gardes armées chez toi, et comment en sortir</span></summary><div class="in">
+        <p>Cinq fichiers dans <code>.agents/state/gates/</code> : les quatre <code>*_REQUIRED</code> et <code>CONFIG_QUALITE_PROTEGE</code>. Leur seule présence arme un refus.</p>
+        <table>
+          <tr><td><code>PLAN_CHAIN_REQUIRED</code></td><td>Pas de démarrage sans plan et critique de plan tracés (trace valable 24 h). Sortie : <code>--sans-chaine "&lt;pourquoi&gt;"</code>.</td></tr>
+          <tr><td><code>BINOME_REQUIRED</code></td><td>Pas de <code>done</code> sans revue de clôture tracée. Sortie : <code>--sans-binome "&lt;pourquoi&gt;"</code>.</td></tr>
+          <tr><td><code>PLAN_CIBLE_REQUIRED</code></td><td>Chaque étape du plan cite une cible de <code>docs/PROMPT-projet.md</code>. Sortie : <code>--sans-cible "&lt;pourquoi&gt;"</code>.</td></tr>
+          <tr><td><code>CHRONO_REQUIRED</code></td><td>Armée à la copie du kit. Retirer le marqueur la désarme.</td></tr>
+          <tr><td><code>CONFIG_QUALITE_PROTEGE</code></td><td>Un agent ne modifie pas par Edit/Write une config lint ou format qui existe déjà ; en créer une reste permis. Sortie : toi seul, une ligne d'octroi dans <code>.agents/state/gates/CONFIG_QUALITE_AUTORISE</code>.</td></tr>
+        </table>
+        <p class="warn"><b>Sous Codex</b> : si la factory bloque le démarrage alors que le plan et sa critique ont tourné, les hooks n'ont pas été approuvés et les preuves manquent. Relance Codex et choisis « Trust all and continue ».</p>
+        <p>Une sortie tracée reste visible au board avec ta raison. Désarmer une garde, c'est retirer son fichier et commiter : ton geste, jamais celui d'un agent. Les gardes empêchent d'oublier une étape, pas de tricher.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>La sécurité en quatre classes</b><span>Ce qui bloque, ce qui ne bloque jamais</span></summary><div class="in">
+        <table>
+          <tr><td>0 · Secrets</td><td>gitleaks. Jamais de dérogation : on retire le secret et on le change.</td></tr>
+          <tr><td>1 · Ton code</td><td>semgrep et revue de sécurité du diff. Un HIGH ou CRITICAL se corrige avant d'avancer.</td></tr>
+          <tr><td>2 · Dépendance corrigeable</td><td>Corrigée automatiquement (patch ou minor, tests verts).</td></tr>
+          <tr><td>3 · Le reste</td><td>Ne bloque jamais. Ta décision s'écrit dans <code>.agents/security/sca-waivers.json</code>.</td></tr>
+        </table>
+        <p>Un scanner absent donne <code>COVERAGE DEGRADED</code>, jamais un faux GO. Réglages utiles : <code>SEMGREP_CONFIG=p/security-audit</code> (règles complètes, réseau requis), <code>SCA_GATE_LEVEL</code> (<code>high</code> par défaut), <code>NVD_API_KEY</code> dès qu'il y a du Java ou du Swift.</p>
+        <p>Serveurs MCP : le kit n'en livre aucun. Pour en ajouter un, épingle sa version, ajoute une ligne à <code>.agents/state/gates/MCP_ALLOWLIST.md</code>, puis édite la configuration toi-même.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>Pousser son code</b><span>La porte, les commits, la CI</span></summary><div class="in">
+        <ul>
+          <li><code>bash core-scripts/verify.sh --at HEAD</code> doit dire <code>VERIFY OK @ &lt;sha&gt;</code>. Le push refuse un commit sans verdict vert.</li>
+          <li>Un <code>done</code> ajoute deux commits d'état : relance la porte avant de pousser.</li>
+          <li>Message de commit : un des dix types (<code>feat</code>, <code>fix</code>, <code>chore</code>, <code>docs</code>, <code>refactor</code>, <code>perf</code>, <code>test</code>, <code>revert</code>, <code>ci</code>, <code>build</code>), et <code>T-&lt;id&gt;</code> ou <code>Sans-tache: &lt;pourquoi&gt;</code>.</li>
+          <li>Dérogations tracées, raison obligatoire : <code>CADRE_GARDES_DEGRADEES</code> (scanner absent), <code>CADRE_SANS_TEST</code> (module sans test).</li>
+          <li>Les hooks locaux sont des rappels : <code>--no-verify</code> les saute — la garde <code>safe-bash</code> refuse ce geste aux agents (règle <code>git-hooks-bypass</code>), jamais à toi au terminal. La vraie porte est la CI (job <code>adoptant</code>) et le ruleset de la forge, que toi seul actives.</li>
+        </ul>
+      </div></details>
+
+      <details class="mc" id="quelle-commande"><summary><b>Quelle commande lancer ensuite ?</b><span>L'ordre des questions, et l'aiguilleur qui y répond</span></summary><div class="in">
+        <ol class="qs">
+          <li>Une tâche tourne déjà ? La clore d'abord.</li>
+          <li>Aucune tâche en attente ? Décris ta demande (ou <code><span class="pfx">/</span>kickoff "&lt;ta demande&gt;"</code>).</li>
+          <li>Un plan prêt ? <code><span class="pfx">/</span>kickoff T-…</code></li>
+          <li>Un plan à reprendre (périmé, refusé) ? <code><span class="pfx">/</span>planning-all T-…</code></li>
+          <li>Plusieurs tâches sans plan ? <code><span class="pfx">/</span>planning</code></li>
+        </ol>
+        <p><code>python3 .agents/bin/aiguillage.py</code> pose ces questions pour toi, en lecture seule : <code>EN COURS</code>, <code>BLOQUÉES</code>, <code>SUIVANTE</code> (la commande et sa raison), <code>EN PARALLÈLE</code> (ce qu'un équipier peut prendre), <code>À DÉCLARER</code>.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>La mémoire de l'usine</b><span>Capitaliser une leçon, une décision, une contrainte</span></summary><div class="in">
+        <p>Le ledger vit dans <code>.agents/state/memory/</code>, commité. Un extrait est relu au début de chaque session, contraintes d'abord.</p>
+        <div class="code"><button class="copy" type="button">Copier</button><pre>python3 .agents/bin/ledger.py add --category lesson \
+  "Valider X côté serveur, pas seulement côté client" \
+  --text "le détail réutilisable" --related T-… --tags security,api</pre></div>
+        <ul>
+          <li><code>lesson</code> : un bug et son correctif. <code>decision</code> : un débat tranché. <code>constraint</code> : une règle toujours réinjectée en premier.</li>
+          <li><code>archive</code> / <code>restore</code> retirent une entrée sans l'effacer. <code>promote</code> te rend un bloc à coller dans <code>AGENTS.md</code> ou une skill.</li>
+          <li>Le journal d'une tâche (plan, verdicts, décisions) : <code>python3 .agents/bin/specs.py list --task &lt;id&gt;</code>.</li>
+        </ul>
+      </div></details>
+
+      <details class="mc"><summary><b>Travailler en équipe</b><span>Ce qui est partagé, et le coéquipier qui rejoint le dépôt</span></summary><div class="in">
+        <p><b>Partagé par git</b> : le kit, le board, la mémoire, les specs, l'index, les gardes. <b>Propre à chaque poste ou clone</b> : <code>.claude/settings.local.json</code>, l'identité du projet, les stores machine.</p>
+        <p><b>Un coéquipier qui clone un dépôt déjà équipé</b> ne recopie rien du kit :</p>
+        <ul>
+          <li>une fois par poste : <code>setup.sh</code>, les scanners, <code>doctor.sh</code>, les réglages de son assistant ;</li>
+          <li>une fois par clone : <code>git config core.hooksPath .githooks</code>, puis <code><span class="pfx">/</span>setup</code> ;</li>
+          <li>son propre rattachement du coût (étape 4).</li>
+        </ul>
+        <p>Le pilote de fusion du board évite les conflits quand vous êtes plusieurs : <code>setup_projet.py</code> le propose quand il tourne dans un terminal, réponds <code>o</code> ; sous <code><span class="pfx">/</span>setup</code>, la question n'est pas posée : l'agent te donne la commande à taper dans ton terminal (<code>python3 .agents/bin/setup_projet.py</code>), qui la pose.</p>
+      </div></details>
+
+      <details class="mc" id="chrono"><summary><b>Suivre le temps d'une tâche</b><span>Les étapes d'une tâche, leur durée et l'estimation</span></summary><div class="in">
+        <p><code>tasks.py chrono</code> suit un cycle de tâche, ses étapes et les lots de la fournée. Le journal est local au clone : il sert à comprendre les attentes et les durées, sans décider si la tâche peut avancer. Les verbes du board posent eux-mêmes les jalons principaux.</p>
+        <div class="code"><button class="copy" type="button">Copier</button><pre>python3 .agents/bin/tasks.py chrono &lt;id&gt; estimate --etape dev
+python3 .agents/bin/tasks.py chrono &lt;id&gt; show
+python3 .agents/bin/tasks.py chrono &lt;id&gt; show --watch</pre></div>
+        <ul>
+          <li>Un lot de fournée se consulte avec son propre identifiant ; son temps est porté sur le journal de la tâche parente.</li>
+          <li><code>show</code> donne l'état actuel, <code>--watch</code> le rafraîchit jusqu'à la fin du cycle, <code>--json</code> le rend lisible par un script. Si le journal manque, la commande dit ce qu'elle sait sans inventer de durée.</li>
+          <li>Sous Claude Code, la ligne d'état montre l'étape en cours et son temps.</li>
+        </ul>
+      </div></details>
+
+      <details class="mc" id="propriete"><summary><b>Une tâche prise sur un autre poste</b><span>Qui tient la tâche, et comment la transférer</span></summary><div class="in">
+        <p>Le premier démarrage inscrit durablement le pilote qui a pris la tâche. Quand il publie sa branche, l'autre poste voit cette propriété. Si une tâche est déjà revendiquée, <code>tasks.py start</code> et <code>tasks.py fournee</code> la refusent avec <code>REVENDICATION</code> avant de modifier le board ; ils indiquent le pilote courant et la branche à publier ou fusionner.</p>
+        <div class="code"><button class="copy" type="button">Copier</button><pre>python3 .agents/bin/tasks.py start &lt;id&gt; --reprise "&lt;raison&gt;"</pre></div>
+        <p>Ce transfert est ton geste : lance-le depuis un terminal interactif, puis saisis exactement l'identifiant demandé. Un agent ne fait jamais ce geste. Une raison vide, un terminal sans saisie ou un identifiant différent sont refusés. Après le transfert, vérifie que l'ancien pilote n'a pas publié de nouveaux commits avant de reprendre le travail.</p>
+      </div></details>
+
+      <details class="mc" id="jira"><summary><b>Jira : configurer, vérifier, exporter</b><span>Le board reste local ; Jira se branche depuis ton terminal</span></summary><div class="in">
+        <p>Le board reste local par défaut. Pendant la mise en place, <code>setup_projet.py</code> pose la question <code>Board : local ou Jira ? [L/j]</code> sur un terminal seulement ; la réponse par défaut garde le board local. Pour configurer Jira plus tard, changer de projet ou remplacer le jeton, tape dans ton propre terminal :</p>
+        <div class="code"><button class="copy" type="button">Copier</button><pre>python3 .agents/bin/jira_setup.py configure
+python3 .agents/bin/jira_setup.py configure --change-token</pre></div>
+        <ul>
+          <li><code>configure</code> demande le site, le projet et l'e-mail, puis les enregistre dans <code>~/.config/cadre/jira.json</code>, hors du dépôt. Sur macOS, le jeton est lu dans le presse-papiers et rangé dans le trousseau ; ailleurs, il vient de la variable <code>JIRA_API_TOKEN</code>.</li>
+          <li><code>configure</code> refuse de s'exécuter sans terminal ou sous un agent qui pose un marqueur (Claude Code, hooks du kit). Un agent lancé sous un pseudo-terminal sans marqueur, comme Codex, n'est pas détecté : seule la consigne lui interdit alors cette commande. C'est une garde de lisibilité, pas une frontière.</li>
+          <li><code><span class="pfx">/</span>jira</code> fait vérifier la configuration par l'agent, en lecture seule : <code>jira_setup.py status</code> décrit la configuration locale et la source du jeton, <code>jira_setup.py verify</code> contrôle la connexion, le projet et les droits.</li>
+        </ul>
+        <p>Le connecteur <code>tracabilite_jira.py</code> prépare un aperçu ou un CSV hors ligne ; une tâche déjà liée à Jira est écartée de l'export.</p>
+        <div class="code"><button class="copy" type="button">Copier</button><pre>python3 .agents/bin/tracabilite_jira.py --all --limit 5
+python3 .agents/bin/tracabilite_jira.py --tout --csv &lt;fichier.csv&gt;</pre></div>
+        <p>Choisis une sélection : <code>--task</code>, <code>--epic</code>, <code>--workstream</code>, <code>--state</code> ou <code>--all</code> ; <code>--limit</code> borne le nombre. <code>--send</code> utilise l'API de Jira Cloud : c'est ton geste, dans ton terminal, après relecture de l'aperçu. L'envoi est refusé quand un marqueur d'agent est présent ; un hôte sans marqueur n'est pas détecté.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>Le coût</b><span>Prévu, réconcilié, et un piège à connaître</span></summary><div class="in">
+        <p>Avant ta validation, l'usine annonce un <code>FORECAST</code> par agent. Les hooks le comparent au réel dans <code>.agents/state/local/RUN_LOG.md</code>. C'est une information, jamais un frein : le kit ne baisse ni un modèle ni un effort pour économiser.</p>
+        <p class="warn"><b>Piège</b> : le workflow <code>.github/workflows/eval-nightly.yml</code> tourne chaque nuit et consomme des crédits si un secret <code>ANTHROPIC_API_KEY</code> est posé sur le dépôt, quel qu'en soit l'usage. Si tu n'en veux pas, retire ce workflow.</p>
+        <p>Traces Langfuse en plus du dashboard : <code><span class="pfx">/</span>lang</code>.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>Les assistants</b><span>Ce que chacun lit, et ce qui est réservé à Claude Code</span></summary><div class="in">
+        <table>
+          <tr><td>Claude Code</td><td><code>CLAUDE.md</code> · <code>.claude/agents/</code> · <code>.claude/hooks/</code></td></tr>
+          <tr><td>Codex</td><td><code>AGENTS.md</code> · <code>.codex/agents/</code> · <code>.codex/hooks.json</code></td></tr>
+          <tr><td>GitHub Copilot</td><td><code>.github/copilot-instructions.md</code> · <code>.github/agents/</code> · <code>.github/hooks/</code></td></tr>
+        </table>
+        <ul>
+          <li>Tous lisent le même board, la même mémoire et les mêmes gardes. Ce que chacun trace vraiment varie : <code>README-OTHER-HOSTS.md</code>.</li>
+          <li><code>/night</code> n'existe que sous Claude Code.</li>
+          <li>L'agent cloud de Copilot ne charge hooks et agents que depuis la branche par défaut.</li>
+        </ul>
+      </div></details>
+
+      <details class="mc"><summary><b>Les agents</b><span>Qui fait quoi derrière le kickoff</span></summary><div class="in">
+        <table class="ag">
+          <tr><th colspan="2">La chaîne</th></tr>
+          <tr><td>orchestrator</td><td>Route la tâche, annonce le FORECAST, s'arrête.</td></tr>
+          <tr><td>language-detector</td><td>Détecte la stack depuis les manifestes.</td></tr>
+          <tr><td>planner</td><td>Écrit le plan : étapes, risques, tests, retour arrière.</td></tr>
+          <tr><td>plan-critic</td><td>Attaque le plan : GO, GO_AVEC_RESERVES ou NO_GO.</td></tr>
+          <tr><td>dev-mono · dev-multi</td><td>Implémentent sur un ou plusieurs fichiers.</td></tr>
+          <tr><td>frontend-fidelity</td><td>Le dev d'un écran, fidèle à sa maquette.</td></tr>
+          <tr><td>terraform-deployer</td><td>Écrit le Terraform, sans l'appliquer dans la tâche.</td></tr>
+          <tr><td>design-review</td><td>Audit adverse de l'interface, avec preuves.</td></tr>
+          <tr><td>exec-critic</td><td>Rejoue chaque critère d'acceptation. Il rend, il ne répare pas.</td></tr>
+          <tr><td>documenter · indexer</td><td>Mettent à jour la doc et l'index.</td></tr>
+          <tr><th colspan="2">La clôture</th></tr>
+          <tr><td>critic-opus</td><td>Revue de clôture avant la porte. Replis : critic-fable, puis critic-sonnet-max.</td></tr>
+          <tr><th colspan="2">La sécurité</th></tr>
+          <tr><td>security-code-review</td><td>Revue AppSec du diff de chaque tâche.</td></tr>
+          <tr><td>security-orchestrator</td><td>Lance les scanners de dépendances, corrige sous politique.</td></tr>
+          <tr><td>sca-npm · sca-java · sca-mobile</td><td>Analyse des dépendances par écosystème.</td></tr>
+          <tr><th colspan="2">À la demande</th></tr>
+          <tr><td>communicator</td><td>Tout ce qui t'est adressé, en français sans jargon.</td></tr>
+          <tr><td>analyzer</td><td>« Comment marche X », en lecture seule.</td></tr>
+          <tr><td>modeler · optimizer</td><td>Modèles de données ; performance.</td></tr>
+          <tr><td>load-tester</td><td>Test de charge k6 contre une cible déployée.</td></tr>
+          <tr><td>seo-specialist</td><td>Relecture SEO technique de pages publiques : mesure d'abord, conseille ensuite.</td></tr>
+          <tr><td>reverse-engineer</td><td>Rétro-ingénierie d'une cible autorisée par la CLI épinglée rea ; Evidence recopiée, jamais son propre verdict.</td></tr>
+        </table>
+        <p>La liste qui fait foi : <code>ls .claude/agents/</code>. Le modèle et l'effort de chacun sont dans son en-tête.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>Le mode nuit</b><span>Préparer un lot, le laisser tourner</span></summary><div class="in">
+        <ol class="qs">
+          <li><code><span class="pfx">/</span>planning-all</code> planifie un lot ordonné par ses dépendances.</li>
+          <li>Il te rend une ligne <code>night_approve.py</code> : la taper toi-même, c'est ta validation.</li>
+          <li><code>/night</code> enchaîne les tâches approuvées (<code>--end HH:MM</code>, <code>--dry-run</code>). Claude Code seul.</li>
+        </ol>
+        <p>La nuit livre mais ne clôt pas : le matin, chaque tâche passe sa revue de clôture avant son <code>done</code>.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>Le board en ligne de commande</b><span>Voir l'état, poser une sortie tracée</span></summary><div class="in">
+        <p>Les agents pilotent le board pour toi. <code>python3 .agents/bin/tasks.py &lt;verbe&gt;</code> sert quand tu veux voir :</p>
+        <table>
+          <tr><td><code>list [--task &lt;id&gt;]</code></td><td>L'état du board, ou le détail d'une tâche.</td></tr>
+          <tr><td><code>new "&lt;titre&gt;"</code></td><td>Crée une tâche.</td></tr>
+          <tr><td><code>block --on &lt;id&gt;</code> · <code>unblock</code></td><td>Bloque une tâche sur une autre.</td></tr>
+          <tr><td><code>reopen --raison "…"</code></td><td>La clôture était fausse : la tâche repart.</td></tr>
+        </table>
+        <p>Ne jamais éditer <code>TASKS.json</code>, <code>LEDGER.json</code> ou <code>SPECS.json</code> à la main.</p>
+      </div></details>
+
+      <details class="mc"><summary><b>Fais, ne fais pas</b><span>Les réflexes qui évitent les ennuis</span></summary><div class="in">
+        <div class="dodont">
+          <ul class="do"><li>Passer par la factory pour toute tâche</li><li>Lire les contraintes de la mémoire avant de valider un plan</li><li>Capitaliser une leçon en fin de tâche</li><li>Pousser seulement un commit vert</li></ul>
+          <ul class="dont"><li>Éditer le board ou la mémoire à la main</li><li>Contourner un hook : lis sa raison</li><li>Lancer un gros changement sans plan approuvé</li></ul>
+        </div>
+      </div></details>
+
+      <details class="mc"><summary><b>Réglages avancés de Claude Code</b><span>Les trois fichiers, et ce qu'il ne faut pas poser</span></summary><div class="in">
+        <table>
+          <tr><td><code>.claude/settings.json</code></td><td>Livré, commité. Porte les gardes : n'y touche pas.</td></tr>
+          <tr><td><code>~/.claude/settings.json</code></td><td>Ton fichier utilisateur, une fois par poste.</td></tr>
+          <tr><td><code>.claude/settings.local.json</code></td><td>L'identité du projet, une fois par clone, git-ignoré.</td></tr>
+        </table>
+        <ul>
+          <li><code>autoCompactWindow</code> et <code>CONTEXT_RETRO_PCT</code> vont ensemble : pourcentage × fenêtre du modèle &lt; <code>autoCompactWindow</code> − 54 000. Si tu changes l'un, recalcule l'autre.</li>
+          <li>Ne pose jamais <code>statusLine</code> dans le fichier local (il éteint le capteur de contexte), ni <code>disableAllHooks</code> (il coupe les gardes), ni <code>OTEL_LOG_USER_PROMPTS</code>.</li>
+          <li>Windows : <code>CLAUDE_CODE_USE_POWERSHELL_TOOL=0</code>, car les gardes visent l'outil Bash. N'exporte ni <code>BASH_ENV</code> ni <code>SHELLOPTS</code> dans le shell qui lance l'assistant.</li>
+        </ul>
+      </div></details>
+
+      <details class="mc"><summary><b>Monter de version du kit</b><span>Pas encore outillé : à la main, avec git comme filet</span></summary><div class="in">
+        <ol class="qs">
+          <li>Pars d'un arbre propre et mets de côté <code>docs/PROMPT-projet.md</code>.</li>
+          <li>Clone la branche <code>main</code> de <a href="https://gitlab.groupeonepoint.com/glass-factory/glass-factory-kit">glass-factory-kit</a> sur GitLab et recopie-la avec <code>cp -R</code> (cette fois, la copie écrase).</li>
+          <li>Relis <code>git diff</code>, rends-toi tes fichiers avec <code>git restore</code>, refais tes fusions.</li>
+          <li>Rejoue <code>doctor.sh</code> et <code>verify.sh --at HEAD</code> avant de commiter.</li>
+        </ol>
+      </div></details>
+
+      <details class="mc"><summary><b>Le code du kit dans ton dépôt</b><span><code>.agents/vendor/cadre/</code> et <code>.agents/vendor/agentic_v3/</code></span></summary><div class="in">
+        <p>Le kit se livre par copie : son noyau vit dans <code>.agents/vendor/cadre/</code>, son journal d'événements dans <code>.agents/vendor/agentic_v3/</code>. Ils sont commités pour que chaque coéquipier les ait.</p>
+        <ul>
+          <li>L'index et la porte les ignorent déjà : ils ne comptent pas comme ton code.</li>
+          <li>Exclus-les de tes linters, de ta couverture et de ton packaging (<code>.agents/</code> — noyau <code>cadre</code> et moteur V3 compris —, <code>core-scripts/</code>).</li>
+          <li>À terme : un paquet <code>cadre</code> installé une fois, puis <code>cadre init</code> par projet.</li>
+        </ul>
+      </div></details>
+    </div>
+
+    <div class="next"><button data-go="dashboard"><small>← Étape précédente</small><b>3 · Le dashboard</b></button><button data-go="installer"><small>Revenir au début</small><b>1 · Installer</b></button></div>
+  </section>
+
+</main>
+
+<footer>onepoint · La Glass Factory · <button type="button" data-go="avance" data-anchor="plus-sec">En savoir plus</button>. Relevé sur le kit le 2026-10-15 : en cas de doute, le dépôt fait foi.</footer>
+
+<script>
+(function(){
+  var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Étoiles
+  var cv=document.querySelector('.stars'),stars=[];
+  (function(){var a=20261022>>>0;function r(){a=(a+0x6D2B79F5)>>>0;var t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}
+    for(var i=0;i<220;i++)stars.push({x:r(),y:r(),r:.4+r()*1.1,o:.2+r()*.6,p:r()*6.28})})();
+  function draw(t){var d=Math.min(devicePixelRatio||1,2),w=innerWidth,h=innerHeight;if(cv.width!==w*d){cv.width=w*d;cv.height=h*d;cv.style.width=w+'px';cv.style.height=h+'px'}
+    var c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,w,h);var n=Math.max(60,Math.min(220,Math.round(150*w*h/(1920*1080))));
+    for(var i=0;i<n;i++){var s=stars[i],tw=reduce?1:.65+.35*Math.sin((t||0)/1400+s.p);c.globalAlpha=s.o*tw;c.fillStyle='#EDEFFF';c.beginPath();c.arc(s.x*w,s.y*h,s.r,0,6.283);c.fill()}
+    if(!reduce)requestAnimationFrame(draw)}
+  addEventListener('resize',function(){cv.width=0;if(reduce)draw()});draw();
+
+  // Apparitions
+  var io='IntersectionObserver' in window&&!reduce?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.08}):null;
+  function arm(){document.querySelectorAll('.reveal:not(.in)').forEach(function(el){io?io.observe(el):el.classList.add('in')});
+    setTimeout(function(){document.querySelectorAll('.reveal:not(.in)').forEach(function(el){el.classList.add('in')})},1500)}
+
+  // Onglets
+  var tabs=[].slice.call(document.querySelectorAll('[role=tab]'));
+  function show(id,scroll){
+    if(id==='plus')id='avance';if(!document.getElementById('p-'+id))id='installer';
+    tabs.forEach(function(t){var on=t.getAttribute('aria-controls')==='p-'+id;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on});
+    document.querySelectorAll('.st').forEach(function(b){var on=b.dataset.go===id;if(on)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');b.querySelector('.here').textContent=on?'Tu es ici':'Ouvrir'});
+    if(location.hash!=='#'+id)history.replaceState(null,'','#'+id);
+    if(id==='travailler'){try{var rb=document.querySelector('.video iframe').contentDocument.getElementById('replay');if(rb)rb.click()}catch(e){}}
+    arm();
+    if(scroll)document.getElementById('p-'+id).scrollIntoView({behavior:reduce?'auto':'smooth'});
+  }
+  tabs.forEach(function(t,i){
+    t.onclick=function(){show(t.getAttribute('aria-controls').slice(2),true)};
+    t.onkeydown=function(e){var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){var n=tabs[(i+d+tabs.length)%tabs.length];n.focus();n.click()}};
+  });
+  document.querySelectorAll('[data-go]').forEach(function(a){a.onclick=function(){var t=a.getAttribute('data-anchor');show(a.getAttribute('data-go'),!t);if(t){arm();document.querySelectorAll('.reveal').forEach(function(e){e.classList.add('in')});document.getElementById(t).scrollIntoView({behavior:reduce?'auto':'smooth'})}}});
+  show((location.hash||'#installer').slice(1));
+
+  // Système
+  var osb=[].slice.call(document.querySelectorAll('[data-set-os]'));
+  function setOs(o){document.body.className=document.body.className.replace(/\bos-\w+/g,'').trim()+' os-'+o;osb.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.setOs===o)});store.set('gf-os',o)}
+  osb.forEach(function(b){b.onclick=function(){setOs(b.dataset.setOs)}});
+  var o=store.get('gf-os');if(!o){var u=navigator.userAgent||'';o=/Win/.test(u)?'win':/Linux|X11/.test(u)&&!/Android/.test(u)?'linux':'mac'}setOs(o);
+
+  // Plein écran du tuto
+  var fsb=document.getElementById('fs'),fr=document.querySelector('.video .frame');
+  function popout(){try{window.open(URL.createObjectURL(new Blob([fr.querySelector('iframe').srcdoc],{type:'text/html'})),'_blank')}catch(e){}}
+  fsb.onclick=function(){var f=fr.requestFullscreen||fr.webkitRequestFullscreen;if(!f)return popout();
+    try{var r=f.call(fr);if(r&&r.catch)r.catch(popout)}catch(e){popout()}};
+
+  // Assistant
+  var hb=[].slice.call(document.querySelectorAll('[data-set-host]'));
+  function setHost(h){document.body.className=document.body.className.replace(/\bh-\w+/g,'').trim()+' h-'+h;
+    hb.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.setHost===h)});
+    document.querySelectorAll('.pfx').forEach(function(e){e.textContent=h==='cc'?'/':'$'});store.set('gf-host',h)}
+  hb.forEach(function(b){b.onclick=function(){setHost(b.dataset.setHost)}});
+  var sh=store.get('gf-host');setHost(sh==='copilot'||sh==='codex'?sh:'cc');
+
+  // Progression
+  var steps=[].slice.call(document.querySelectorAll('.step'));
+  function refresh(){var n=0;steps.forEach(function(s){var c=s.querySelector('.check input').checked;s.classList.toggle('done',c);if(c)n++});
+    document.getElementById('fill').style.width=(n/steps.length*100)+'%';
+    document.getElementById('count').textContent=n===steps.length?'Prêt : parle à la factory':n+' / '+steps.length}
+  steps.forEach(function(s){var k='gf-step-'+s.dataset.step,i=s.querySelector('.check input');i.checked=store.get(k)==='1';i.onchange=function(){store.set(k,i.checked?'1':'0');refresh()}});
+  refresh();
+
+  // Copier
+  document.querySelectorAll('.copy').forEach(function(b){var l=b.textContent;b.onclick=function(){
+    var txt=b.parentNode.querySelector('pre').innerText.replace(/^#.*\n?/gm,'').trim();
+    var done=function(){b.textContent='Copié';setTimeout(function(){b.textContent=l},1400)};
+    if(navigator.clipboard)navigator.clipboard.writeText(txt).then(done,done);else done();
+  }});
+
+  // Dashboard
+  var V={
+    accueil:['Accueil','L\'état du projet, et les autres projets de ton poste.','en arrivant le matin'],
+    board:['Board','Les tâches et leur étape : en attente, en cours, bloquée, close.','pour savoir où en est ta tâche'],
+    timeline:['Timeline','Le fil des événements, dans l\'ordre.','après une pause'],
+    sessions:['Sessions','Quel agent tourne, avec quel outil, depuis quand.','quand l\'usine semble bloquée'],
+    terminal:['Terminal','La sortie de Claude Code recopiée, en lecture seule (Claude Code seul).','pour suivre depuis un autre écran'],
+    cout:['Coût','Jetons prévus par agent, puis consommés.','pour comparer prévu et réel'],
+    gouv:['Gouvernance','Les refus des gardes, avec leur raison.','quand une étape a été refusée'],
+    secu:['Sécurité','Les constats des scanners et des revues.','avant de pousser ou de faire la démo'],
+    couv:['Couverture','Ce qui a été vérifié, et ce qui ne l\'a pas été.','si un scanner manque'],
+    memoire:['Mémoire','Leçons, décisions et contraintes retenues.','pour voir ce que l\'usine sait déjà'],
+    specs:['Specs','Les spécifications et leurs liens aux tâches.','si tu pars d\'une spec écrite'],
+    plateforme:['Plateforme','L\'index du code et les serveurs MCP.','si l\'usine ignore une partie du code']
+  };
+  var dv=document.getElementById('dview'),db=[].slice.call(document.querySelectorAll('#dnav button'));
+  function dshow(k){var v=V[k];db.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.v===k)});
+    dv.innerHTML='<h4>'+v[0]+'</h4><p>'+v[1]+'</p><p class="q"><span>Quand ?</span> '+v[2]+'</p><div class="sk"><div></div><div></div><div></div><div class="w"></div></div>'}
+  db.forEach(function(b){b.onclick=function(){dshow(b.dataset.v)}});
+  dshow('accueil');
+})();
+</script>
+</body>
+</html>

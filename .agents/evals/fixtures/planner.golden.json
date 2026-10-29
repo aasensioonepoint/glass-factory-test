@@ -1,0 +1,22 @@
+{
+  "_schema": {
+    "purpose": "Frozen, LLM-free contract for the `planner` agent across all 5 hosts (Claude / Codex / Gemini / Copilot / Kimi). test_golden_transcripts.py recomposes these invariants from the LIVE agent definitions and asserts (a) each host still matches this golden and (b) all hosts agree (multi-host parity). No model is ever called.",
+    "invariants": {
+      "emits_forecast": "planner emits FORECAST-REFINE when its file count changes the estimate",
+      "read_only_no_edit": "planner never edits code — it plans only",
+      "owns_approval_gate": "planner IS the agent that requests human approval and awaits the user OK (the pipeline's single gate)",
+      "produces_steps": "output contains a bounded Steps section",
+      "hands_to_dev": "plan hands off to dev-mono / dev-multi after approval"
+    },
+    "host_config": "Frontmatter model/effort is format-specific and NOT part of the parity set (Copilot's format carries neither by design). Since T-00000037 the golden freezes NO tier literal: test_golden_transcripts.py::TierRelationTests asserts the RELATION palier(plan-critic) >= palier(planner) against the LIVE definitions, per host and per axis (effort on Claude/Gemini/Codex, model on Claude/Gemini). Concrete values are the pilot's to tune."
+  },
+  "agent": "planner",
+  "hosts": ["claude", "codex", "gemini", "copilot", "kimi"],
+  "invariants": {
+    "emits_forecast": true,
+    "read_only_no_edit": true,
+    "owns_approval_gate": true,
+    "produces_steps": true,
+    "hands_to_dev": true
+  }
+}

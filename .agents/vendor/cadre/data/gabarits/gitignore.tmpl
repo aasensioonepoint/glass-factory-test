@@ -1,0 +1,38 @@
+# .gitignore — GENERE par `cadre init`. Relisez-le : il vous appartient, et
+# rien ne le regenere dans votre dos.
+#
+# TROIS REGIMES POUR LES STORES SQLITE DU KIT, ET ILS NE SE CONFONDENT PAS.
+# AUJOURD'HUI, LES DEUX DERNIERS SONT VIDES — et le rendu le dit en clair.
+#
+#  1. L'ETAT JETABLE est ignore EN BLOC. Tout ce qu'il contient se reconstruit :
+#     vues generees, journal de run, rapports de scan, base d'evenements du
+#     tableau de bord. Un repertoire entier, donc les lateraux de ce qui vit
+#     dedans sont couverts par la meme ligne — il n'y a rien a nommer de plus.
+#
+#  2. LES STORES SUIVIS NE SERAIENT PAS IGNORES — et il n'y en a AUCUN. L'index
+#     SQLite (`index.db`) vit hors depot, sous la partition MACHINE du projet
+#     (`cadre paths` -> STATE_PROJECT, sous-repertoire `index/`), comme le store
+#     V3 : les deux se reconstruisent, l'un depuis les `SYMBOLS*.md` versionnes,
+#     l'autre depuis les exports `runs/`. Rien de SQLite n'est donc a committer.
+#     Un store qui redeviendrait suivi serait NOMME ci-dessous, en commentaire.
+#
+#  3. LEURS LATERAUX WAL seraient ignores en lignes LITTERALES ET ANCREES — et,
+#     faute de store suivi, il n'y en a aucun a nommer. SQLite depose un `-wal`
+#     et un `-shm` a cote d'une base ouverte en mode WAL, tant qu'elle est
+#     ouverte ; sans regle ils apparaitraient en `??`.
+#
+# POURQUOI PAS UN GLOB `*.db-wal`. Parce qu'un motif flottant ratisse ce qu'on
+# ne lui a pas demande : il capturerait aussi les lateraux de TOUTE autre base
+# du depot, y compris celles dont personne n'a decide le sort. Le jour ou l'une
+# d'elles changerait de mode, le glob masquerait ses lateraux en silence, sans
+# decision et sans trace. Une ligne litterale nomme sa cible et ne peut se
+# tromper que bruyamment.
+
+# 1. L'etat jetable, ignore en bloc.
+{jetable}
+
+# 2. Les stores SUIVIS — jamais ignores. Nommes, pas ignores.
+{suivis}
+
+# 3. Les lateraux WAL des stores suivis — litteraux et ancres.
+{lateraux}

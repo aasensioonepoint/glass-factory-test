@@ -1,0 +1,470 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# ACTIONS PINNED BY DIGEST. Every `uses:` in this repo carries a 40-char SHA
+# plus a tag comment. A git tag is MUTABLE: `actions/checkout@v4` is a pointer
+# its maintainer (or whoever takes that account) can move at will, with no
+# commit in THIS repo changing — so the code running in CI would no longer be
+# described by this repo. A SHA-40 is immutable, and a bump becomes a diff
+# somebody reviews. The tag comment is not decorative: it is the only thing
+# that makes `3d3c42e5…` readable, i.e. auditable.
+# Re-pinned 2026-08-21 to move both actions onto the Node 24 runtime. The
+# previous pins (checkout v4.4.0, setup-python v5.6.0) ran on Node 20, which is
+# deprecated and now force-migrated to Node 24 by the runners — a scheduled
+# break, not a live failure: when the forcing stops, those pins break. Resolved
+# by `git ls-remote` (dereferencing `^{}` for annotated tags), cross-checked
+# against the GitHub git-ref API, and CONFIRMED by reading each `action.yml` at
+# the pinned SHA: `runs.using: node24`, and the inputs used here still present
+# (persist-credentials for checkout, python-version for setup-python). Both
+# tags resolved are LIGHTWEIGHT — the git-ref API returns object.type=commit
+# and ls-remote shows no `^{}` deref — so the rendered SHA IS the commit (an
+# annotated tag would need `^{}`, else you pin the tag object, which `uses:`
+# cannot resolve). checkout `v7` == `v7.0.1` and setup-python `v7` == `v7.0.0`
+# today: the precise tag is recorded on each `uses:` line for auditability.
+#
+# PYTHON DEPS PINNED BY HASH — the other end of the same chain. Pinning the
+# actions and then pulling MUTABLE code from PyPI on every run closes one end
+# and leaves the other open. A Python package can execute code AT INSTALL time,
+# before a single test runs; `--require-hashes` makes pip refuse any artefact
+# whose sha256 is not the one written below, so the bytes that run are the bytes
+# this repo describes. `--only-binary :all:` is the second half: it forbids
+# sdists, and a wheel install has no build step to execute at all.
+# The requirement set is the FULL resolved closure of pytest (not just pytest),
+# because hash-checking mode refuses to install anything unlisted. Resolved
+# 2026-08-06 with `pip download --only-binary :all:` and sha256 taken from the
+# downloaded wheels. All are `py3-none-any`, so they are valid for any 3.x.
+# `colorama` carries pytest's OWN marker (`sys_platform == "win32"`): on this
+# ubuntu runner the line is inert, and keeping it means the same block is valid
+# on a Windows dev box — MEASURED both ways, because `pip --platform` does NOT
+# switch marker evaluation, so a marker-gated line is the only portable form.
+# `exceptiongroup`/`tomli` are absent on purpose: pytest needs them only under
+# `python_version < "3.11"`, and the interpreter is pinned to `3.14` below (see
+# the setup-python step) — 3.14 >= 3.11, so they stay JUSTLY absent. That pin is
+# at the MINOR: the patch floats knowingly (all wheels are `py3-none-any`, a
+# patch pin would break at each runner tool-cache rotation for no gain).
+# Bumping a version is now a diff with a hash in it — which is the point.
+#
+# THE RESIDUAL, NAMED: a NEW conditional dependency appearing in a future pytest
+# would be unlisted, and hash-checking mode then FAILS LOUD ("must have their
+# versions pinned with ==") instead of silently installing it. Fail-safe: a red
+# CI, never an unpinned install. What this does NOT cover is trust in the
+# artefact itself — a hash freezes the bytes, it does not vouch for them.
+#
+# `--upgrade pip` was REMOVED, not forgotten. It downloaded the newest pip from
+# PyPI on every run, unpinned, and it cannot be hash-pinned without pinning pip
+# to install pip. The pip shipped by setup-python is used instead: it is bound
+# to the resolved interpreter rather than fetched fresh each run.
+#
+# persist-credentials: false — see the note on the checkout step below.
+#
+# THREE JOBS, ONE RULE (T-00001183, pilot decision S-00004119: « c'est le build
+# du projet et sous modules qui doivent faire foi »). This file TRAVELS to the
+# projects that adopt the kit, and there the kit's own suite is not the verdict:
+# the project's build and tests are.
+#   * `porte` decides the mode, with the SAME rule as `core-scripts/verify.sh`
+#     and `.githooks/pre-push`: ADOPTANT iff `.agents/IS_THE_KIT` is absent AND
+#     `.agents/security/module_discovery.py` is present. The name in a
+#     pyproject never enters the rule. Its step `id: porte` writes
+#     `porte=kit|adoptant` to "$GITHUB_OUTPUT", and the job exports it through
+#     `outputs:` — both links are asserted by `.agents/bin/test_porte_adoptant_ci.py`
+#     (a signal whose producer is not witnessed is a signal nobody reads).
+#   * `tests` (the kit's suite) runs unless `porte` said `adoptant` POSITIVELY:
+#     `!cancelled() && … != 'adoptant'`. A failed `porte` leaves its outputs
+#     EMPTY, so the kit suite still runs and `porte`, a required check, blocks —
+#     fail-closed toward the old behaviour, never a silent skip.
+#   * `adoptant` runs `.agents/bin/porte_adoptant.py` (the project's modules,
+#     submodules included — or the project's own `scripts/verify-projet.sh`, which
+#     then decides for the WHOLE repository (S-00004278) —, gitleaks over the
+#     whole tree, semgrep on what is NEW since the base passed in
+#     `CADRE_SEMGREP_BASE`, or else the merge-base with the default branch) only
+#     when `porte` said `adoptant`. `needs: porte` ALONE: adding `tests` would
+#     skip it whenever `tests` is skipped, i.e. always where it matters.
+#     It sits AFTER `tests` on purpose: verify.sh derives its docker image from
+#     the FIRST `python-version:` of this file and its apt list from the FIRST
+#     `apt-get install -y` line — both must stay the `tests` job's.
+# The forge-side models live in `.github/rulesets/`: the kit's requires
+# `adoptant`, `porte` and `tests (macos-latest)` (a job skipped by its `if:`
+# reports Success); an adopting project imports `main-protection.adoptant.ruleset.json`
+# (`adoptant`, `porte`), which requires no check that is skipped in its mode.
+
+jobs:
+  # THE MODE IS DECIDED BY THE TREE UNDER JUDGEMENT — so a pull request could
+  # switch it off: adding `.agents/IS_THE_KIT` or deleting `module_discovery.py`
+  # turns an adopting base into `kit`, and the `adoptant` job, skipped by its
+  # `if:`, reports Success (binôme c4f3, opus F2). On `pull_request` the step
+  # therefore also reads the BASE — `HEAD^1` of the merge commit the checkout
+  # makes, hence `fetch-depth: 2` — and a PR that takes an ADOPTANT base out of
+  # adoptant mode is RED, named, BEFORE `porte=` is written: the outputs stay
+  # empty, `tests` runs, `adoptant` is skipped, and `porte` — a required check —
+  # blocks. A base that cannot be read on a PR is RED too, never a pass.
+  porte:
+    runs-on: ubuntu-latest
+    outputs:
+      porte: ${{ steps.porte.outputs.porte }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - id: porte
+        run: |
+          if [ ! -f .agents/IS_THE_KIT ] && [ -f .agents/security/module_discovery.py ]; then
+            porte=adoptant
+          else
+            porte=kit
+          fi
+          echo "porte: $porte (adoptant iff .agents/IS_THE_KIT absent and .agents/security/module_discovery.py present)"
+          if [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ] && [ "$porte" = "kit" ]; then
+            if ! git rev-parse --verify -q 'HEAD^1^{commit}' > /dev/null; then
+              echo "porte: RED — the base of this pull request (HEAD^1) cannot be read (fetch-depth: 2 expected)"
+              exit 1
+            fi
+            if ! git cat-file -e 'HEAD^1:.agents/IS_THE_KIT' 2> /dev/null && git cat-file -e 'HEAD^1:.agents/security/module_discovery.py' 2> /dev/null; then
+              echo "porte: RED — cette PR fait sortir une base adoptant du mode adoptant ; le job adoptant serait sauté"
+              exit 1
+            fi
+          fi
+          echo "porte=$porte" >> "$GITHUB_OUTPUT"
+
+  tests:
+    # MATRIX, not a targeted Windows job. The SAME two test steps
+    # (`run-pytest-shards.sh`, the bare command under CADRE_GATE_JOBS=1, + `run-bash-tests.sh`) run on ubuntu, windows AND macos,
+    # under `shell: bash`. A separate, Windows-only job would break the contract
+    # that `core-scripts/verify.sh` replays EXACTLY what CI runs (L-00000068,
+    # check-workflow-pins.sh:23-30): the suites are already built for Git-Bash on
+    # Windows (run-bash-tests.sh), and the `skipUnless(WINDOWS, …)` probes in
+    # test_gate_b_launch_probe.py run in NO CI today — that is the gap this leg
+    # closes. Two hosted runners are two distinct boxes, so L-00000164 (gates do
+    # not parallelise on ONE shared machine) does not apply here.
+    # `fail-fast: false`: a red on one OS must NOT cancel the other, or a single
+    # leg's failure hides the other leg's verdict.
+    # Skipped ONLY on a positive `adoptant` from `porte` (header above).
+    needs: porte
+    if: ${{ !cancelled() && needs.porte.outputs.porte != 'adoptant' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    # PRIORITY: macOS is the BLOCKING leg. Ubuntu still runs — free Linux
+    # signal — but a red ubuntu no longer fails the run (pilot decision
+    # 2026-09-01); Windows joined it on 2026-09-24 (pilot decision): its first
+    # real run (35991156812) went red and then hung past the 60-min timeout,
+    # a debt carried by T-00000744. continue-on-error is evaluated PER
+    # MATRIX LEG.
+    continue-on-error: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest' }}
+    timeout-minutes: 60 # Windows is ~2x slower; measured on the trial branch.
+    env:
+      # macOS runners default to a non-UTF-8 locale, so Python encodes its output
+      # (the "->" arrow in scan/recap summaries) as ASCII and dies with
+      # UnicodeEncodeError. PYTHONUTF8=1 forces UTF-8 stdio on every leg without
+      # depending on a generated locale; PYTHONIOENCODING (set per-subprocess by
+      # test_project_init) still wins where a test drives a specific encoding.
+      PYTHONUTF8: "1"
+      # Local gate: pytest + bash suites in parallel processes. CI stays the BARE reference (serial),
+      # pinned, not guessed from runner size (T-00001122) — guarded by check-ci-parity.test.sh case 10.
+      CADRE_GATE_JOBS: "1"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # `persist-credentials: false`: by DEFAULT actions/checkout leaves
+      # GITHUB_TOKEN in `.git/config`, where every later step (and anything
+      # those steps execute, including a dependency's install-time code) can
+      # read it. This job never talks to a remote — it installs deps and runs
+      # two local test suites — so the token has no reason to outlive the
+      # checkout. Verified before setting: no step here pushes, fetches or
+      # clones from a remote, the repo has no submodules, and the only
+      # `git clone`/`git fetch` calls in the test surface target LOCAL paths
+      # (verify.sh's frozen clone, test_sync_template.py's bare fixture origin).
+      # `fetch-depth: 0`: the default shallow checkout (depth 1) hides the
+      # previous `contract.lock.json`, so test_contract_diff.py skips its
+      # changelog comparison and test_checks_manifest.py fails on the
+      # undeclared skip — measured on run 35991156812, reproduced in a
+      # `--depth 1` clone. Full history makes the comparison real.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      # System deps the suites rely on: universal-ctags (build_index) and jq
+      # (hook/tasks scripts).
+      #
+      # NOT PINNABLE, said plainly rather than papered over: apt has no
+      # digest-pinning equivalent, and `apt-get install pkg=version` breaks as
+      # soon as the ubuntu archive drops that exact build — which it does within
+      # weeks, since only the current version of a package stays in the mirror.
+      # So this line trusts the ubuntu archive and the runner image, and that
+      # trust is UNPINNED. It is a smaller surface than PyPI (distro-signed
+      # repository, no per-package install hooks we choose) but it is not zero,
+      # and no guard in this repo covers it.
+      #
+      # LINUX ONLY here — the perimeter is now split PER PLATFORM, each leg's
+      # ctags source stated in writing. ubuntu: apt (UNPINNED trust, said plainly
+      # above). Windows: the universal-ctags release PINNED by sha256, installed
+      # in its own step below (so the "cas 19" java-pruning guard and the earlier
+      # ctags-only block in build_index.test.sh now run there too). macOS: the ONE
+      # leg still WITHOUT ctags — jq and node/npm are preinstalled, but ctags is
+      # not, and no digest-pinnable macOS source was added — so it exercises
+      # build_index's ANNOUNCED fallback branch (the ctags-only block in
+      # build_index.test.sh, which the ctags-equipped legs never enter).
+      - name: Install system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y universal-ctags jq
+
+      # macOS ONLY — same DOCUMENTED unpinned trust as the apt block above, one
+      # formula of perimeter. GitHub's `shell: bash` on macos-latest is /bin/bash
+      # 3.2 (2007), where `set -u` treats an EMPTY array expansion as unbound
+      # (fixed in bash 4.4) — MEASURED on this very workflow: run-bash-tests.sh
+      # died on "NESTED[@]: unbound variable" before running a single suite. No
+      # real macOS dev box runs the kit under 3.2: Homebrew bash 5.x sits first
+      # in PATH (measured on the pilot's machine). Installing bash via brew makes
+      # the `bash core-scripts/…` commands below resolve to 5.x through PATH
+      # (/opt/homebrew/bin precedes /bin on the runner — its git already wins the
+      # same way), mirroring a real dev box. brew has no digest pinning — the
+      # trust is stated plainly rather than papered over.
+      # `coreutils` brings GNU `timeout`, which macOS has NOT natively: without it
+      # run-bash-tests.sh falls to WATCHDOG=0 (:112-120) and a hung suite is neither
+      # named nor bounded — 5 arms of run-bash-tests.test.sh (§8, §9) went KO on
+      # macos-latest in run 33768031446 while the same suites were green on a dev box
+      # that HAS coreutils. The macOS leg had never run on main before that push, so the
+      # gap was invisible: this line makes the runner match what verify.sh measures.
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install bash coreutils
+
+      # Windows ONLY — universal-ctags PINNED by sha256. choco (its only other
+      # Windows install path) is NOT digest-pinnable, and the whole point of this
+      # file is that nothing unpinned enters; a GitHub RELEASE asset can be pinned
+      # by its sha256, so it is. This closes the ctags-only guards (the "cas 19"
+      # java-pruning block and the earlier ctags-only block in
+      # build_index.test.sh) on the Windows leg — before this they were skipped
+      # there and case 19 false-RED under T-00000324.
+      #
+      # PIN: universal-ctags/ctags-win32 v6.1.0, asset ctags-v6.1.0-x64.zip;
+      # ctags.exe sits at the ZIP ROOT, so $RUNNER_TEMP/ctags/ctags.exe after
+      # extraction and $RUNNER_TEMP/ctags on GITHUB_PATH. GITHUB_PATH PREPENDS,
+      # so this pinned ctags wins over any runner-preinstalled shim, and it
+      # applies to LATER steps only — hence this step sits BEFORE the two test
+      # steps. A retagged or removed release makes `sha256sum -c` go RED here:
+      # that is the pin working as intended, not a flake — remedy is to re-pin
+      # the URL and the sha256 below to the new release.
+      - name: Install system deps (Windows, ctags pinned)
+        if: runner.os == 'Windows'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/ctags.zip" https://github.com/universal-ctags/ctags-win32/releases/download/v6.1.0/ctags-v6.1.0-x64.zip
+          echo "ed1bdabe977980db2f5bd8f0a0fa11963f14604b5af92f31db26875bf342efd8  $RUNNER_TEMP/ctags.zip" | sha256sum -c -
+          python -m zipfile -e "$RUNNER_TEMP/ctags.zip" "$RUNNER_TEMP/ctags"
+          "$RUNNER_TEMP/ctags/ctags.exe" --version
+          echo "$RUNNER_TEMP/ctags" >> "$GITHUB_PATH"
+
+      # Enforced by `core-scripts/check-workflow-pins.sh` (rule R2), which runs in
+      # the "Bash test suites" step below via check-workflow-pins.test.sh.
+      - name: Install Python deps (hash-pinned)
+        run: |
+          set -euo pipefail
+          REQ="$(mktemp)"
+          cat > "$REQ" <<'EOF'
+          pytest==9.1.1 --hash=sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c
+          iniconfig==2.3.0 --hash=sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12
+          packaging==26.3 --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+          pluggy==1.6.0 --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
+          pygments==2.20.0 --hash=sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176
+          colorama==0.4.6; sys_platform == "win32" --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
+          EOF
+          python -m pip install --require-hashes --only-binary :all: --disable-pip-version-check -r "$REQ"
+
+      # MATRIX COVERAGE, stated rather than assumed:
+      #  * No Docker `--linux` leg on the Windows runner — there is no need, the
+      #    ubuntu leg above IS the Linux replay; verify.sh's `--linux` exists for
+      #    Windows DEV boxes, not for CI.
+      #  * No UI gate on EITHER OS since T-00000505 withdrew it (see the block
+      #    under the two steps below). Nothing here installs npm packages or a
+      #    browser, so the matrix costs the same on both runners.
+      #  * Line endings are already closed by `.gitattributes` (`*.sh`/`*.py
+      #    eol=lf) — that primes over the runner's core.autocrlf, so the LF the
+      #    suites assume holds on the Windows checkout. Cited, not re-corrected.
+      - name: Python test suites
+        run: bash core-scripts/run-pytest-shards.sh
+
+      - name: Bash test suites
+        run: bash core-scripts/run-bash-tests.sh
+
+      # La correction du shell — le trou entre `bash -n` (syntaxe seule) et
+      # semgrep (motifs de sécurité). Cette étape EXISTE ICI parce que
+      # `check-ci-parity` l'exige : `verify.sh` doit exécuter EXACTEMENT ce que
+      # la CI exécute, et l'ajouter d'un seul côté rougit la porte de parité —
+      # ce qu'elle a fait au premier essai. Sans `shellcheck` sur le runner :
+      # `COVERAGE DEGRADED` et exit 0, jamais un faux propre.
+      #
+      # AU MOINS TROIS VERSIONS EN CIRCULATION, AUCUNE ÉPINGLÉE, et chaque
+      # verdict nomme désormais la sienne (T-00000574, 2026-09-13) : 0.11.0 sur
+      # un poste brew, 0.10.0 dans la jambe conteneur de `verify.sh` (Debian),
+      # plus celle de chaque runner — cette étape n'a PAS de `if:`, elle tourne
+      # sur les trois OS de la matrice, donc « trois » est une BORNE BASSE.
+      #
+      # MESURÉ, et la nuance décide : à la sévérité de CETTE porte (`warning` +
+      # les quatre exclusions), 0.11.0 et 0.10.0 rendent tous deux `propre` —
+      # MÊME VERDICT. À sévérité `style` elles divergent (574 contre 613, et
+      # `SC2317` disparaît en 0.11 au profit de `SC2329`). L'écart est donc
+      # inerte LÀ OÙ CETTE PORTE DÉCIDE, et seulement là : on ENREGISTRE la
+      # version au lieu de l'épingler, et on épinglera le jour où la divergence
+      # atteindra la sévérité de la porte. Un runner sans l'outil dégrade —
+      # bruyamment, jamais en faux propre.
+      - name: Shell correctness (shellcheck)
+        run: bash .agents/security/shellcheck-scan.sh
+
+      # NO UI GATE HERE — WITHDRAWN BY PILOT DECISION (T-00000505). The interface
+      # gate (Playwright + axe) used to reach CI by DISCOVERY, through the "Bash
+      # test suites" step above; scripts/ui-gate.sh and scripts/ui-gate.test.sh
+      # are now deleted, so CI runs NO npm and launches NO browser, on either OS.
+      # `.agents/ui-src/` stays on disk and is played BY HAND, outside CI
+      # (`npx playwright test e2e/coverage.spec.ts` — name the spec, a bare run
+      # rakes untracked *.spec.ts, T-00000203), npm installing its deps at use.
+
+  # THE ADOPTING PROJECT'S GATE (T-00001183, S-00004119) — see the header. No
+  # `continue-on-error`: in an adopting project this job IS the verdict.
+  # `submodules: recursive`: the project's modules are often submodules, and a
+  # gate over empty directories would report "no module". PRIVATE submodules are
+  # not reachable with this job's token: the checkout goes red, named (a deploy
+  # key or a secret is the pilot's choice, not a default of this file).
+  # Scanners PINNED, never floating: gitleaks by its release archive and sha256
+  # (a retagged release goes red at `sha256sum -c` — the pin working), semgrep
+  # and its whole closure by hash from `.agents/security/gardes-ci-requirements.txt`
+  # (kept OUT of this file: verify.sh extracts every `name==… --hash=` line here
+  # into its docker leg). `check-workflow-pins.sh` follows that `-r` (R2d).
+  # `fetch-depth: 0`: the gate's semgrep judges only what is NEW since
+  # `git merge-base HEAD <default branch>` (pilot decision S-00004250) — at the
+  # default depth of 1 no merge-base exists, and the gate falls back to a FULL
+  # scan, saying so, where every pre-existing finding blocks.
+  # `CADRE_SEMGREP_BASE` (binôme c4f3 bis, pilot decision S-00004276): semgrep's
+  # base is IMPOSED — on `pull_request` the PR's base, on `push` the ref's
+  # previous tip `github.event.before`, so that EVERY pushed commit is judged,
+  # not `HEAD^1` alone. Through `env:` ONLY, never `${{ }}` inside a `run:`. The
+  # gate takes it only if it is 40 hex AND an ancestor of HEAD; otherwise — a
+  # branch creation (`before` = 0000…0), a force-push (`before` gone from the
+  # history, or not an ancestor) — it falls back on the merge-base it computes,
+  # and says so. It also derives each submodule's base from its gitlink there.
+  adoptant:
+    needs: porte
+    if: ${{ needs.porte.outputs.porte == 'adoptant' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUTF8: "1"
+      CADRE_SEMGREP_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      # PIN: gitleaks v8.30.1, asset gitleaks_8.30.1_linux_x64.tar.gz; sha256 read
+      # in the release's gitleaks_8.30.1_checksums.txt and re-computed on the
+      # downloaded archive (2026-10-05, identical). The binary sits at the root
+      # of the archive.
+      - name: Install gitleaks (pinned by sha256)
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/gitleaks.tar.gz" https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/gitleaks"
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP/gitleaks" gitleaks
+          "$RUNNER_TEMP/gitleaks/gitleaks" version
+          echo "$RUNNER_TEMP/gitleaks" >> "$GITHUB_PATH"
+
+      # A BLOCK scalar, not an inline `run:` — `:all: ` (colon, space) is a
+      # mapping indicator in a plain YAML scalar and breaks the whole file.
+      - name: Install semgrep (hash-pinned closure)
+        run: |
+          python -m pip install --require-hashes --only-binary :all: --disable-pip-version-check -r .agents/security/gardes-ci-requirements.txt
+
+      # The gate picks a module's package manager from its lockfile. Enable the
+      # image's corepack before selecting a project Node version. Its pnpm/yarn
+      # shims then remain available in this job's PATH. The package manager is
+      # fetched at first use at the version named by the project's packageManager
+      # field, hash-pinned only if that field carries a hash. Without a project
+      # version declaration, Java and Node remain the runner image's versions
+      # (S-01M5E6NA2R).
+      - name: Enable corepack (pnpm, yarn)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/corepack"
+          corepack enable --install-directory "$RUNNER_TEMP/corepack"
+          echo "$RUNNER_TEMP/corepack" >> "$GITHUB_PATH"
+
+      # Only root declarations select tools. Write fixed filenames, never
+      # project content, to the step output consumed by the pinned actions.
+      - id: outils
+        name: Locate project tool versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          java_file=''
+          node_file=''
+          if [ -f .java-version ]; then
+            java_file=.java-version
+          elif [ -f .sdkmanrc ] && grep -Eq '^[[:space:]]*java=' .sdkmanrc; then
+            java_file=.sdkmanrc
+          elif [ -f .tool-versions ] && grep -Eq '^[[:space:]]*java[[:space:]]+[^[:space:]#]+' .tool-versions; then
+            java_file=.tool-versions
+          fi
+          if [ -f .nvmrc ]; then
+            node_file=.nvmrc
+          elif [ -f .node-version ]; then
+            node_file=.node-version
+          elif [ -f .tool-versions ] && grep -Eq '^[[:space:]]*nodejs[[:space:]]+[^[:space:]#]+' .tool-versions; then
+            node_file=.tool-versions
+          elif [ -f package.json ] && python3 -c 'import json; p=json.load(open("package.json", encoding="utf-8")); v=p.get("engines", {}).get("node"); raise SystemExit(0 if isinstance(v, str) and bool(v.strip()) else 1)'; then
+            node_file=package.json
+          fi
+          printf 'java_file=%s\nnode_file=%s\n' "$java_file" "$node_file" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        if: ${{ steps.outils.outputs.java_file != '' }}
+        with:
+          # Adopter: the gate's JDK is ALWAYS Eclipse Temurin, whatever vendor your
+          # version file names; only the version is read from it. Another vendor:
+          # edit `distribution:` here. Never add `java-version:`
+          # beside the file below: setup-java reads it first and ignores the file.
+          distribution: temurin
+          java-version-file: ${{ steps.outils.outputs.java_file }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: ${{ steps.outils.outputs.node_file != '' }}
+        with:
+          node-version-file: ${{ steps.outils.outputs.node_file }}
+          package-manager-cache: false
+
+      # The gate's FALLBACK base reads `origin/HEAD` first (binôme c4f3 bis, fable
+      # F3). The checkout does not set it, so a repository whose default branch is
+      # neither `main` nor `master` fell to a FULL scan whenever the imposed base
+      # was refused (branch creation, force-push). The name comes in by `env:`,
+      # never `${{ }}` inside the `run:`.
+      - name: Point origin/HEAD at the default branch
+        env:
+          DEFAUT: ${{ github.event.repository.default_branch }}
+        run: |
+          git symbolic-ref refs/remotes/origin/HEAD "refs/remotes/origin/$DEFAUT"
+
+      - name: Porte adoptant
+        run: python .agents/bin/porte_adoptant.py

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cadre:scan-verdict:1",
+  "title": "cadre.scan-verdict/1",
+  "description": "Verdict commun d'un scanner de securite, v1. coverage.complete ne vaut jamais true en v1 : un consommateur DOIT le lire, status clean seul ne prouve pas la couverture. Tout champ ajoute, retire ou change de sens ouvre un nouveau majeur ; regle courant a partir du premier producteur cable (S1), avant lui /1 absorbe ses corrections. Les allOf / if-then portent les controles de coherence de validate (statut, rc, classe d'outil, trou) ; constantes et refus tenus egaux a scan_verdict.py par test_scan_verdict.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "tool", "status", "tool_exit_code", "findings", "tool_errors", "notes", "coverage"],
+  "properties": {
+    "schema": {"const": "cadre.scan-verdict/1"},
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "class", "config"],
+      "properties": {
+        "name": {"enum": ["semgrep", "gitleaks"]},
+        "version": {"type": ["string", "null"]},
+        "class": {"enum": ["sast", "secrets"]},
+        "config": {"type": ["string", "null"]}
+      },
+      "allOf": [
+        {"if": {"properties": {"name": {"const": "semgrep"}}, "required": ["name"]},
+         "then": {"properties": {"class": {"const": "sast"}}}},
+        {"if": {"properties": {"name": {"const": "gitleaks"}}, "required": ["name"]},
+         "then": {"properties": {"class": {"const": "secrets"}}}}
+      ]
+    },
+    "status": {"enum": ["clean", "findings", "degraded"]},
+    "tool_exit_code": {"type": ["integer", "null"], "minimum": 0, "maximum": 255},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "path", "line", "severity", "tool_severity"],
+        "properties": {
+          "rule": {"type": "string"},
+          "path": {"type": "string"},
+          "line": {"type": ["integer", "null"], "minimum": 0},
+          "severity": {"enum": ["critical", "high", "medium", "low", "unknown"]},
+          "tool_severity": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "tool_errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "level", "rule_id"],
+        "properties": {
+          "type": {"type": "string"},
+          "level": {"type": "string"},
+          "rule_id": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "report_absent",
+          "report_empty",
+          "report_unreadable",
+          "report_too_large",
+          "tool_errors",
+          "skipped_rules",
+          "known_gap",
+          "scanned_empty",
+          "exit_code_absent",
+          "exit_code_findings_without_findings",
+          "exit_code_out_of_table",
+          "exit_code_disagrees_with_report"
+        ]
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidates", "inspected", "analysis_incomplete", "skipped", "excluded", "not_reported", "skipped_source", "complete"],
+      "properties": {
+        "candidates": {"type": ["integer", "null"], "minimum": 0},
+        "inspected": {"type": "array", "items": {"type": "string"}},
+        "analysis_incomplete": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "type"],
+            "properties": {
+              "path": {"type": "string"},
+              "type": {"type": "string"}
+            }
+          }
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "reason"],
+            "properties": {
+              "path": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "reason"],
+            "properties": {
+              "path": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        },
+        "not_reported": {"type": "array", "items": {"type": "string"}},
+        "skipped_source": {"enum": ["paths.skipped", "complement", "unknown"]},
+        "complete": {"enum": [false, null]}
+      },
+      "if": {"anyOf": [
+        {"properties": {"skipped": {"minItems": 1}}, "required": ["skipped"]},
+        {"properties": {"analysis_incomplete": {"minItems": 1}}, "required": ["analysis_incomplete"]}
+      ]},
+      "then": {"properties": {"complete": {"const": false}}}
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "clean"}}, "required": ["status"]},
+     "then": {"properties": {
+       "tool_exit_code": {"enum": [0, null]},
+       "tool_errors": {"maxItems": 0},
+       "notes": {"maxItems": 0},
+       "coverage": {"properties": {"skipped": {"maxItems": 0}, "analysis_incomplete": {"maxItems": 0}}}
+     }}},
+    {"if": {"properties": {"status": {"const": "clean"},
+                           "tool": {"properties": {"name": {"const": "gitleaks"}}, "required": ["name"]}},
+            "required": ["status", "tool"]},
+     "then": {"properties": {"tool_exit_code": {"const": 0}}}},
+    {"if": {"properties": {"status": {"const": "degraded"}}, "required": ["status"]},
+     "then": {"anyOf": [
+       {"properties": {"notes": {"minItems": 1}}, "required": ["notes"]},
+       {"properties": {"coverage": {"properties": {"skipped": {"minItems": 1}}, "required": ["skipped"]}},
+        "required": ["coverage"]},
+       {"properties": {"coverage": {"properties": {"analysis_incomplete": {"minItems": 1}},
+                                    "required": ["analysis_incomplete"]}},
+        "required": ["coverage"]}
+     ]}},
+    {"if": {"properties": {"status": {"const": "findings"}}, "required": ["status"]},
+     "then": {"properties": {"findings": {"minItems": 1}}},
+     "else": {"properties": {"findings": {"maxItems": 0}}}}
+  ]
+}

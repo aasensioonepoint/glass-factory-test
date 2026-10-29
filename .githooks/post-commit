@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# post-commit — MINCE : n'agit que sur un commit à DEUX parents (un conflit de
+# fusion conclu à la main par `git commit` ou `git merge --continue`, que git ne
+# signale jamais à `post-merge`), et délègue alors à `post-merge commit`, qui
+# porte toute la logique, ses bornes et son témoin (`.githooks/post-merge.test.sh`).
+# Arbitrage orchestrateur S-01M5EKGMX47F9D4QDGBR15G6QH (mandat autonomie),
+# option (a). Un commit à un parent (cherry-pick, revert, rebase sans -r) : silence.
+# Rend toujours 0, n'écrit rien.
+
+set -u
+
+git rev-parse -q --verify 'HEAD^2' >/dev/null 2>&1 || exit 0
+_ici=$(dirname -- "$0")
+[ -f "$_ici/post-merge" ] || exit 0
+bash "$_ici/post-merge" commit
+exit 0

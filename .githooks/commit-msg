@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+# commit-msg — refuse a commit message whose subject carries no known type prefix,
+# then require a task number (or a traced `Sans-tache:`) by threshold: warning
+# below it, refusal above it (see THE TASK NUMBER below).
+#
+# WHY THIS EXISTS. `AGENTS.md` § Conventions lists seven commit types and nothing
+# read them. Measured 2026-09-14 while taking the relevé T-00000593 asks for:
+# `core.hooksPath` is `.githooks`, that directory held ONLY `pre-push`, and no
+# `commit-msg` existed anywhere in the tree. The convention was held by memory
+# alone — which is the whole point of that ticket.
+#
+# WHY THIS ONE IS MECHANISABLE WHEN MOST OF ITS SIBLINGS ARE NOT. T-00000593's
+# design rule is "what DETERMINISTIC ARTEFACT would exist if the rule had been
+# followed, and who can observe it". Here the artefact IS the thing being judged:
+# the commit message. There is no self-declared marker in the loop, so the usual
+# objection — an agent that posts its own proof proves nothing — does not apply.
+#
+# WHAT IT IS, AND THE WORD MATTERS, exactly as `pre-push` says of itself: a local
+# REMINDER, not a gate. `git commit --no-verify` skips it entirely, and it only
+# runs at all where `core.hooksPath` points here. It ATTESTS a convention; it
+# PROVES nothing about a forge.
+#
+# IT JUDGES FORM, NEVER TRUTH. `feat:` on a pure deletion passes. That bound is
+# deliberate and is the same one the rest of this kit writes down: a hook can
+# never invoke a model, so nothing here can weigh whether the type fits the diff.
+# Saying so is part of the contract — a guard whose limits are unwritten gets
+# read as covering more than it does.
+#
+# THE KNOWN HOLES ARE BOUNDED, NOT ENUMERATED: `--no-verify`, a hook never
+# installed, and every commit made through a path that bypasses hooks. Two more
+# are NAMED because they were MEASURED rather than imagined, and the first draft
+# of this header got one of them exactly backwards:
+#
+#   * `git merge -m "<anything>"` — MERGE_HEAD is set, so the subject the
+#     COMMITTER chose is never judged. The first draft blamed `--amend` instead;
+#     measured, an `--amend --no-edit` IS judged and an amend that rewrites a
+#     subject is judged too. Naming the wrong hole is worse than naming none:
+#     it sends the reader to guard a door that is already shut.
+#   * A FIRST LINE THAT IS A COMMENT, on the `-m` / `-F` path. Those use
+#     `--cleanup=whitespace`, which KEEPS comments, so git records `#` as the
+#     subject while this hook skips it and reads the next line. Measured:
+#     `git commit -m "$(printf '#\nfix: x')"` is accepted and stores `#` as the
+#     subject. Closing it means making this hook model git's cleanup modes,
+#     which is a bigger mechanism than the one it guards; the divergence is
+#     pinned by an arm of the bench instead of being fixed, and reopening it is
+#     a decision, not a patch.
+#
+# THE EDITOR PATH HANDS THIS HOOK THE UNCLEANED FILE. An earlier header said
+# git strips its template before this hook runs; REFUTED 2026-10-19 (git
+# 2.54.0): under `git commit -v` the file received here carries the `#`
+# template, then `# ------------------------ >8 ------------------------`, then
+# the STAGED DIFF. The task-number check below therefore reads only the lines
+# ABOVE the first line that ENDS with ` ------------------------ >8 ---...`
+# (whatever its comment prefix) and skips `#` lines: a `T-...` in the diff
+# never satisfies it.
+#
+# THE TASK NUMBER (T-01M54GEQ68NTP1C34EYTF0SDHX), JUDGED AFTER THE TYPE AND AFTER
+# EVERY EXEMPTION. A typed message must also carry a task number — `T-` then 3
+# to 15 digits or 10 to 26 ULID characters, on a non-`#` line above the cut — or
+# a TRACED way out, a line `Sans-tache: <why>` with at least 10 non-blank
+# characters. Without one, the verdict depends on a THRESHOLD (palier) recomputed
+# at every commit, with no state and no switch: among the 200 last non-merge
+# commits of HEAD, those whose subject is not `chore(state): ` / `chore(runs): `
+# are ELIGIBLE (N); those that pass the very predicate above are CONFORMING (K).
+# N < 20 or K < 95 % of N: a WARNING, rc 0. Otherwise: REFUSED, rc 1. Once
+# refusing, every commit that passes is conforming — a ratchet in fact.
+# Bounds, SAID: the threshold reads HEAD's history, not the clone's (a commit
+# made with `--no-verify` or without the hook counts against it); a cut line
+# written by hand on `-m`/`-F` truncates the reading — stricter, never wider;
+# `core.commentChar`/`core.commentString` other than `#` makes the template
+# read as text (a listed path `docs/tasks/T-...` would satisfy the rule;
+# measured unset here); the FORM of the number is judged, never its existence
+# on the board.
+#
+# INSTALLING IT: the same single gesture as `pre-push`, and it carries the same
+# warning — `core.hooksPath` REPLACES `.git/hooks/` in its entirety rather than
+# adding to it. See the header of `.githooks/pre-push` before running:
+#     git config core.hooksPath .githooks
+# That one gesture also arms its two siblings, `.githooks/post-merge` and
+# `.githooks/post-commit`: they ALERT (stderr, never a refusal, always rc 0)
+# when a merge touched a `merge=cadre-enregistrement` path while this clone's
+# field-merge driver is missing or invalid. Their bounds are written in the
+# header of `.githooks/post-merge`. Nothing below depends on them.
+
+set -u
+
+MSG_FILE="${1:-}"
+if [ -z "$MSG_FILE" ] || [ ! -f "$MSG_FILE" ]; then
+  # No message file is not our business to adjudicate: git is mid-something we
+  # do not model. Fail OPEN, like every advisory surface in this kit.
+  exit 0
+fi
+
+# The subject is the FIRST NON-COMMENT, NON-EMPTY line. Reading line 1 blindly
+# would judge the leading blank line of a `-F -` message, and would judge a
+# comment on a template. Neither is the subject git will record.
+SUBJECT=""
+line=""
+# `|| [ -n "$line" ]` KEEPS THE LAST LINE WHEN THE FILE HAS NO TRAILING NEWLINE.
+# Without it `read` returns false on that line and the loop body never runs, so a
+# one-line message with no final newline produced an EMPTY subject and sailed
+# through the whole hook. Caught by arm 3a of the bench the day this was written,
+# which is the entire reason that arm exists.
+while IFS= read -r line || [ -n "$line" ]; do
+  case "$line" in
+    "#"*)
+      continue
+      ;;
+    "")
+      continue
+      ;;
+    *)
+      SUBJECT="$line"
+      break
+      ;;
+  esac
+done < "$MSG_FILE"
+
+# An empty message aborts the commit on git's own account — saying anything here
+# would put a convention error in front of a user who is already being refused.
+if [ -z "$SUBJECT" ]; then
+  exit 0
+fi
+
+# --- LE NUMERO DE TACHE ET SON PALIER : DEFINITIONS (voir l en-tete) ---------
+# Definies ICI, avant les exemptions, et INERTES : rien n est juge avant l appel
+# qui suit le controle du type, plus bas.
+TAB="$(printf '\t')"
+COUPE=' ------------------------ >8 ------------------------'
+RE_NUM='(^|[^A-Za-z0-9_-])T-([0-9]{3,15}|[0-9A-HJKMNP-TV-Z]{10,26})([^A-Za-z0-9]|$)'
+RE_SANS="^[0-9]+${TAB}Sans-tache:([[:blank:]]*[^[:blank:]]){10}"
+
+# corps <exclure> : lit des messages dont chacun OUVRE par l octet \001 ; ecrit
+# « n<TAB> » une fois par message retenu, puis « n<TAB><ligne> » par ligne LUE —
+# arret a la ligne de coupe, lignes `#` sautees. exclure=1 ecarte les messages
+# `chore(state): ` / `chore(runs): ` (le palier) ; 0 les garde (le message en
+# cours, qui doit porter son numero comme les autres). UNE fonction pour les
+# deux usages : le palier compte EXACTEMENT le predicat d acceptation unitaire.
+corps() {
+  LC_ALL=C awk -v exclure="$1" -v coupe="$COUPE" '
+    BEGIN { n = 0; garde = 0; coupee = 0; lc = length(coupe) }
+    substr($0, 1, 1) == "\001" {
+      n++
+      $0 = substr($0, 2)
+      coupee = 0
+      garde = 1
+      if (exclure == 1 && (index($0, "chore(state): ") == 1 || index($0, "chore(runs): ") == 1)) garde = 0
+      if (garde) print n "\t"
+    }
+    !garde || coupee { next }
+    length($0) >= lc && substr($0, length($0) - lc + 1) == coupe { coupee = 1; next }
+    substr($0, 1, 1) == "#" { next }
+    { print n "\t" $0 }
+  '
+}
+
+# Les lignes « n<TAB>... » qui portent un numero ou une sortie `Sans-tache:`.
+lignes_porteuses() {
+  LC_ALL=C grep -E -e "$RE_NUM" -e "$RE_SANS"
+}
+
+message_en_cours() {
+  printf '\001'
+  cat -- "$MSG_FILE"
+}
+
+porte_numero() {
+  [ -n "$(message_en_cours | corps 0 | lignes_porteuses)" ]
+}
+
+formes_acceptees() {
+  printf 'Formes acceptees (une seule suffit) :\n'
+  printf '  fix(x): le sujet (T-<id>)\n'
+  printf '  une ligne de corps : Tâche: T-<id>\n'
+  printf '  git commit -m "<sujet>" -m "Sans-tache: <pourquoi, 10 caracteres au moins>"\n'
+  printf '    (sortie TRACEE, comptee par tracabilite.py bilan)\n'
+  printf 'T-<id> : 3 a 15 chiffres, ou 10 a 26 caracteres d un ULID (prefixe compris).\n'
+}
+
+# Toujours une sortie : avertissement rc 0, ou refus rc 1. Calcule seulement
+# quand le message n a PAS de numero.
+juger_palier() {
+  HIST="$(git -c log.showSignature=false log --no-merges -n 200 --format='%x01%B' HEAD 2>/dev/null | corps 1)"
+  N="$(printf '%s\n' "$HIST" | cut -f1 | LC_ALL=C sort -u | grep -c .)"
+  K="$(printf '%s\n' "$HIST" | lignes_porteuses | cut -f1 | LC_ALL=C sort -u | grep -c .)"
+  if [ "$N" -lt 20 ] || [ $((K * 100)) -lt $((N * 95)) ]; then
+    {
+      printf 'AVERTISSEMENT commit-msg : aucun numéro de tâche — palier %s/%s sous 95 %% (ou moins de 20 éligibles) ; ce commit sera REFUSÉ dès que 95 %% des commits éligibles parmi les 200 derniers commits hors fusion en portent un.\n' "$K" "$N"
+      printf '\n'
+      formes_acceptees
+    } >&2
+    exit 0
+  fi
+  {
+    printf 'REFUSE par commit-msg : aucun numéro de tâche.\n'
+    printf '\n'
+    printf '  sujet lu : %s\n' "$SUBJECT"
+    printf '  palier %s/%s : 95 %% au moins des commits éligibles parmi les 200 derniers commits hors fusion portent un numéro, le refus est en vigueur.\n' "$K" "$N"
+    printf '\n'
+    formes_acceptees
+    printf '\n'
+    printf 'Ce hook juge la FORME du numero, jamais son existence au board.\n'
+  } >&2
+  exit 1
+}
+
+# THE EXEMPTIONS, AND EACH ONE IS A MESSAGE GIT AUTHORS ITSELF OR REWRITES LATER.
+# Refusing these would make the hook fire on gestures whose subject is not the
+# committer's to choose — the profile that gets a guard disabled within the week.
+# `Merge ` ET `Revert ` ETAIENT DES MOTS LIBRES, ET LE REFUS IMPRIMAIT SON
+# PROPRE CONTOURNEMENT. Mesure : « Merge les deux configs sans type » et
+# « Revert le chantier entier » passaient tous deux, et le texte du refus
+# ENUMERAIT les prefixes exemptes — un lecteur refuse n avait qu a recopier le
+# premier. Les motifs ci-dessous sont les formes que git ECRIT vraiment, et les
+# vraies fusions restent de toute facon couvertes par MERGE_HEAD plus bas.
+case "$SUBJECT" in
+  "Merge branch "*|"Merge branches "*|"Merge remote-tracking branch "*|"Merge tag "*|"Merge commit "*|"Merge pull request "*|'Revert "'*|"fixup! "*|"squash! "*|"amend! "*|"Squashed commit of the following:"*)
+    exit 0
+    ;;
+esac
+
+# A rebase or a cherry-pick replays subjects that were already judged when they
+# were first written. Judging them again turns one old miss into a wall that
+# stops an unrelated operation.
+GIT_DIR_PATH="$(git rev-parse --git-dir 2>/dev/null)" || GIT_DIR_PATH=""
+if [ -n "$GIT_DIR_PATH" ]; then
+  # REVERT_HEAD VOYAGE AVEC LE RESSERREMENT CI-DESSUS, et pas separement : tant
+  # que « Revert » etait un mot libre, un `git revert` etait couvert par le
+  # prefixe. Maintenant que le prefixe exige la forme exacte de git, un revert
+  # d un commit dont le sujet d origine n avait pas de type serait refuse sans
+  # ce marqueur. Les deux corrections sont une seule.
+  for marker in rebase-merge rebase-apply CHERRY_PICK_HEAD REVERT_HEAD MERGE_HEAD; do
+    if [ -e "$GIT_DIR_PATH/$marker" ]; then
+      exit 0
+    fi
+  done
+fi
+
+# The ten types of `AGENTS.md` § Conventions, and nothing else. An optional
+# `(scope)` and an optional `!` for a breaking change are accepted because both
+# are Conventional Commits and both already appear in this repo's history.
+#
+# TEN AND NOT SEVEN — DECISION PILOTE DU 2026-09-14, PRISE SUR UNE MESURE. The
+# doctrine listed seven; the history uses three more. Measured over all 1065
+# subjects: 1054 conform (99,0 %), and of the eleven that do not, `ci:` appears
+# three times, `build(ui):` and `revert(atterrissage):` once each — types
+# Conventional Commits defines and this repo already writes. Refusing them would
+# have taught the `--no-verify` reflex on the very gestures a repo makes most
+# often, which is how a guard gets disabled in the week. `AGENTS.md` moved in
+# the same commit: the hook and the doctrine never travel apart.
+TYPES="feat|fix|chore|docs|refactor|perf|test|revert|ci|build"
+
+# LE TYPE EST BON : le numero de tache est juge ICI, apres les exemptions et
+# les marqueurs, jamais avant (bras 10f du banc, mutant M-H4).
+if printf '%s' "$SUBJECT" | grep -qE "^($TYPES)(\([^)]+\))?!?: .+"; then
+  if porte_numero; then
+    exit 0
+  fi
+  juger_palier
+fi
+
+# THE REFUSAL CONTRACT HERE IS GIT'S, NOT THIS KIT'S PER-HOST HOOK CONTRACT:
+# stderr plus a non-zero exit, with the remedy printed. No host registry is
+# involved and none is touched — this is a git hook, not an agent-host hook.
+{
+  printf 'REFUSE par commit-msg : le sujet ne porte aucun type connu.\n'
+  printf '\n'
+  printf '  sujet lu : %s\n' "$SUBJECT"
+  printf '\n'
+  printf 'Les dix types de AGENTS.md, section Conventions :\n'
+  printf '  feat:  fix:  chore:  docs:  refactor:  perf:  test:\n'
+  printf '  revert:  ci:  build:\n'
+  printf '\n'
+  printf 'Formes acceptees, portee et rupture comprises :\n'
+  printf '  fix: le sujet\n'
+  printf '  fix(dash): le sujet\n'
+  printf '  feat(porte)!: le sujet\n'
+  printf '\n'
+  printf 'Les fusions, reverts et fixup/squash/amend ECRITS PAR GIT sont deja\n'
+  printf 'exemptes, ainsi que tout commit joue pendant un rebase, un cherry-pick,\n'
+  printf 'un revert ou une fusion. Tu n as rien a faire pour eux.\n'
+  printf '\n'
+  printf 'Ce hook juge la FORME, jamais la verite : il ne sait pas si le type\n'
+  printf 'colle au diff, et il ne peut pas le savoir — aucun hook de ce depot\n'
+  printf 'n invoque de modele.\n'
+} >&2
+
+exit 1

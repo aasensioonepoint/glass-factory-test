@@ -1,0 +1,210 @@
+name: eval-nightly
+
+# Nightly LIVE evals. This is the ONLY paid, opt-in path in the whole test
+# surface: it is the only place an actual model would be invoked. It is:
+#   - schedule-driven (nightly) + manually dispatchable (never on push/PR),
+#   - the PAID step is gated on ANTHROPIC_API_KEY at the STEP level (env is a
+#     valid `if` context; `secrets` is NOT valid in a job-level `if` and using
+#     it there triggers a workflow startup failure),
+#   - NON-BLOCKING (continue-on-error) so a paid, flaky, or rate-limited live
+#     run never turns the tree red or blocks a merge.
+# The deterministic, zero-cost drift evals run in ci.yml on every push/PR via
+# `python -m pytest` (.agents/evals/test_golden_transcripts.py). Do NOT move
+# live model calls into that job.
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC nightly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Actions are pinned by SHA-40 with the tag kept as a trailing comment, and
+# Python deps by sha256 under `--require-hashes` — see the rationale block in
+# ci.yml for both. It matters MORE here than anywhere else in this repo: this is
+# the only job that maps a real credential (ANTHROPIC_API_KEY) into its env, so
+# a floating tag would let third-party code change under that secret with no
+# commit here moving.
+#
+# AND THAT IS EXACTLY WHY THE PIP LINE MATTERED TOO. `pip install pytest` runs
+# with this job's env — ANTHROPIC_API_KEY included — and a Python package can
+# execute code at INSTALL time, before any test runs. Pinning the actions while
+# leaving that line floating closed one end of the chain and left the other
+# open, in the one job where the chain ends at a live secret.
+#
+# The requirement block below is byte-identical to ci.yml's; a test asserts that
+# parity so the two cannot drift (see core-scripts/check-workflow-pins.test.sh).
+
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    continue-on-error: true # non-blocking: a paid/flaky run never fails the tree
+    # `secrets` is NOT a valid context in a job-level `if:` (it causes a
+    # workflow startup failure). Map the key into job `env` instead — env CAN
+    # read secrets — and gate the single PAID step on it below.
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      # `persist-credentials: false` — and here the default is worse than in
+      # ci.yml: this job already holds ANTHROPIC_API_KEY in its env, so leaving
+      # GITHUB_TOKEN in `.git/config` would put a SECOND credential within reach
+      # of every later step. Verified before setting: this job checks out, sets
+      # up python, installs deps, runs `pytest .agents/evals` and echoes a stub.
+      # Nothing pushes, fetches or clones from a remote; no submodules exist.
+      # `fetch-depth: 0`, same cause as ci.yml (1237d547): the default shallow
+      # checkout hides the previous `contract.lock.json`, so test_contract_diff
+      # skips its changelog comparison and test_checks_manifest fails on the
+      # undeclared skip — `pytest .agents/evals` below would go red.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps (hash-pinned)
+        run: |
+          set -euo pipefail
+          REQ="$(mktemp)"
+          cat > "$REQ" <<'EOF'
+          pytest==9.1.1 --hash=sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c
+          iniconfig==2.3.0 --hash=sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12
+          packaging==26.3 --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+          pluggy==1.6.0 --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
+          pygments==2.20.0 --hash=sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176
+          colorama==0.4.6; sys_platform == "win32" --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
+          EOF
+          python -m pip install --require-hashes --only-binary :all: --disable-pip-version-check -r "$REQ"
+
+      # Free deterministic drift evals — a smoke check that runs even without a
+      # key (never spends anything); same suite ci.yml runs on every push.
+      - name: Deterministic drift evals (free)
+        run: python -m pytest .agents/evals -q
+
+      # -------------------------------------------------------------------
+      # LIVE EVAL PLACEHOLDER — intentionally NOT implemented yet.
+      #
+      # This is where a real, PAID model call would go (replay the golden
+      # trajectories through an actual orchestrator/planner invocation and
+      # score the transcript against .agents/evals/fixtures/*.golden.json).
+      # It is deliberately left as a documented stub so nobody wires a
+      # billable call in without a conscious decision. When implemented it
+      # MUST stay inside this opt-in, non-blocking step. `env` (not `secrets`)
+      # is valid in a step-level `if:`.
+      # -------------------------------------------------------------------
+      - name: Live eval (stub)
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        run: |
+          echo "Live eval stub: no model call is made yet."
+          echo "This is the single opt-in paid path; implement here only."
+          echo "Golden fixtures available under .agents/evals/fixtures/."
+
+  # ==========================================================================
+  # SCA WATCH (T-00000462, case #47) — the SCHEDULED vulnerability watch.
+  #
+  # New advisories are published every day against dependency trees that have
+  # not moved, so a gate that only fires on a diff cannot see them. This job is
+  # what makes the watch periodic; the `on: schedule:` trigger at the top of the
+  # file already existed and is NOT re-declared here.
+  #
+  # WRITTEN, NOT EXERCISED — and that is said rather than implied. The GitHub
+  # Actions quota is exhausted on this repository (a pilot fact, not re-measured
+  # here), so this job has never run on CI and nobody should read it as proven.
+  # THE PROOF IS LOCAL AND IT IS REAL: `.agents/security/sca-watch.test.sh`
+  # exercises sca-watch.sh here and now — a dated digest, an audit line marked
+  # `mode=watch`, and a refusal to invoke an orchestrator that is not on the
+  # PATH. That suite is step 1 below precisely so that the day this job DOES
+  # run, it starts by re-establishing its own premise instead of assuming it.
+  #
+  # WHAT THIS JOB WILL ACTUALLY REPORT ON THIS REPOSITORY, measured 2026-09-07
+  # rather than guessed: `module_discovery.py` finds ONE module below the root
+  # (`.agents/ui-src`), so the bare form of sca-scan.sh falls back to
+  # `--all-modules` and scans that module instead of the root. The root
+  # `effective-verdict.json` is therefore not written, and the digest can show
+  # `Active findings at gate: **?**`. A `?` here means NOT MEASURED — it is not
+  # a zero, and it must never be read as one.
+  #
+  # NO `pip install` ANYWHERE IN THIS JOB, deliberately. The job above pins its
+  # dependencies by sha256 under `--require-hashes` because it maps a live
+  # credential into its env; this one needs no Python package at all, and the
+  # cheapest way to keep a supply chain short is not to have one. The practical
+  # consequence is stated honestly: with no `pip-audit` on the runner, the
+  # Python ecosystem will report `degraded`, which is the correct outcome for a
+  # tool that is absent — "could not look" is not "found nothing".
+  # ==========================================================================
+  sca-watch:
+    runs-on: ubuntu-latest
+    # Non-blocking like the job above: a watch that goes red on a new advisory
+    # must not turn the tree red for everyone. It reports; it does not gate.
+    continue-on-error: true
+    # No `env:` block: this job maps NO secret. The root `permissions:
+    # contents: read` above applies to it unchanged.
+    steps:
+      # Same SHA-40 pins as the job above, copied verbatim, tag comment
+      # included — the comment is the part a human reads at audit time, so a
+      # bump rewrites BOTH or the file lies about what it pins.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      # STEP 1 — re-establish the premise before using it. If the harness is
+      # red, the watch below is not to be trusted, and this step says so first.
+      - name: SCA watch harness (local proof, zero network, zero key)
+        run: bash .agents/security/sca-watch.test.sh
+
+      # STEP 2 — run the watch AND summarise it, in ONE step. Splitting them
+      # would lose `$rc`: each `run:` is its own shell, so a second step would
+      # read an empty variable and report a verdict it never obtained.
+      #
+      # `bash <path>`, never the file as an executable: every `.sh` in this repo
+      # is mode 100644 in the git index (Windows-authored), so on a real POSIX
+      # runner invoking the FILE dies with Permission denied. That is the class
+      # T-00000307 measured, and the class that made this very watch print
+      # "GO — no action needed" on a repository it had never scanned.
+      - name: Run the watch and write the step summary
+        run: |
+          set -uo pipefail
+          # THE EXIT CODE IS CAPTURED, NEVER PIPED. `cmd | tee` yields tee's
+          # status and `cmd || echo rc=$?` yields the echo's — both would report
+          # success for a watch that failed. Measurement first, display second.
+          rc=0
+          bash .agents/security/sca-watch.sh \
+            > "$RUNNER_TEMP/watch.out" 2> "$RUNNER_TEMP/watch.err" || rc=$?
+          echo "sca-watch rc=$rc"
+          cat "$RUNNER_TEMP/watch.out"
+          cat "$RUNNER_TEMP/watch.err" >&2
+          # A BOUND, not an enumeration: an rc outside the three known values is
+          # a measurement NOT OBTAINED, and it is named as such rather than
+          # falling through to a reassuring default.
+          case "$rc" in
+            0) verdict="GO — nothing to act on" ;;
+            1) verdict="NO-GO — findings at the gate" ;;
+            2) verdict="NO-ECOSYSTEM — nothing detected to scan" ;;
+            3) verdict="DEGRADED — NO verdict obtained; this is NOT a clean run" ;;
+            *) verdict="UNKNOWN rc=$rc — treat as NOT measured" ;;
+          esac
+          digest=".agents/state/local/sca-reports/last-watch-digest.md"
+          {
+            echo "## SCA watch"
+            echo
+            echo "- exit code: \`$rc\`"
+            echo "- verdict: **$verdict**"
+            echo
+            echo "### Digest"
+            echo
+            if [ -s "$digest" ]; then
+              cat "$digest"
+            else
+              echo "_No digest was produced — the watch did not reach the point where it writes one._"
+            fi
+            echo
+            echo "> \`Active findings at gate: **?**\` means NOT MEASURED, never zero."
+            echo "> This job is WRITTEN but has never been exercised on CI (quota)."
+          } >> "$GITHUB_STEP_SUMMARY"

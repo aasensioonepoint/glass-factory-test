@@ -1,0 +1,445 @@
+{
+  "schema": 1,
+  "outil": ".agents/bin/tasks.py",
+  "parseur": ".agents/bin/tasks_cli.py — _construire_parseur",
+  "repartition": ".agents/bin/tasks.py — main",
+  "doc": ".agents/ref/TASKS_CLI_CONTRACT.md",
+  "banc": ".agents/evals/test_tasks_cli_contract.py",
+  "definitions": {
+    "statut": "promis : la forme et les codes sont tenus par le banc et ne changent qu'avec ce JSON, dans le même commit. noyau : appelable et décrit ici, sans promesse au-delà du moteur. promis ne vaut PAS public : le verrou public reste contract.lock.json, où `cadre tasks` est réservé (bascule : T-00000797, BK-159).",
+    "mutant": "oui : le verbe draine le rejeu V3 avant et après lui (ensemble `mutating` de main). sauf --dry-run : idem, sauf sous --dry-run. non : aucun drain. non ne veut PAS dire lecture seule (voir non_mutants_qui_ecrivent). --statusline avale le verbe : aucun drain, le verbe ne tourne pas. start, fournee et retour (hors --dry-run ; retour sur RETOUR: ok seulement) et done (qui y complète cloture, correction et porte) écrivent aussi, après le verbe abouti, le journal local task-chrono/<tid>.jsonl de la racine commune (celui du PARENT pour un lot), comme le non-mutant review-scope (juges, cloture) ; le chrono parle sur stderr, sans changer le rc ni le stdout du verbe.",
+    "rc": "codes que le verbe peut rendre. 0 succès ; 1 réponse négative d'un contrôle ; 2 faute d'usage, identifiant inconnu ou refus de garde. Une trace Python non rattrapée sort aussi en 1.",
+    "sorties": "la forme stable de la sortie, éprouvée par le banc : derniere_ligne (regex sur la dernière ligne non vide de stdout), json (stdout est un tableau JSON), jeton (dernière ligne dans jetons_commit), prefixe (stdout ouvre par). Le reste de la sortie n'est pas contractuel.",
+    "defaut": "figé seulement s'il est littéral. --root : {env, repli}, lu à la construction du parseur (CLAUDE_PROJECT_DIR, sinon .).",
+    "hors_contrat": "les textes d'aide (help, description, metavar), le nom interne (dest) des options, l'ordre des options. Sauf : une option à deux noms garde la dest de l'ancien nom (banc AliasAnglais).",
+    "alias": "T-01M5QC86XNEJ5NEX6DGZJ0AJZ5 (S-01M5S9S55X02Z3J0WATVQD0ZH9) : le nom ANGLAIS, tapé en tête, d'un verbe dont la clé reste l'ancien nom que main répartit (set_defaults(cmd=<ancien>)) ; les deux noms sont acceptés. Une option à deux noms s'écrit `--<anglais> --<ancien>`, la dest de l'ancien nom.",
+    "deps-ready":"jetons de 1re ligne `deps-ready: <JETON>`, liste FERMÉE, par précédence : CYCLE > AMONT_OUVERT > INEXPLOITABLE > PLAN_A_REPLANIFIER | REPRISE_DITE > AMONT_CLOS (décision pilote S-01M4Z5VMP5E9YN8T6EMDTBAF0T). rc 0 : AMONT_CLOS, REPRISE_DITE (lancée sous la trace élue, chaque amont en cause clos au plus tard à ce lancement — lancee_le ; « lancée sous S-… : reprise DITE », jamais une révision). rc 1 : CYCLE, AMONT_OUVERT, INEXPLOITABLE (fail-closed, avec un amont clos : plan_cible absent ou qui ne se charge pas, SPECS illisible ou trace sans date lisible), PLAN_A_REPLANIFIER (dont un amont clos après le lancement d'une tâche lancée sous la trace). Source : DEPS_READY_JETONS (tasks_graphe.py).",
+    "depassements": "les tâches NON done au-delà de leur échéance (`echeance`, UTC) ou de leur limite (`jetons` DÉCLARÉS par `conso` > `limite_jetons`), puis chaque valeur illisible (T-01M54GEMCH3JWA95G61N2J70KS). rc 0 : aucune entrée ; rc 1 : au moins une. Objet --json : tache, type (delai | jetons | illisible), valeur (délai : l'instant du jugement ; jetons : le cumul ; illisible : le nom du champ), limite (délai : l'échéance ; jetons : la limite ; illisible : null), etat, arret (vrai sous .agents/state/gates/LIMITE_ARRET, jamais pour une valeur illisible).",
+    "conso": "AJOUTE un nombre DÉCLARÉ au cumul `jetons` : le `subagent_tokens` (`totalTokens`) que l'hôte rend pour un sous-agent terminé, recopié par l'orchestrateur — la taille de son DERNIER appel (contexte final et sortie), jamais sa consommation : mesuré 1× à 194× sous les jetons traités, médiane 39× (107 exécutions de sous-agents, session 383a61a7), sur Claude Code seul. La limite borne cette somme déclarée, jamais une dépense. Un sous-agent REPRIS rend à chaque tour la taille de son dernier appel, qui porte déjà le contexte des tours précédents : déclarer la DIFFÉRENCE entre deux relevés, jamais le relevé brut."
+  },
+  "non_mutants_qui_ecrivent": {
+    "render": "régénère la vue TASKS.md",
+    "binome-purge": "supprime les traces locales de revue d'une tâche",
+    "commit-stores": "commite les trois stores sous le verrou POST_TASK_DONE",
+    "commit-run-exports": "commite runs/ sous le verrou POST_TASK_DONE",
+    "replay-sync": "rejoue l'outbox V3 (drain EXPLICITE, hors mutating)",
+    "focus": "écrit focus.json (focus du clone) sous .agents/state/local du dépôt principal",
+    "review-scope": "écrit review-scope.json (portée de la revue de clôture) sous .agents/state/local du dépôt principal ; abouti, écrit aussi le journal local task-chrono/<tid>.jsonl de la racine commune (juges relevés, cloture ouverte ; done y complète cloture, correction et porte)",
+    "chrono": "begin et step écrivent le journal local task-chrono/<tid>.jsonl sous .agents/state/local de la racine commune ; ni board ni V3"
+  },
+  "jetons_commit": {
+    "litteraux": ["committed", "nothing", "failed", "locked-out", "bash-introuvable"],
+    "prefixes": ["busy:"],
+    "rc_exiger": "sous --exiger, rc 1 hors committed et nothing ; sans --exiger, rc 0 quel que soit le jeton. Script absent : failed ; script présent hors git : nothing."
+  },
+  "options_globales": {
+    "--root": {
+      "action": "store",
+      "requis": false,
+      "choix": null,
+      "nargs": null,
+      "type": null,
+      "defaut": {"env": "CLAUDE_PROJECT_DIR", "repli": "."}
+    },
+    "--statusline": {
+      "action": "store_true",
+      "requis": false,
+      "choix": null,
+      "nargs": 0,
+      "type": null,
+      "defaut": false
+    }
+  },
+  "verbes": {
+    "new": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "title", "nargs": null, "choix": null}],
+      "options": {
+        "--owner": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--workstream --chantier": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--assignee --responsable": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--epic": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--measure --mesure": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--not-a-defect --pas-un-defaut": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--motive --motif": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null}
+      },
+      "sorties": {"libelle": "`TASKS: <id> → pending`", "derniere_ligne": "TASKS: T-[0-9A-Z]+ → pending"}
+    },
+    "epic-new": {
+      "statut": "noyau",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "eid", "nargs": null, "choix": null}, {"nom": "titre", "nargs": null, "choix": null}],
+      "options": {
+        "--wave --vague": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": "int", "defaut": null},
+        "--priority --priorite": {"action": "store", "requis": false, "choix": ["P0", "P1", "P2"], "nargs": null, "type": null, "defaut": null},
+        "--exclusive": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--risk --risque": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--replace --maj": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "epic": {
+      "statut": "noyau",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "eid", "nargs": "?", "choix": null}],
+      "options": {"--remove --retirer": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}}
+    },
+    "epic-list": {
+      "statut": "noyau",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [],
+      "options": {"--json": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}}
+    },
+    "start": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {
+        "--stage": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--without-chain --sans-chaine": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-target --sans-cible": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-deps --sans-dependances": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-claim --sans-revendication": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--takeover --reprise": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null}
+      }
+    },
+    "jira-import": {
+      "statut": "noyau",
+      "mutant": "sauf --dry-run",
+      "rc": [0, 2],
+      "positionnels": [],
+      "options": {
+        "--project": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--issue": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--dry-run": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "jira-claim": {
+      "statut": "noyau",
+      "mutant": "sauf --dry-run",
+      "rc": [0, 2],
+      "positionnels": [],
+      "options": {
+        "--retry": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--dry-run": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "stage": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "stage", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "block": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {
+        "--note": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--on": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""}
+      }
+    },
+    "unblock": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "done": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {
+        "--reason --raison": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--without-review --sans-binome": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-target --sans-cible": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-deps --sans-dependances": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""}
+      }
+    },
+    "reopen": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {
+        "--reason --raison": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--without-reblock --sans-rebloquer": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "binome-purge": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 2],
+      "alias": "review-purge",
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "retitle": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "title", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "reassign": {
+      "statut": "noyau",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "owner", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "regroup": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "chantier", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "responsable": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "alias": "assignee",
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "responsable", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "limite": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {
+        "--delai": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--echeance": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--jetons": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--retirer": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "conso": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "quantite", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "depassements": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 1, 2],
+      "positionnels": [],
+      "options": {"--json": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}},
+      "sorties": {"libelle": "`--json` : un tableau JSON sur stdout, objets `{tache, type, valeur, limite, etat, arret}` (`[]` à rc 0)", "json": true}
+    },
+    "writeset": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "paths", "nargs": "*", "choix": null}],
+      "options": {"--clear": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}}
+    },
+    "direct": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {"--remove --retirer": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}}
+    },
+    "retour": {
+      "statut": "promis",
+      "mutant": "sauf --dry-run",
+      "rc": [0, 1, 2],
+      "alias": "return",
+      "positionnels": [{"nom": "tids", "nargs": "+", "choix": null}],
+      "options": {
+        "--base": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--branch --branche": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--dry-run": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--into --vers": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null}
+      },
+      "sorties": {"libelle": "dernière ligne `RETOUR: ok` ou `RETOUR: refus`", "derniere_ligne": "RETOUR: (ok|refus)"}
+    },
+    "livraison": {
+      "statut": "noyau",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "alias": "delivery",
+      "positionnels": [{"nom": "tids", "nargs": "+", "choix": null}],
+      "options": {
+        "--branch --branche": {"action": "store", "requis": true, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--remove --retirer": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "fournee": {
+      "statut": "noyau",
+      "mutant": "sauf --dry-run",
+      "rc": [0, 2],
+      "alias": "batch",
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {
+        "--dry-run": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--without-chain --sans-chaine": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-target --sans-cible": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-deps --sans-dependances": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": ""},
+        "--without-claim --sans-revendication": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--takeover --reprise": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null}
+      }
+    },
+    "depends": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "deps", "nargs": "*", "choix": null}],
+      "options": {
+        "--clear": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--add": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--remove --retirer": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--remove-pilot-order --retirer-ordre-pilote": {"action": "store", "requis": false, "choix": null, "nargs": 2, "type": null, "defaut": null},
+        "--motive --motif": {"action": "append", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": []}
+      }
+    },
+    "depends-show": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "deps-ready": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 1, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {},
+      "sorties": {"libelle": "rc 0 et 1 : stdout ouvre par `deps-ready: ` puis un jeton fermé (`definitions`)", "prefixe": "deps-ready: "}
+    },
+    "chrono": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}, {"nom": "action", "nargs": null, "choix": ["estimate", "begin", "step", "show"]}],
+      "options": {
+        "--step --etape": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--phase": {"action": "store", "requis": false, "choix": ["begin", "end"], "nargs": null, "type": null, "defaut": null},
+        "--lot": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--attempt --tentative": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": "int", "defaut": null},
+        "--watch": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--json": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      }
+    },
+    "parallel": {
+      "statut": "promis",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tids", "nargs": "+", "choix": null}],
+      "options": {}
+    },
+    "focus": {
+      "statut": "noyau",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {}
+    },
+    "review-scope": {
+      "statut": "noyau",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tids", "nargs": "+", "choix": null}],
+      "options": {}
+    },
+    "delete": {
+      "statut": "noyau",
+      "mutant": "oui",
+      "rc": [0, 2],
+      "positionnels": [{"nom": "tid", "nargs": null, "choix": null}],
+      "options": {"--force": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}}
+    },
+    "purge": {
+      "statut": "promis",
+      "mutant": "sauf --dry-run",
+      "rc": [0, 2],
+      "positionnels": [],
+      "options": {
+        "--state": {"action": "store", "requis": false, "choix": ["pending", "blocked", "done"], "nargs": null, "type": null, "defaut": "done"},
+        "--before": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--dry-run": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--cap --plafond": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": "int", "defaut": 50}
+      }
+    },
+    "list": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [],
+      "options": {
+        "--json": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--task": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--state": {"action": "store", "requis": false, "choix": ["pending", "running", "blocked", "done"], "nargs": null, "type": null, "defaut": null},
+        "--workstream --chantier": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--blocked-by": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--depends-on": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--group": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--session": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false},
+        "--epic": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null},
+        "--assignee --responsable": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null}
+      },
+      "sorties": {"libelle": "`--json` : un tableau JSON sur stdout (`[]` si rien ; l'absence dite sur stderr)", "json": true}
+    },
+    "render": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 2],
+      "positionnels": [],
+      "options": {},
+      "sorties": {"libelle": "`TASKS.md regenerated from TASKS.json`", "derniere_ligne": "TASKS\\.md regenerated from TASKS\\.json"}
+    },
+    "replay-sync": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 1, 2],
+      "positionnels": [],
+      "options": {},
+      "sorties": {"libelle": "`TASKS: replayed <N> sync intent(s)`", "derniere_ligne": "TASKS: replayed \\d+ sync intent\\(s\\)"}
+    },
+    "commit-stores": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 1, 2],
+      "positionnels": [],
+      "options": {
+        "--lock-timeout": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": "float", "defaut": null},
+        "--require --exiger": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      },
+      "sorties": {"libelle": "un jeton de `jetons_commit`, en dernière ligne", "jeton": true}
+    },
+    "commit-run-exports": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 1, 2],
+      "positionnels": [],
+      "options": {
+        "--lock-timeout": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": "float", "defaut": null},
+        "--require --exiger": {"action": "store_true", "requis": false, "choix": null, "nargs": 0, "type": null, "defaut": false}
+      },
+      "sorties": {"libelle": "un jeton de `jetons_commit`, en dernière ligne", "jeton": true}
+    },
+    "cible-check": {
+      "statut": "promis",
+      "mutant": "non",
+      "rc": [0, 1, 2],
+      "alias": "target-check",
+      "positionnels": [{"nom": "plan", "nargs": null, "choix": null}],
+      "options": {"--spec": {"action": "store", "requis": false, "choix": null, "nargs": null, "type": null, "defaut": null}},
+      "sorties": {"libelle": "rc 0 et 1 : stdout ouvre par `cible-check: `", "prefixe": "cible-check: "}
+    }
+  }
+}

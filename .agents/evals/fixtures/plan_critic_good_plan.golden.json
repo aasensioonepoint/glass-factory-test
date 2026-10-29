@@ -1,0 +1,19 @@
+{
+  "_schema": {
+    "purpose": "Data fixture for the opt-in nightly behavioural eval (.github/workflows/eval-nightly.yml), NOT invoked with an LLM by the free CI path. Mirrors plan_critic_bad_plan.golden.json's shape so a NO_GO-always critic (that would trivially pass the bad-plan check by refusing everything) is caught here instead: this plan is sound and must NOT be NO_GO'd."
+  },
+  "plan": "PLAN: add refresh-token rotation\n\n## Context\nAdds automatic refresh-token rotation to the auth flow, invalidating the previous refresh token on each use (SYM-001).\n\n## Steps\n1. Add `rotateRefreshToken()` to src/auth/tokenService.ts\n2. Update src/auth/authController.ts to call rotateRefreshToken() on refresh\n3. Add src/auth/refreshTokenStore.ts to persist token generations\n4. Add src/auth/refreshToken.middleware.ts to reject reused tokens\n5. Update src/api/routes/auth.routes.ts to wire the new middleware\n6. Update src/config/authConfig.ts to add the rotation TTL setting\n\nFORECAST-REFINE: dev-mono ~9k (6 files, not the 1-file default)\n\n## Tests\n- src/auth/tokenService.test.ts::rotateRefreshToken issues a new pair and invalidates the previous refresh token\n- src/auth/refreshToken.middleware.test.ts::rejects a reused refresh token with 401\n\n## Rollback\nRevert the commit. No data migration and no sca-waivers.json entry are introduced by this plan, so a code revert alone restores prior behaviour.\n",
+  "expected": {
+    "verdict_in": ["GO", "GO_AVEC_RESERVES"],
+    "max_blocking": 0,
+    "rows_that_must_pass": [
+      "scope-fit",
+      "index-fidelity",
+      "blast-radius",
+      "test-adequacy",
+      "rollback-viability",
+      "constraint-compliance",
+      "cost-realism"
+    ]
+  }
+}

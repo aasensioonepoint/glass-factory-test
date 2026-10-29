@@ -1,0 +1,141 @@
+{
+  "$doc": [
+    "Table de taux par modele, en USD par MILLION de tokens. Lue par",
+    "dashboard_readers.read_model_rates() et exposee dans /api/snapshot sous `rates`.",
+    "",
+    "POURQUOI CE FICHIER EXISTE. Le dashboard mesure le cout natif via",
+    "claude_code.cost.usage : c'est une MESURE, elle n'a besoin d'aucun tarif. Cette",
+    "table sert uniquement a l'ESTIMATION tokens x tarif, qui est un chiffre d'une",
+    "autre nature. Le design doc exige qu'une estimation soit etiquetee comme telle",
+    "ET sourcee : d'ou `source` et `checked_at` sur chaque fournisseur. Une ligne",
+    "sans source ne doit pas etre ajoutee ici.",
+    "",
+    "POURQUOI L'ESTIMATION EST UNE FOURCHETTE ET PAS UN NOMBRE. La telemetrie compte",
+    "les tokens de `cache creation` sans distinguer le TTL du write. Or 5 min et 1 h",
+    "different d'un facteur 1,6 (6,25 vs 10 $/MTok sur Opus 5). Le lecteur calcule",
+    "donc une borne basse (tout en 5 min) et une borne haute (tout en 1 h) plutot",
+    "que d'affirmer une valeur qui reposerait sur une hypothese invisible.",
+    "",
+    "CE QUE L'ESTIMATION NE PEUT PAS VOIR. Trois multiplicateurs ne sont pas",
+    "deductibles du nom de modele : fast mode (Opus 5 a 10/50 au lieu de 5/25),",
+    "inference_geo=us (x1,1 sur toutes les categories) et le Batch API (-50 %). Une",
+    "estimation qui les ignore sous-estime ou surestime sans le dire ; ils sont",
+    "listes dans `unmodelled_multipliers` pour que la vue puisse l'annoncer.",
+    "",
+    "MAINTENANCE. `effective_from`/`effective_until` sont des dates ISO ; le lecteur",
+    "choisit la ligne active a la date du snapshot. Sonnet 5 en est l'exemple vivant :",
+    "son tarif introductif expire le 2026-08-31 et double presque le 2026-09-01. Une",
+    "table sans date d'effet aurait surfacture en silence des septembre."
+  ],
+  "schema_version": 1,
+  "unit": "usd_per_million_tokens",
+  "providers": {
+    "anthropic": {
+      "billing": "per_token",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "checked_at": "2026-07-31",
+      "cache_write_multipliers": { "ttl_5m": 1.25, "ttl_1h": 2.0 },
+      "cache_read_multiplier": 0.1,
+      "unmodelled_multipliers": [
+        "fast mode (Opus 5 / Opus 4.8) : 10 / 50 au lieu de 5 / 25 ; (Opus 5.5) : 8 / 40 au lieu de 4 / 20",
+        "inference_geo=us : x1,1 sur input, output, cache write et cache read",
+        "Batch API : -50 % sur input et output"
+      ],
+      "aliases": {
+        "claude-opus-5-5[1m]": "claude-opus-5-5",
+        "claude-opus-5[1m]": "claude-opus-5",
+        "claude-opus-4-8[1m]": "claude-opus-4-8",
+        "claude-sonnet-5[1m]": "claude-sonnet-5"
+      },
+      "alias_note": "Le suffixe [1m] est un libelle de telemetrie pour la fenetre 1M, pas un identifiant de modele. La doc est explicite : les modeles 4.6+ incluent la fenetre 1M au tarif standard, sans prime de long contexte. Meme ligne de taux que le modele nu.",
+      "models": {
+        "claude-fable-5": [
+          { "effective_from": "2026-01-01", "input": 10.0, "output": 50.0, "cache_write_5m": 12.5, "cache_write_1h": 20.0, "cache_read": 1.0 }
+        ],
+        "claude-mythos-5": [
+          { "effective_from": "2026-01-01", "input": 10.0, "output": 50.0, "cache_write_5m": 12.5, "cache_write_1h": 20.0, "cache_read": 1.0 }
+        ],
+        "claude-opus-5-5": [
+          { "effective_from": "2026-09-22", "input": 4.0, "output": 20.0, "cache_write_5m": 5.0, "cache_write_1h": 8.0, "cache_read": 0.2,
+            "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+            "checked_at": "2026-09-23",
+            "note": "LES CINQ VALEURS SONT LUES SUR LA PAGE, aucune n'est derivee : 4 / 5 / 8 / 0,20 / 20 $ par MTok, releves le 2026-09-23. cache_read est le cas qui INTERDIT la derivation — la page porte une note de bas de tableau explicite, « Cache hits and refreshes on Claude Opus 5.5 are priced at 0.05x the base input price », la ou `cache_read_multiplier` global vaut 0,1 : appliquer le multiplicateur donnerait 0,40, soit le DOUBLE. Les deux cache_write coincident avec 1,25x et 2x, mais sont relevees et non calculees. `checked_at` est PORTE PAR LA LIGNE parce que le `checked_at` du fournisseur (2026-07-31) est anterieur : le relever au niveau fournisseur pretendrait que TOUTE la table a ete reverifiee, ce qui est faux. Non modelise ici, mais releve sur la meme page : Batch API 2 / 10, fast mode 8 / 40." }
+        ],
+        "claude-opus-5": [
+          { "effective_from": "2026-01-01", "input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.5 }
+        ],
+        "claude-opus-4-8": [
+          { "effective_from": "2026-01-01", "input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.5 }
+        ],
+        "claude-opus-4-7": [
+          { "effective_from": "2026-01-01", "input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.5 }
+        ],
+        "claude-opus-4-6": [
+          { "effective_from": "2026-01-01", "input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.5 }
+        ],
+        "claude-sonnet-5": [
+          { "effective_from": "2026-01-01", "effective_until": "2026-08-31", "input": 2.0, "output": 10.0, "cache_write_5m": 2.5, "cache_write_1h": 4.0, "cache_read": 0.2, "note": "tarif introductif" },
+          { "effective_from": "2026-09-01", "input": 3.0, "output": 15.0, "cache_write_5m": 3.75, "cache_write_1h": 6.0, "cache_read": 0.3 }
+        ],
+        "claude-sonnet-4-6": [
+          { "effective_from": "2026-01-01", "input": 3.0, "output": 15.0, "cache_write_5m": 3.75, "cache_write_1h": 6.0, "cache_read": 0.3 }
+        ],
+        "claude-haiku-4-5": [
+          { "effective_from": "2026-01-01", "input": 1.0, "output": 5.0, "cache_write_5m": 1.25, "cache_write_1h": 2.0, "cache_read": 0.1 }
+        ]
+      }
+    },
+    "google": {
+      "billing": "per_token",
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "checked_at": "2026-07-31",
+      "unmodelled_multipliers": [
+        "paliers de taille de prompt : les modeles Pro facturent input et output plus cher au-dela de 200k tokens (ligne `input_above_200k`)",
+        "niveaux de service : Batch et Flex a -50 %, Priority a environ +80 % — non deductibles du nom de modele",
+        "le stockage de cache est facture a l'HEURE et non au token : hors de portee d'une estimation tokens x tarif"
+      ],
+      "cache_storage_note": "Gemini facture le cache en deux parties : une lecture au token (`cache_read`) et un stockage a l'heure (`cache_storage_usd_per_hour`). Seule la premiere entre dans une estimation au token.",
+      "models": {
+        "gemini-3.6-flash": [
+          { "effective_from": "2026-01-01", "input": 1.5, "output": 7.5, "cache_read": 0.15, "cache_storage_usd_per_hour": 1.0 }
+        ],
+        "gemini-3.5-flash": [
+          { "effective_from": "2026-01-01", "input": 1.5, "output": 9.0, "cache_read": 0.15, "cache_storage_usd_per_hour": 1.0 }
+        ],
+        "gemini-3.5-flash-lite": [
+          { "effective_from": "2026-01-01", "input": 0.3, "output": 2.5 }
+        ],
+        "gemini-3.1-flash-lite": [
+          { "effective_from": "2026-01-01", "input": 0.25, "output": 1.5, "cache_storage_usd_per_hour": 1.0, "note": "input audio facture 0,50 — non modelise" }
+        ],
+        "gemini-3.1-pro-preview": [
+          { "effective_from": "2026-01-01", "input": 2.0, "input_above_200k": 4.0, "output": 12.0, "output_above_200k": 18.0, "cache_read": 0.2, "cache_read_above_200k": 0.4, "cache_storage_usd_per_hour": 4.5 }
+        ],
+        "gemini-2.5-pro": [
+          { "effective_from": "2026-01-01", "input": 1.25, "input_above_200k": 2.5, "output": 10.0, "output_above_200k": 15.0, "cache_read": 0.125, "cache_read_above_200k": 0.25, "cache_storage_usd_per_hour": 4.5 }
+        ],
+        "gemini-2.5-flash": [
+          { "effective_from": "2026-01-01", "input": 0.3, "output": 2.5 }
+        ],
+        "gemini-2.5-flash-lite": [
+          { "effective_from": "2026-01-01", "input": 0.1, "output": 0.4 }
+        ]
+      }
+    },
+    "github_copilot": {
+      "billing": "per_seat",
+      "source": "https://docs.github.com/en/copilot/about-github-copilot/plans-for-github-copilot",
+      "checked_at": "2026-07-31",
+      "models": {},
+      "absence_reason": "GitHub Copilot n'a PAS de tarification au token. La facturation est par siege et par mois (Free 0, Pro 10, Business 19 par siege, Pro+ 39, Enterprise 39 par siege, Max 100 USD), assortie d'une allocation de credits IA. Aucun tarif input/output/cache n'existe : une estimation tokens x tarif est structurellement impossible pour cet hote, et un tableau de taux invente en serait une fabrication. Le cout Copilot se derive du nombre de sieges, pas du volume de tokens — une dimension que ce dashboard ne mesure pas.",
+      "seat_pricing_usd_per_user_month": {
+        "free": 0,
+        "pro": 10,
+        "business": 19,
+        "pro_plus": 39,
+        "enterprise": 39,
+        "max": 100
+      }
+    }
+  }
+}

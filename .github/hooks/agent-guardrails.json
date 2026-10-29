@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/session_context.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/session_context.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/garde-fermee.sh --echeance=7 .agents/pyrun.sh .codex/hooks/protect_paths.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/protect_paths.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/garde-fermee.sh --echeance=7 .agents/pyrun.sh .agents/bin/kickoff_guard.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.agents/bin/kickoff_guard.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/gitleaks-scan.sh --content",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/security/gitleaks-scan.sh') '--content'; $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 60
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/garde-fermee.sh --echeance=7 .agents/pyrun.sh .codex/hooks/audit_gate.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/audit_gate.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/garde-fermee.sh --echeance=7 .agents/pyrun.sh .codex/hooks/safe_bash.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/safe_bash.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/garde-fermee.sh --echeance=7 .agents/pyrun.sh .codex/hooks/iac_guard.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/iac_guard.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/post_edit_check.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/post_edit_check.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 20
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot SCA_CHANGED_ONLY=1 bash .agents/security/sca-scan.sh",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $env:SCA_CHANGED_ONLY='1'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/security/sca-scan.sh'); $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 120
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/bin/post-task-done-index.sh",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/bin/post-task-done-index.sh'); $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 30
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/semgrep-scan.sh --hook --event=post",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/security/semgrep-scan.sh') '--hook' '--event=post'; $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 90
+      }
+    ],
+    "preCompact": [
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/pre_compact_backup.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/pre_compact_backup.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/log_agent_usage.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/log_agent_usage.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 15
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/binome_trace.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/binome_trace.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 15
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .agents/bin/plan_trace.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.agents/bin/plan_trace.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 15
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/stale_index.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/stale_index.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/pyrun.sh .codex/hooks/log_agent_usage.py",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/log_agent_usage.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 15
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot SCA_CHANGED_ONLY=1 bash .agents/security/sca-scan.sh",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $env:SCA_CHANGED_ONLY='1'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/security/sca-scan.sh'); $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 120
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/gitleaks-scan.sh",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/security/gitleaks-scan.sh'); $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 60
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .agents/security/semgrep-scan.sh --hook --event=stop",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.agents/security/semgrep-scan.sh') '--hook' '--event=stop'; $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 90
+      },
+      {
+        "type": "command",
+        "bash": "AGENTS_HOOK_HOST=copilot bash .claude/hooks/affirmation-guard.sh \"$PWD\"",
+        "powershell": "$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='copilot'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & bash ($r+'/.claude/hooks/affirmation-guard.sh') $r; $childExitCode=$LASTEXITCODE; exit $childExitCode } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }",
+        "cwd": ".",
+        "timeoutSec": 30
+      }
+    ]
+  }
+}

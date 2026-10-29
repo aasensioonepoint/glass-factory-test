@@ -1,0 +1,7 @@
+# Throw-away bucket: generated views, run log, SCA reports. See the root .gitignore.
+state/local/
+# The delivered core stays tracked even when your root .gitignore ignores vendor/ or bin/
+# (a re-inclusion cannot live at the root: rule order loses it; it lives here).
+!/vendor/
+!/skills/vendor/
+!/bin/

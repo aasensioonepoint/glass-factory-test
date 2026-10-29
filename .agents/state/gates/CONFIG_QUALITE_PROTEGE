@@ -1,0 +1,34 @@
+# CONFIG LINT/FORMAT EXISTANTE — ARMÉE PAR DÉFAUT chez l'adoptant : sa seule PRÉSENCE l'arme.
+# Ce que la présence arme : la garde de chemins refuse (Edit/Write) qu'un agent
+# MODIFIE une config de linter ou de formateur qui EXISTE déjà dans le projet —
+# `.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `biome.json`, `ruff.toml`,
+# `.editorconfig`, `.golangci.*`, `.rubocop.yml`, `mypy.ini`, les listes
+# d'exclusion `.eslintignore`, `.semgrepignore`… (liste fermée et ses deux motifs :
+# `.agents/bin/config_qualite_guard.py`). L'agent corrige le code plutôt que
+# d'affaiblir la règle. La CRÉATION d'une config absente reste permise. Hors liste,
+# par choix : `pyproject.toml`, `setup.cfg`, `tsconfig*`, `jest`/`vitest`,
+# `pytest.ini`, `package.json`.
+# Sortie tracée, PILOTE SEUL : une ligne dans `.agents/state/gates/CONFIG_QUALITE_AUTORISE`,
+# `<chemin|préfixe/> T-<8 chiffres ou ULID> <AAAA-MM-JJTHH:MMZ>` (UTC, échéance
+# obligatoire) ; chaque écriture octroyée reste VISIBLE au journal des hooks
+# (`hook.warn`, règle `config-qualite-octroi`). Un agent n'écrit ni ce marqueur
+# ni l'octroi. Marqueur posé et garde illisible : toute écriture est refusée.
+# Désarmer = retirer ce fichier, geste du pilote du projet.
+#
+# Statut par hôte et par garde, relevé 2026-10-20 (table des autres gardes,
+# datée : README-OTHER-HOSTS.md, section couverture par hôte) — config lint/format :
+#   MESURÉ : Claude Code (`.claude/hooks/protect-paths.sh`), par le banc de la
+#   garde sur charges synthétiques. Sans python 3 : rien n'est jugé (régime historique).
+#   CÂBLÉ : Codex (`.codex/hooks/protect_paths.py`), même code que juge le banc.
+#   SUPPOSÉ : GitHub Copilot et Kimi Code — HÉRITÉ du code Codex
+#   (`.codex/hooks/protect_paths.py`) ; déclenchement par l'hôte supposé.
+#   NON CÂBLÉ : Gemini CLI — INERTE (G0 : sa config de hooks n'est pas chargée).
+#   NON MESURÉ : Antigravity.
+#
+# Protection : ce fichier (graine dans le dépôt du kit, marqueur chez
+# l'adoptant) est protégé PAR SON NOM — Edit/Write et redirection shell sont
+# refusés ; `cp`, `sed -i`, `tee`, `python3 -c` NE le sont PAS. Couverture
+# partielle, comme les autres marqueurs : la protection empêche l'OUBLI, pas la
+# triche (mesuré sur 3 familles de hooks par charges synthétiques ; émission hôte NON mesurée).
+# Canaux actuels : copie de la branche template ou d'un checkout du kit ;
+# `cadre init` (nom réservé) ne sème rien.

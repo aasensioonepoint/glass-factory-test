@@ -1,0 +1,191 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/session_context.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/session_context.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Loading project index"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/protect_paths.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/protect_paths.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Checking protected paths"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.agents/bin/kickoff_guard.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.agents/bin/kickoff_guard.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Checking kickoff mandate (silent unless a task is armed)"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/security/gitleaks-scan.sh\" --content",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/security/gitleaks-scan.sh' '--content'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 60,
+            "statusMessage": "Secrets gate (class-0, gitleaks) on edited content"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/audit_gate.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/audit_gate.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Checking skill audit gate"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/safe_bash.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/safe_bash.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Checking shell safety"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/iac_guard.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/iac_guard.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Checking IaC guard"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/post_edit_check.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/post_edit_check.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 20,
+            "statusMessage": "Checking edited files"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi SCA_CHANGED_ONLY=1 bash \"$(git rev-parse --show-toplevel)/.agents/security/sca-scan.sh\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $env:SCA_CHANGED_ONLY='1'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/security/sca-scan.sh'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 120,
+            "statusMessage": "SCA gate (waiver-aware) — runs only when a dependency manifest changed"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/security/semgrep-scan.sh\" --hook --event=post",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/security/semgrep-scan.sh' '--hook' '--event=post'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 90,
+            "statusMessage": "SAST hook (class-1, semgrep) on the edited file(s)"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/bin/post-task-done-index.sh\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/bin/post-task-done-index.sh'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 30,
+            "statusMessage": "Committing board, ledger, journal and run exports on a closed task"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/pre_compact_backup.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/pre_compact_backup.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Backing up transcript"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/log_agent_usage.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/log_agent_usage.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 15,
+            "statusMessage": "Logging agent token usage"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/binome_trace.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/binome_trace.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 15,
+            "statusMessage": "Tracing closing-critic run"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/stale_index.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/stale_index.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 10,
+            "statusMessage": "Checking index freshness"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/pyrun.sh\" \"$(git rev-parse --show-toplevel)/.codex/hooks/log_agent_usage.py\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'module' $r '.codex/hooks/log_agent_usage.py'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 15,
+            "statusMessage": "Logging token usage"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi SCA_CHANGED_ONLY=1 bash \"$(git rev-parse --show-toplevel)/.agents/security/sca-scan.sh\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $env:SCA_CHANGED_ONLY='1'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/security/sca-scan.sh'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 120,
+            "statusMessage": "SCA gate (waiver-aware) — runs only when a dependency manifest changed"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/security/gitleaks-scan.sh\"",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/security/gitleaks-scan.sh'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 60,
+            "statusMessage": "Secrets gate (class-0, gitleaks) on the working-tree diff"
+          },
+          {
+            "type": "command",
+            "command": "AGENTS_HOOK_HOST=kimi bash \"$(git rev-parse --show-toplevel)/.agents/security/semgrep-scan.sh\" --hook --event=stop",
+            "commandWindows": "powershell -NoProfile -NonInteractive -Command \"$ErrorActionPreference='Stop'; try { $env:AGENTS_HOOK_HOST='kimi'; $r=(& git rev-parse --show-toplevel); $gitExitCode=$LASTEXITCODE; if($gitExitCode -ne 0){exit $gitExitCode}; & ($r+'/.agents/pyrun.ps1') 'bash' $r '.agents/security/semgrep-scan.sh' '--hook' '--event=stop'; $helperState=@($?, $LASTEXITCODE); if(-not $helperState[0]){if([int]$helperState[1] -ne 0){exit [int]$helperState[1]}; exit 1}; exit [int]$helperState[1] } catch { [Console]::Error.WriteLine('pyrun: PowerShell launcher failed'); exit 1 }\"",
+            "timeout": 90,
+            "statusMessage": "SAST hook (class-1, semgrep) on the dirty tree"
+          }
+        ]
+      }
+    ]
+  }
+}

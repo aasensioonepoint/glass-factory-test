@@ -1,0 +1,33 @@
+MIT — declaree par vercel-labs/agent-skills, sans fichier de licence a l'amont.
+
+Source      : https://github.com/vercel-labs/agent-skills
+Commit pin  : 7c180d9044c9ae2b442b567aad4e42a28dd5ed62
+Releve le   : 2026-09-14, AU COMMIT EPINGLE (et re-verifie au HEAD)
+
+OU LA LICENCE EST DECLAREE, deux endroits concordants :
+  - README.md:226-228 du depot amont, section "## License", valeur "MIT"
+  - le frontmatter du SKILL.md vendorise ici, ligne 21 : "license: MIT"
+
+POURQUOI CE FICHIER ACCOMPAGNE LE LICENSE. L'amont ne fournit AUCUN fichier
+de licence et AUCUNE ligne de copyright : sa declaration est inline. MIT exige
+que la notice de copyright et la notice de permission accompagnent toute
+redistribution. Le LICENSE a cote porte donc le texte canonique de MIT,
+CONSTRUIT ici et non copie de l'amont (decision pilote du 2026-09-14, commit
+526bef89) : titulaire Vercel Labs, FONDE sur le LICENSE du depot frere du meme
+organisme (vercel-labs/web-interface-guidelines), et AUCUNE annee, que rien a
+l'amont ne soutient. Ce NOTICE garde le releve de la declaration amont telle
+qu'elle existe, et nomme le manque.
+
+CE QUE CE FICHIER N'EST PAS. Il n'est pas le texte de la licence MIT. Il atteste
+de sa DECLARATION, avec ses deux emplacements et son commit, pour qu'un lecteur
+puisse la verifier sans refaire l'enquete.
+
+BORNE DE METHODE, ecrite parce qu'elle a coute cher le jour meme : l'absence
+d'un FICHIER de licence n'est pas l'absence d'une LICENCE. Le champ "license" de
+l'API GitHub ne detecte qu'un fichier a la racine — il vaut null ici, et c'est
+un faux negatif du canal, pas une donnee. Une licence se cherche par deux
+methodes qui ne se recouvrent pas : le fichier, ET la declaration inline.
+
+RESIDU OUVERT, sans effet sur le droit : un fichier LICENSE AMONT portant un
+titulaire et une annee remplacerait le LICENSE construit a cote. C'est une
+demarche aupres de l'amont, pas un blocage.

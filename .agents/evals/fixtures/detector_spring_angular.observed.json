@@ -1,0 +1,3087 @@
+{
+  "records": [
+    {
+      "variant": "base",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-base-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "node@unknown",
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml",
+          "backend/mvnw"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "base",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-base-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "java",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "spring-framework",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml: Spring Boot 4.1.1, Java 25, spring-boot-starter-webmvc-test",
+          "backend/mvnw",
+          "frontend/package.json: @angular/core 22.2.4, @angular/build 22.2.4, npm@11.0.0",
+          "frontend/package-lock.json",
+          "frontend/angular.json: @angular/build:unit-test"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot",
+              "spring-framework"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "gradle",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-gradle-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4",
+        "runtime": "java@25",
+        "package_manager": "gradle",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "gradle",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ],
+        "signals_used": [
+          "backend/build.gradle.kts",
+          "backend/gradlew",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "gradle",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-gradle-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4",
+        "runtime": "java 25",
+        "package_manager": "gradle",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/build.gradle.kts",
+          "backend/gradlew",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "gradle",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "starter-test-runner-karma",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-starter-test-runner-karma-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": null,
+        "package_manager": "npm",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "starter-test-runner-karma",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-starter-test-runner-karma-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_typescript.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json: @angular/core ^22.2.4, @angular/build ^22.2.4, packageManager npm@11.0.0",
+          "frontend/package-lock.json",
+          "frontend/angular.json: @angular/build:unit-test with runner karma",
+          "backend/pom.xml: Spring Boot 4.1.1, spring-boot-starter-test"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_typescript.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "sans-runner",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-sans-runner-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": null,
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "sans-runner",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-sans-runner-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "jvm",
+        "package_manager": "maven",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml: Spring Boot parent 4.1.1, Java 25, Maven; no JUnit test dependency declared",
+          "frontend/package.json: @angular/core ^22.2.4, @angular/build ^22.2.4, packageManager npm@11.0.0",
+          "frontend/package-lock.json: npm lockfile",
+          "frontend/angular.json: @angular/build:unit-test with no explicit runner; Angular 22 implies Vitest",
+          ".agents/ref/CONVENTIONS_java.md",
+          ".agents/ref/CONVENTIONS_angular.md"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "karma-sans-lock",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-karma-sans-lock-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "karma-sans-lock",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-karma-sans-lock-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "java 25",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml",
+          "frontend/package.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22.2.4",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "angular20-sans-runner",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angular20-sans-runner-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@20",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@20",
+            "package_manager": "npm",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "angular20-sans-runner",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angular20-sans-runner-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@20",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot",
+          "spring-framework"
+        ],
+        "signals_used": [
+          "frontend/package.json: @angular/core ^20.3.41 and @angular/build ^20.3.41",
+          "frontend/package-lock.json",
+          "frontend/angular.json: @angular/build:unit-test without options.runner; Angular 20 test runner is unknown",
+          "backend/pom.xml: Maven, Spring Boot 4.1.1, Java 25, spring-boot-starter-webmvc-test"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@20",
+            "package_manager": "npm",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot",
+              "spring-framework"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "angularjs",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angularjs-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "javascript"
+        ],
+        "framework": "spring-boot@4",
+        "runtime": "java@25",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "low",
+        "route_to": "ask",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "javascript",
+            "framework": "unknown",
+            "runtime": null,
+            "package_manager": "unknown",
+            "test_runner": "unknown",
+            "confidence": "low",
+            "conventions_file": null,
+            "registry_sections": []
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "runtime": "java@25",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "confidence": "high",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "angularjs",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angularjs-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "unknown",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "low",
+        "route_to": "ask",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json: dependency angular@^1.8.3 (AngularJS; framework unknown)",
+          "backend/pom.xml: Spring Boot parent 4.1.1, spring-boot-starter-webmvc, spring-boot-starter-webmvc-test"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "unknown",
+            "framework": "unknown",
+            "package_manager": "unknown",
+            "test_runner": "unknown",
+            "confidence": "low",
+            "conventions_file": null,
+            "registry_sections": []
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "angular19",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angular19-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@19",
+        "runtime": "node",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "medium",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@19",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "angular19",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angular19-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "unknown",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "medium",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "backend/pom.xml",
+          "frontend/package.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@19",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_typescript.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 1
+    },
+    {
+      "variant": "base",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-base-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "node@unknown",
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml",
+          "backend/mvnw"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "base",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-base-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "unknown",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": null,
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml",
+          "backend/mvnw",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "gradle",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-gradle-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": null,
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "gradle",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/build.gradle.kts",
+          "backend/gradlew"
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "gradle",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-gradle-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "jvm",
+        "package_manager": "gradle",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "spring-framework",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/build.gradle.kts",
+          "backend/gradlew",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "gradle",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot",
+              "spring-framework"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "starter-test-runner-karma",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-starter-test-runner-karma-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "karma",
+            "confidence": "high",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "confidence": "high",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "starter-test-runner-karma",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-starter-test-runner-karma-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "unknown",
+        "secondary": [
+          "java",
+          "typescript"
+        ],
+        "framework": "unknown",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": null,
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "sans-runner",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-sans-runner-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": null,
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "sans-runner",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-sans-runner-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "karma-sans-lock",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-karma-sans-lock-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-mono",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package.json (@angular/core ^22.2.4)"
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "karma-sans-lock",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-karma-sans-lock-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "jvm",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml: Spring Boot parent 4.1.1, spring-boot-starter-webmvc-test",
+          "frontend/package.json: @angular/core ^22.2.4, @angular/build ^22.2.4",
+          "frontend/angular.json: test builder @angular/build:karma",
+          "frontend: no package manager lockfile found"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "angular20-sans-runner",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angular20-sans-runner-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@20",
+        "runtime": "node@unknown",
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@20",
+            "package_manager": "npm",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "angular20-sans-runner",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angular20-sans-runner-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@20",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot",
+          "spring-framework"
+        ],
+        "signals_used": [
+          "frontend/package.json: @angular/core ^20.3.41 and packageManager npm@11.0.0",
+          "frontend/package-lock.json",
+          "frontend/angular.json: @angular/build:unit-test with no runner option",
+          "backend/pom.xml: Spring Boot 4.1.1 parent, Spring MVC starter, Spring Boot test starter"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@20",
+            "package_manager": "npm",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot",
+              "spring-framework"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "angularjs",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angularjs-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "javascript"
+        ],
+        "framework": "spring-boot@4",
+        "runtime": "java@25",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "low",
+        "route_to": "ask",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "javascript",
+            "framework": "unknown",
+            "confidence": "low",
+            "package_manager": "unknown",
+            "test_runner": "unknown",
+            "conventions_file": null,
+            "registry_sections": [
+              "javascript"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "backend/pom.xml"
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "angularjs",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angularjs-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "unknown",
+        "secondary": [],
+        "framework": "unknown",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "unknown",
+        "confidence": "low",
+        "route_to": "ask",
+        "conventions_file": null,
+        "registry_sections": [],
+        "signals_used": [
+          "backend/pom.xml: Maven, Spring Boot 4.1.1, spring-boot-starter-webmvc-test",
+          "frontend/package.json: angular ^1.8.3 (AngularJS)"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "javascript",
+            "framework": "unknown",
+            "package_manager": "unknown",
+            "test_runner": "unknown",
+            "conventions_file": null,
+            "registry_sections": []
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "angular19",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angular19-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@19",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "medium",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@19",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "angular19",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angular19-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@19",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "medium",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json: @angular/core ^19.2.0",
+          "frontend/angular.json: test builder @angular-devkit/build-angular:karma",
+          "backend/pom.xml: Spring Boot 4.1.1, spring-boot-starter-webmvc-test"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@19",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 2
+    },
+    {
+      "variant": "base",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-base-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": null,
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml",
+          "backend/mvnw"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "confidence": "high",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "confidence": "high",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "base",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-base-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "java 25",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": null,
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml",
+          "backend/mvnw",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "gradle",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-gradle-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "node",
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/build.gradle.kts",
+          "backend/gradlew"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "gradle",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "gradle",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-gradle-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "unknown",
+        "package_manager": "gradle",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "backend/build.gradle.kts",
+          "backend/gradlew",
+          "frontend/package.json",
+          "frontend/package-lock.json",
+          "frontend/angular.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "gradle",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "starter-test-runner-karma",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-starter-test-runner-karma-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "node@unknown",
+        "package_manager": "npm",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "starter-test-runner-karma",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-starter-test-runner-karma-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "typescript"
+        ],
+        "framework": "spring-boot@4.1.1",
+        "runtime": "jvm",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot",
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "backend/pom.xml declares Spring Boot 4.1.1 and spring-boot-starter-test",
+          "frontend/angular.json uses @angular/build:unit-test with runner karma",
+          "frontend/package.json declares @angular/core ^22.2.4 and npm@11.0.0",
+          "frontend/package-lock.json"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "sans-runner",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-sans-runner-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "node@unknown",
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "sans-runner",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-sans-runner-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "vitest",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "backend/pom.xml: Spring Boot parent 4.1.1; Maven manifest; no declared JUnit test dependency",
+          "frontend/package.json: @angular/core ^22.2.4, @angular/build ^22.2.4, packageManager npm@11.0.0",
+          "frontend/package-lock.json: npm lockfile",
+          "frontend/angular.json: @angular/build:unit-test with no runner option; Angular 22 defaults to Vitest"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "npm",
+            "test_runner": "vitest",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "karma-sans-lock",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-karma-sans-lock-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@22",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "karma-sans-lock",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-karma-sans-lock-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "unknown",
+        "secondary": [],
+        "framework": "unknown",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": null,
+        "registry_sections": [],
+        "signals_used": [
+          "frontend/angular.json: @angular/build:karma",
+          "frontend/package.json: @angular/core ^22.2.4",
+          "backend/pom.xml: Spring Boot parent 4.1.1",
+          "backend/pom.xml: spring-boot-starter-webmvc-test"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@22",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "angular20-sans-runner",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angular20-sans-runner-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@20",
+        "runtime": null,
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@20",
+            "package_manager": "npm",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "frontend/package-lock.json",
+          "backend/pom.xml"
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "angular20-sans-runner",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angular20-sans-runner-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@20",
+        "runtime": "unknown",
+        "package_manager": "npm",
+        "test_runner": "unknown",
+        "confidence": "high",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json: @angular/core ^20.3.41 and @angular/build ^20.3.41",
+          "frontend/angular.json: @angular/build:unit-test with no runner; Angular 20 uses unknown test runner",
+          "frontend/package-lock.json: npm lockfile",
+          "backend/pom.xml: Spring Boot 4.1.1, Maven, spring-boot-starter-webmvc-test"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@20",
+            "package_manager": "npm",
+            "test_runner": "unknown",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4.1.1",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "angularjs",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angularjs-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "java",
+        "secondary": [
+          "javascript"
+        ],
+        "framework": "spring-boot@4",
+        "runtime": "java@25",
+        "package_manager": "maven",
+        "test_runner": "junit",
+        "confidence": "low",
+        "route_to": "ask",
+        "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+        "registry_sections": [
+          "java",
+          "spring-boot"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "javascript",
+            "framework": "unknown",
+            "package_manager": "unknown",
+            "test_runner": "unknown",
+            "confidence": "low",
+            "conventions_file": null,
+            "registry_sections": [
+              "javascript"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "backend/pom.xml",
+          "backend/pom.xml (spring-boot-starter-webmvc-test)"
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "angularjs",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angularjs-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "unknown",
+        "secondary": [
+          "java",
+          "javascript"
+        ],
+        "framework": "unknown",
+        "runtime": "unknown",
+        "package_manager": "unknown",
+        "test_runner": "unknown",
+        "confidence": "low",
+        "route_to": "ask",
+        "conventions_file": null,
+        "registry_sections": [
+          "java"
+        ],
+        "signals_used": [
+          "backend/pom.xml: Maven, Spring Boot 4.1.1, spring-boot-starter-webmvc-test",
+          "frontend/package.json: dependency angular@^1.8.3 (AngularJS; not Angular)"
+        ],
+        "modules": [
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          },
+          {
+            "path": "frontend",
+            "primary_language": "javascript",
+            "framework": "unknown",
+            "package_manager": "unknown",
+            "test_runner": "unknown",
+            "conventions_file": null,
+            "registry_sections": []
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "angular19",
+      "host": "claude",
+      "model": "haiku",
+      "effort": "low",
+      "command": "claude -p --agent language-detector --model haiku --effort low \"fixture-angular19-claude\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "0a301e1bd3658ddf35b5b1c060cb571cf562825e04e687de5a4cd75cdd49b35f",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@19",
+        "runtime": "node@unknown",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "medium",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@19",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "confidence": "medium",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "confidence": "high",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    },
+    {
+      "variant": "angular19",
+      "host": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "command": "codex exec -s read-only -m gpt-6-luna -c model_reasoning_effort=\"medium\" --json -o <capture> \"Act as the language-detector agent: your instructions are the developer_instructions of .codex/agents/language-detector.toml. Read them, then apply them to the scope fixture-angular19-codex and output only the JSON block.\"",
+      "base_sha": "f2771db40f9f5cc7460354d37fe7ce8af5d4a6f7",
+      "def_sha256": "af4bce0c8fc60f0ee68fd7d9ce372a4038084be61a68e9f2dadf9a0f3f6185d0",
+      "sheets_present": [
+        ".agents/ref/CONVENTIONS_angular.md",
+        ".agents/ref/CONVENTIONS_java.md",
+        ".agents/ref/CONVENTIONS_typescript.md"
+      ],
+      "json": {
+        "primary_language": "typescript",
+        "secondary": [
+          "java"
+        ],
+        "framework": "angular@19",
+        "runtime": "node",
+        "package_manager": "unknown",
+        "test_runner": "karma",
+        "confidence": "medium",
+        "route_to": "dev-multi",
+        "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+        "registry_sections": [
+          "typescript",
+          "angular",
+          "java",
+          "spring-boot"
+        ],
+        "signals_used": [
+          "frontend/package.json",
+          "frontend/angular.json",
+          "backend/pom.xml"
+        ],
+        "modules": [
+          {
+            "path": "frontend",
+            "primary_language": "typescript",
+            "framework": "angular@19",
+            "package_manager": "unknown",
+            "test_runner": "karma",
+            "conventions_file": ".agents/ref/CONVENTIONS_angular.md",
+            "registry_sections": [
+              "typescript",
+              "angular"
+            ]
+          },
+          {
+            "path": "backend",
+            "primary_language": "java",
+            "framework": "spring-boot@4",
+            "package_manager": "maven",
+            "test_runner": "junit",
+            "conventions_file": ".agents/ref/CONVENTIONS_java.md",
+            "registry_sections": [
+              "java",
+              "spring-boot"
+            ]
+          }
+        ]
+      },
+      "draw": 3
+    }
+  ]
+}

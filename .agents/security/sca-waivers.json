@@ -1,0 +1,4 @@
+{
+  "_comment": "Security waiver register. status=accepted (pilot decision via /kickoff) | pending_review (auto-flagged by /kickoff -s false). Both statuses suppress alerts/blocking for (ecosystem, package, version); they stay separate in every counter and digest. advisories='*' waives the whole version; narrow to ['CVE-...'] to re-alert on new advisories. A version bump naturally voids the waiver. Committed on purpose: this is the audit trail. IaC misconfig (trivy config) key: ecosystem='iac', package=<check/AVD id, e.g. 'AVD-DS-0002'>, version=<scanned path/Target, e.g. 'Dockerfile'>, class='iac_misconfig'; advisories='*' works the same way. iac_misconfig is also always_escalate in sca-policy.json — never auto-fixed, waiving here is a pilot decision only.",
+  "waivers": []
+}

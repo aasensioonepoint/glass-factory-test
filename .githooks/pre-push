@@ -1,0 +1,342 @@
+#!/usr/bin/env bash
+# pre-push — refuse to push a SHA that has no green verdict from core-scripts/verify.sh.
+#
+# WHAT THIS IS, AND THE WORD MATTERS: a local REMINDER, not a gate. It reads
+# `.agents/state/local/VERIFY_STAMP`, a git-ignored, UNAUTHENTICATED file that a
+# five-line `printf` fabricates, and `git push --no-verify` skips this script
+# entirely. It ATTESTS a discipline; it PROVES nothing. The word "gate" belongs to
+# the forge-side ruleset in `.github/rulesets/`, which only the pilot can activate.
+#
+# THE KNOWN HOLES ARE BOUNDED, NOT ENUMERATED: `--no-verify`, a hook never
+# installed, a forge whose plan carries no ruleset, and non-template tag pushes (below) are the
+# holes we KNOW. The list is not closed.
+#
+# INSTALLING IT — READ WHAT THE GESTURE DISABLES FIRST. `core.hooksPath` REPLACES
+# `.git/hooks/` IN ITS ENTIRETY; it does not add one hook. Check first:
+#     ls .git/hooks/ | grep -v '\.sample$'
+# With active hooks, integrate them into `.githooks/` and chain matching names;
+# or integrate the kit hooks into the active hooks directory without changing
+# `core.hooksPath`. If a `pre-push` already exists, chain the two `pre-push`
+# hooks; never copy the kit's over the existing one. Otherwise:
+#     git config core.hooksPath .githooks
+# Before undoing local activation, check that the value still points here, then
+# use `git config --unset core.hooksPath`.
+#
+# WHY IT READS STDIN AND NOT `HEAD`. Git feeds a pre-push hook one line per ref:
+#     <local-ref> <local-sha> <remote-ref> <remote-sha>
+# `<local-sha>` is THE SHA ABOUT TO BE PUSHED. HEAD is a different question and is
+# routinely a different answer — pushing a branch you are not on, pushing after
+# committing again, `git push origin <sha>:<branch>`. Reading HEAD here would gate
+# something nobody asked to push.
+#
+# AND IT LOOPS OVER EVERY LINE. `git push --all`, `--tags` and `git push origin a b`
+# each send several; a hook that read one line would gate the first ref and wave
+# the rest through in silence.
+#
+# THE REFUSAL CONTRACT HERE IS GIT'S, NOT THIS KIT'S PER-HOST HOOK CONTRACT:
+# stderr + a non-zero exit, with the remedy printed. No host registry is involved
+# and none is touched — this is a git hook, not an agent-host hook.
+
+ZEROS="0000000000000000000000000000000000000000"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || ROOT=""
+[ -n "$ROOT" ] || ROOT="."
+STAMP="$ROOT/.agents/state/local/VERIFY_STAMP"
+
+# --- T-00001183 : LA PORTE DE L'ADOPTANT (décision pilote S-00004119) ---------
+# « c'est le build du projet et sous modules qui doivent faire foi ». Dans un
+# projet qui a adopté le kit, le verdict n'est pas la suite du kit : c'est la
+# porte adoptant de `core-scripts/verify.sh` (`.agents/bin/porte_adoptant.py`).
+# MÊME RÈGLE qu'à verify.sh et au job `porte` de ci.yml : ADOPTANT ssi
+# `.agents/IS_THE_KIT` est absent ET `.agents/security/module_discovery.py` est
+# présent. Dans ce mode, et dans ce mode SEULEMENT :
+#   - un tampon sans `porte=adoptant` est REFUSÉ — il viendrait de la porte du
+#     kit, qui ne dit rien du projet ;
+#   - `verify.requireLinux` est SANS OBJET et ne refuse jamais : la jambe
+#     conteneur rejoue la suite du KIT (le tampon adoptant porte `linux=0`) ;
+#   - les dérogations tracées (`derogation_*`) sont IMPRIMÉES, pour qu'aucune ne
+#     passe en silence ;
+#   - l'avertissement de la porte (`avertissement=`, S-00004278 : ni script du
+#     projet ni module de famille connue, build et tests NON vérifiés par le kit)
+#     est IMPRIMÉ aussi — une SORTIE, jamais un refus : aucun rc n'en dépend.
+# Sur le kit, ce fichier se comporte octet pour octet comme avant.
+porte_adoptant=0
+if [ ! -f "$ROOT/.agents/IS_THE_KIT" ] && [ -f "$ROOT/.agents/security/module_discovery.py" ]; then
+  porte_adoptant=1
+fi
+
+# --- T-00000595 : la garde « pas de push vers la branche par défaut » ---------
+# ELLE EST ARMÉE PAR UN MARQUEUR, ET C'EST CE QUI L'EMPÊCHE DE VOYAGER ARMÉE.
+# DÉCISION PILOTE DU 2026-09-14, dans ses mots : « je ne veux pas un merge par
+# hasard d'un agent vers main ; je n'ai pas besoin de faire cette config pour
+# l'adoptant ». La règle protège donc CE dépôt, pas le sien.
+#
+# Ce fichier est classé CONTRAT et VOYAGE, mais `.agents/state/` est `strip:` de
+# la template : l'adoptant reçoit le mécanisme et PAS CE marqueur — la sync n'y
+# sème que ceux des quatre gardes de pipeline (T-00001093) —, donc la garde y
+# produit zéro octet. Même polarité que `KICKOFF_REQUIRED` et
+# `AFFIRMATION_REQUIRED` — l'ABSENCE du fichier EST le régime de référence.
+# `BINOME_REQUIRED` n'est PLUS de cette polarité chez l'adoptant : il y est semé.
+# C'est aussi ce qui remplace la clé de configuration qu'un binôme proposait :
+# il n'y a rien à désarmer chez qui n'a jamais été armé.
+MAIN_GUARD="$ROOT/.agents/state/gates/PUSH_DEFAUT_PROTEGE"
+MAIN_EXIT="$ROOT/.agents/state/gates/PUSH_DEFAUT_AUTORISE"
+MAIN_JOURNAL="$ROOT/.agents/state/local/push-defaut-sorties.log"
+main_guard_on=0
+[ -f "$MAIN_GUARD" ] && main_guard_on=1
+# Relevé DANS la boucle, consommé APRÈS elle — voir le bloc en fin de fichier.
+main_exit_used=0
+main_exit_refs=""
+
+refused=0
+
+refuse() {  # refuse <ref> <why...>
+  echo "PUSH REFUSED ($1): $2" >&2
+  refused=1
+}
+
+# --- read the stamp ONCE; it cannot change between refs of one push ------------
+stamp_sha=""
+stamp_mode=""
+stamp_linux=""
+stamp_porte=""
+stamp_derogations=""
+stamp_avertissement=""
+stamp_readable=0
+if [ -f "$STAMP" ] && [ -r "$STAMP" ]; then
+  stamp_readable=1
+  # No `source`, no `eval`: this file is data, and data is parsed, never executed.
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      sha=*)   stamp_sha="${line#sha=}" ;;
+      mode=*)  stamp_mode="${line#mode=}" ;;
+      linux=*) stamp_linux="${line#linux=}" ;;
+      porte=*) stamp_porte="${line#porte=}" ;;
+      # Closed list, the same three keys verify.sh copies (T-00001183).
+      derogation_gardes=*|derogation_module=*|derogation_test=*)
+        stamp_derogations="$stamp_derogations$line
+" ;;
+      # The gate's warning (S-00004278) — printed below, never a refusal.
+      avertissement=*) stamp_avertissement="${line#avertissement=}" ;;
+    esac
+  done < "$STAMP"
+fi
+
+# FAIL-CLOSED on anything we cannot read as a whole verdict. A stamp missing a
+# field, or carrying a sha that is not 40 hex, is treated exactly like no stamp:
+# a partial verdict is not a weaker verdict, it is not a verdict.
+stamp_ok=0
+if [ "$stamp_readable" -eq 1 ]; then
+  case "$stamp_sha" in
+    [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])
+        case "$stamp_mode" in
+          frozen|live)
+            case "$stamp_linux" in
+              0|1) stamp_ok=1 ;;
+            esac
+            ;;
+        esac
+        ;;
+  esac
+fi
+
+# `--bool` normalises yes/on/1 to "true"; an unset key prints nothing.
+require_linux="$(git config --bool verify.requireLinux 2>/dev/null)" || require_linux=""
+
+remedy="run: bash core-scripts/verify.sh --at <sha> --linux   (then push that sha)"
+# Adoptant: `--linux` has no object there (the container leg replays the kit's
+# suite), so the remedy does not ask for it.
+if [ "$porte_adoptant" -eq 1 ]; then
+  remedy="run: bash core-scripts/verify.sh --at <sha>   (then push that sha — this project's gate is the adoptant gate)"
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha || [ -n "$local_ref" ]; do
+  [ -n "$local_ref" ] || continue
+  : "$remote_sha"   # named for the contract, unused by these rules
+
+  # A ref DELETION carries an all-zero local sha and pushes no content at all.
+  # There is nothing to have verified.
+  if [ "$local_sha" = "$ZEROS" ]; then
+    # SAUF SI ELLE SUPPRIME LA BRANCHE PAR DÉFAUT. Le `continue` sautait le
+    # `case` plus bas, donc `git push origin --delete main` passait SANS refus
+    # et SANS trace — mesuré. Le geste le plus destructeur sur cette branche
+    # était le seul qui échappait à la garde posée pour elle.
+    if [ "$main_guard_on" -eq 1 ]; then
+      case "$remote_ref" in
+        refs/heads/main|refs/heads/master)
+          refuse "$local_ref" "il SUPPRIME $remote_ref. La clause « aucun merge vers la branche par défaut sans revue humaine » couvre a fortiori sa suppression. Sortie tracée : écris la raison (NON VIDE) dans $MAIN_EXIT puis repousse."
+          ;;
+      esac
+    fi
+    continue
+  fi
+
+  # --- « AUCUN MERGE VERS main SANS REVUE HUMAINE » (T-00000595) --------------
+  # La clause est écrite au plan de référence et en tête de PLAN-ETAT depuis le
+  # début du chantier, donc elle se LIT comme tenue. Mesuré le 2026-09-13 puis
+  # re-mesuré le 2026-09-14 : ce fichier ne portait AUCUNE référence à
+  # `refs/heads/main`, il n'existe pas de CODEOWNERS, et la protection de
+  # branche côté forge répond 403 — elle n'est pas seulement inactive, elle est
+  # INDISPONIBLE sur ce plan pour un dépôt privé. Donc `git push origin
+  # <branche>:main` passait sans refus et sans trace.
+  #
+  # CE QUE CETTE GARDE EST, ET LE MOT COMPTE, exactement comme l'en-tête le dit
+  # de tout ce fichier : une ATTESTATION LOCALE, pas une porte. `--no-verify` la
+  # saute, et elle ne tourne que là où `core.hooksPath` pointe ici. Elle empêche
+  # d'OUBLIER, jamais de TRICHER — et la porte côté forge, la seule qui
+  # mériterait le mot, reste hors d'atteinte sur ce plan.
+  #
+  # `main` ET `master` : la règle protège la branche PAR DÉFAUT, et ce fichier
+  # VOYAGE (classé CONTRAT) vers des dépôts dont le défaut peut être l'un ou
+  # l'autre. Ne garder que `main` laisserait l'adoptant à découvert sans le dire.
+  #
+  # LA SORTIE TRACÉE N'EST PAS UN CONFORT : une garde qui mord sur le geste
+  # propre du pilote et n'offre aucune échappatoire est désarmée dans la
+  # semaine. Elle est CONSOMMÉE une fois et JOURNALISÉE, donc elle reste visible
+  # — même contrat que `AFFIRMATION_SANS_BINOME`.
+  if [ "$main_guard_on" -eq 1 ]; then
+    case "$remote_ref" in
+      refs/heads/main|refs/heads/master)
+        # `-s` : UN MARQUEUR VIDE NE DÉSARME PAS. Mesuré — un `touch` suffisait
+        # à ouvrir le passage, alors que le refus demande d'ÉCRIRE la raison.
+        if [ -f "$MAIN_EXIT" ] && [ -r "$MAIN_EXIT" ] && [ -s "$MAIN_EXIT" ]; then
+          # ON RELÈVE, ON NE CONSOMME PAS ENCORE : le verdict du push n'est pas
+          # connu avant la fin de la boucle. Consommer ici brûlait la sortie sur
+          # un push refusé plus loin par le tampon, ET inscrivait au journal un
+          # merge qui n'avait pas eu lieu — les deux mesurés.
+          main_exit_used=1
+          main_exit_refs="$main_exit_refs $remote_ref@$local_sha"
+        else
+          refuse "$local_ref" "il vise $remote_ref, et « aucun merge vers la branche par défaut sans revue humaine » est une clause de ce chantier. Sortie tracée : écris la raison (NON VIDE) dans $MAIN_EXIT puis repousse — elle est consommée une fois et journalisée, donc elle reste visible."
+        fi
+        ;;
+    esac
+  fi
+
+  # `git push --tags` sends every local tag: each template destination is checked
+  # independently. A server-created tag, --no-verify, or an uninstalled hook
+  # bypasses this local check. The destination name, not the local ref, governs.
+  # Kit only: in an adopting project the tag falls through to the base path below
+  # (stamp check on the pushed ref), exactly as before this freshness leg existed.
+  if [ -f "$ROOT/.agents/IS_THE_KIT" ]; then
+  case "$remote_ref" in
+    refs/tags/template/*)
+      if [ ! -f "$ROOT/.agents/bin/sync_template_docs.py" ] || [ ! -f "$ROOT/.agents/pyrun.sh" ]; then
+        refuse "$local_ref" "contrôle de fraîcheur du tag $remote_ref indisponible dans le kit"
+        continue
+      fi
+      published="$(git -C "$ROOT" rev-parse --verify "${local_sha}^{commit}" 2>/dev/null)"
+      if [ -z "$published" ]; then
+        refuse "$local_ref" "objet du tag $remote_ref illisible"
+        continue
+      fi
+      freshness="$(bash "$ROOT/.agents/pyrun.sh" "$ROOT/.agents/bin/sync_template_docs.py" --fraicheur --ref "$published" --tag "$remote_ref" --tag-object "$local_sha" --source develop 2>&1)"
+      freshness_rc=$?
+      if [ "$freshness_rc" -ne 0 ]; then
+        refuse "$local_ref" "fraîcheur du tag $remote_ref refusée (rc $freshness_rc) : $freshness"
+      else
+        echo "pre-push: $remote_ref — $freshness" >&2
+      fi
+      continue
+      ;;
+  esac
+  fi
+  case "$local_ref" in
+    refs/tags/*)
+      echo "pre-push: $local_ref is a tag — NOT gated (an annotated tag's sha is the tag object, not a commit). Declared hole." >&2
+      continue
+      ;;
+  esac
+
+  if [ "$stamp_ok" -ne 1 ]; then
+    if [ "$stamp_readable" -eq 1 ]; then
+      refuse "$local_ref" "the verdict stamp is MALFORMED ($STAMP) — a partial verdict is not a verdict. $remedy"
+    else
+      refuse "$local_ref" "no verdict stamp ($STAMP) — nothing here says this tree was ever verified. $remedy"
+    fi
+    continue
+  fi
+
+  # `mode=live` means the verdict measured the LIVE tree, which moves. It is not
+  # an anchored verdict, and the remedy is the frozen form.
+  if [ "$stamp_mode" = "live" ]; then
+    refuse "$local_ref" "the stamp records mode=live — a live-tree run is not anchored to a frozen checkout. $remedy"
+    continue
+  fi
+
+  if [ "$stamp_sha" != "$local_sha" ]; then
+    refuse "$local_ref" "the green verdict covers $stamp_sha but you are pushing $local_sha. $remedy"
+    continue
+  fi
+
+  # ADOPTANT (T-00001183): the verdict must come from the adoptant gate; the
+  # container leg is out of scope, so the linux block below is never reached.
+  if [ "$porte_adoptant" -eq 1 ]; then
+    if [ "$stamp_porte" != "adoptant" ]; then
+      refuse "$local_ref" "this project's gate is the ADOPTANT gate, and the stamp for $stamp_sha carries no porte=adoptant — it was written by the kit's suite, which is not this project's verdict. $remedy"
+      continue
+    fi
+    echo "pre-push: verdict $stamp_sha accepted (porte adoptant) — container leg: no object in adoptant mode (verify.requireLinux not applied)." >&2
+    if [ -n "$stamp_derogations" ]; then
+      while IFS= read -r _derog; do
+        [ -n "$_derog" ] || continue
+        # Re-sanitised for the terminal: control bytes out, accents kept.
+        _derog="$(printf '%s' "$_derog" | LC_ALL=C tr -d '\000-\037\177')"
+        echo "pre-push: TRACED DEROGATION in this verdict — ${_derog%%=*}: ${_derog#*=}" >&2
+      done <<< "$stamp_derogations"
+    fi
+    if [ -n "$stamp_avertissement" ]; then
+      _avert="$(printf '%s' "$stamp_avertissement" | LC_ALL=C tr -d '\000-\037\177')"
+      echo "pre-push: WARNING in this verdict — $_avert" >&2
+    fi
+    continue
+  fi
+
+  # THE CONTAINER LEG. ubuntu is the NON-blocking CI leg (ci.yml, pilot decision
+  # 2026-09-01) and the legs that DO block are the ones a host run already covers,
+  # so a host-only verdict is accepted BY DEFAULT — and the gap is announced rather
+  # than swallowed. A project that wants it blocking says so:
+  #     git config --bool verify.requireLinux true
+  if [ "$stamp_linux" = "0" ]; then
+    if [ "$require_linux" = "true" ]; then
+      refuse "$local_ref" "verify.requireLinux is true and the verdict for $stamp_sha has linux=0 (container leg NOT covered). $remedy"
+      continue
+    fi
+    echo "pre-push: verdict $stamp_sha accepted — container leg: NOT covered (linux=0). Set 'git config --bool verify.requireLinux true' to make that blocking." >&2
+  fi
+done
+
+# --- LA SORTIE TRACÉE NE SE CONSOMME QUE SI LE PUSH PART ---------------------
+# Trois échecs étaient avalés ici, et chacun vidait la garde de sa propriété.
+if [ "$main_exit_used" -eq 1 ] && [ "$refused" -eq 0 ]; then
+  # `\t` et `\r` neutralisés : une raison à tabulation cassait le TSV du journal.
+  main_why="$(tr '\n\t\r' '   ' < "$MAIN_EXIT" 2>/dev/null)"
+  mkdir -p "$(dirname "$MAIN_JOURNAL")" 2>/dev/null
+  # FAIL-CLOSED : PAS DE TRACE, PAS DE DÉROGATION. Le canal de retour du `>>`
+  # était jeté par un `|| true` — mesuré : répertoire non inscriptible, le push
+  # PASSAIT, le marqueur était consommé, rien n'était écrit, et stderr affirmait
+  # pourtant « journalisée ». La dérogation devenait invisible, c'est-à-dire que
+  # la garde perdait la seule propriété qui la justifie.
+  if ! printf '%s\t%s\t%s\n' \
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo date-indisponible)" \
+        "$main_exit_refs" "$main_why" >> "$MAIN_JOURNAL" 2>/dev/null; then
+    echo "PUSH REFUSED: la sortie tracée n'a PAS pu être journalisée dans $MAIN_JOURNAL — une dérogation non tracée n'est pas une dérogation. Rends ce chemin inscriptible, puis repousse." >&2
+    exit 1
+  fi
+  rm -f "$MAIN_EXIT"
+  # Et le retrait se VÉRIFIE : mesuré, `gates/` en lecture seule laissait le
+  # marqueur en place et DEUX pushs consécutifs passaient. « Consommée une
+  # fois » ne tenait pas.
+  if [ -e "$MAIN_EXIT" ]; then
+    echo "PUSH REFUSED: $MAIN_EXIT n'a PAS pu être supprimé — la sortie vaudrait alors pour toujours. Retire-le à la main, puis repousse." >&2
+    exit 1
+  fi
+  echo "pre-push: push vers$main_exit_refs AUTORISÉ par une sortie tracée — consommée, et journalisée dans $MAIN_JOURNAL. Raison : $main_why" >&2
+elif [ "$main_exit_used" -eq 1 ]; then
+  echo "pre-push: sortie tracée $MAIN_EXIT LAISSÉE EN PLACE — le push est refusé pour une autre raison, elle n'a donc rien autorisé." >&2
+fi
+
+if [ "$refused" -ne 0 ]; then
+  echo "pre-push: push refused. To bypass deliberately: git push --no-verify (and know that nothing then attests the SHA — and that it skips the default-branch rule too, without leaving any trace)." >&2
+  exit 1
+fi
+exit 0

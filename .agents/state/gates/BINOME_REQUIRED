@@ -1,0 +1,26 @@
+# GARDE BINÔME — ARMÉE PAR DÉFAUT chez l'adoptant : sa seule PRÉSENCE l'arme.
+# Ce que la présence arme : `tasks.py done` refuse de clore une tâche sans UN
+# critique de clôture tracé par l'hôte (`critic-opus` ; repli `critic-fable`
+# puis `critic-sonnet-max`).
+# Sortie tracée : `tasks.py done <id> --raison "..." --sans-binome "<pourquoi>"` ;
+# la raison reste VISIBLE au board. Quand l'utiliser : doublon, ticket caduc,
+# décision sans code — ou un hôte qui n'écrit pas la trace, motif
+# `hôte sans trace : <hôte>`.
+# Désarmer = retirer ce fichier, geste du pilote du projet.
+#
+# Statut par hôte et par garde, relevé 2026-10-02 (table complète et datée :
+# README-OTHER-HOSTS.md, section couverture par hôte) — trace du binôme :
+#   MESURÉ : Claude Code (script et traces écrites par l'hôte).
+#   CÂBLÉ : Codex, Kimi Code, GitHub Copilot, Gemini CLI ; Antigravity par héritage.
+#   NON CÂBLÉ : aucun hôte.
+#   SUPPOSÉ : l'émission réelle hors Claude Code, non mesurée — sans trace,
+#   chaque clôture passe par `--sans-binome`.
+#
+# Protection : ce fichier (graine dans le dépôt du kit, marqueur chez
+# l'adoptant) est protégé PAR SON NOM — Edit/Write et redirection shell sont
+# refusés ; `cp`, `sed -i`, `tee`, `python3 -c` NE le sont PAS. Couverture
+# partielle, comme les autres marqueurs : la protection empêche l'OUBLI, pas la
+# triche (mesuré sur 3 familles de hooks par charges synthétiques ; câblé sur
+# Kimi Code, GitHub Copilot, Antigravity ; émission hôte NON mesurée).
+# Canaux actuels : copie de la branche template ou d'un checkout du kit ;
+# `cadre init` (nom réservé) ne sème rien.

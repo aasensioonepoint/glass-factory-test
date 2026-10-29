@@ -1,0 +1,16 @@
+# Extra protected path prefixes for THIS project. One per line; `#` comments
+# and blank lines are ignored. Read by the path guards of all four hosts
+# (.claude/hooks/protect-paths.sh and the .codex/.gemini protect_paths.py
+# siblings), so a rule added here holds whichever agent is working.
+#
+# WHY THIS FILE EXISTS ONLY ON THE TEMPLATE (T-00000031). `.agents/bin/` is
+# vendored kit code: in YOUR project nobody should edit it locally, because the
+# next kit upgrade overwrites it and your change is lost silently. In the kit's
+# own repository the opposite is true — that directory is where the kit
+# maintains itself — so the file is declared `own:` in `.template-exclude` and
+# never travels back to main.
+#
+# To let an agent touch a protected path anyway: remove or comment the line
+# here, or ask for explicit approval. Never work around the hook.
+
+.agents/bin/

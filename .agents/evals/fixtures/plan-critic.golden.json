@@ -1,0 +1,28 @@
+{
+  "_schema": {
+    "purpose": "Frozen, LLM-free contract for the `plan-critic` agent across all 5 hosts (Claude / Codex / Gemini / Copilot / Kimi). test_golden_transcripts.py recomposes these invariants from the LIVE agent definitions and asserts (a) each host still matches this golden and (b) all hosts agree (multi-host parity). No model is ever called.",
+    "invariants": {
+      "emits_forecast": "cost-realism row checks file count against FORECAST / FORECAST-REFINE",
+      "owns_approval_gate": "plan-critic never requests approval itself — it hands its verdict to the planner-owned gate",
+      "hands_to_dev": "plan-critic never hands off to dev-mono / dev-multi — NO_GO returns to planner, GO/GO_AVEC_RESERVES go to the gate",
+      "declares_writes_nothing": "plan-critic declares in its own text that it writes nothing (console verdict; the executor, never the critic, persists it to docs/tasks/<T>-critic-<n>.md)",
+      "is_adversarial": "plan-critic explicitly frames itself as adversarial, not collaborative"
+    },
+    "host_config": "Frontmatter model/effort is format-specific and NOT part of the parity set (Copilot's format carries neither by design). Since T-00000037 the golden freezes NO tier literal: test_golden_transcripts.py::TierRelationTests asserts rule 5 as a RELATION — palier(plan-critic) >= palier(planner) — against the LIVE definitions, per host and per axis (effort on Claude/Gemini/Codex, model on Claude/Gemini). Concrete values are the pilot's to tune."
+  },
+  "agent": "plan-critic",
+  "hosts": [
+    "claude",
+    "codex",
+    "gemini",
+    "copilot",
+    "kimi"
+  ],
+  "invariants": {
+    "emits_forecast": true,
+    "owns_approval_gate": false,
+    "hands_to_dev": false,
+    "declares_writes_nothing": true,
+    "is_adversarial": true
+  }
+}

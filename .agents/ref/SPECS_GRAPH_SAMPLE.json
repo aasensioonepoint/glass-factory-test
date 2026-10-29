@@ -1,0 +1,2210 @@
+{
+ "version": 1,
+ "generated_at": "2026-08-03",
+ "title": "StaffingMate — specs fonctionnelles",
+ "source": "specs/backlog",
+ "stats": {
+  "decisions": 257,
+  "a_prendre": 42,
+  "en_analyse": 197,
+  "prise": 12,
+  "prise_a_clore": 6
+ },
+ "nodes": [
+  {
+   "id": "E-01",
+   "title": "Cadrage, glossaire, gouvernance et décisions",
+   "release": "R0",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 40,
+    "lines": 862
+   },
+   "counts": {
+    "prise": 10
+   },
+   "decisions": [
+    {
+     "id": "DEC-01.01",
+     "status": "prise",
+     "q": "L'entité légale devient-elle une sixième dimension organisationnelle ? Décision retenue : attribut de la business unit — business_unit.legal_entity_name. Les deux autres options (dimension à part entière, hors périmètre) ne sont pas retenue…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.02",
+     "status": "prise",
+     "q": "Quelle est la cardinalité de la communauté pour un collaborateur ? Décision retenue : une principale et n secondaires — « au plus une » principale porté en base, « au moins une » porté par le formulaire (V1-51). Les options n sans hiérarchi…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.03",
+     "status": "prise",
+     "q": "Le hub est-il porté par le collaborateur, par le projet, ou par les deux ? Décision retenue : les deux, avec deux libellés distincts (BR-01.09) — hub du collaborateur et hub du projet ne sont pas confondus. Impact : facettes, cross-staffing…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.04",
+     "status": "prise",
+     "q": "Le libellé anglais du glossaire est-il exigé au gel du cadrage ? Décision retenue : exigé pour les seuls termes exposés dans l'interface. Mécanisme imposé par le pilote : la transcription vit dans un fichier JSON paramétrable, packages/cont…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.05",
+     "status": "prise",
+     "q": "La matrice de droits de référence est-elle exécutable, c'est-à-dire source directe de la configuration des droits, ou documentaire avec rapport d'écart ? Décision retenue : exécutable, et le pilote a fixé au passage le CONTENU de la matrice…",
+     "date": "2026-07-31"
+    },
+    {
+     "id": "DEC-01.06",
+     "status": "prise",
+     "q": "Quel est le fuseau de référence d'une journée métier ? Décision retenue : fuseau unique pour le groupe, Europe/Paris — une journée métier est la même pour tous les bureaux, quel que soit le pays. Conséquence technique : les calculs de busin…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.07",
+     "status": "prise",
+     "q": "Le terme canonique désignant l'unité à pourvoir dans une demande est-il poste demandé, position ou ligne de besoin ? Décision retenue : position. Coût nul : le DDL l'emploie déjà (request_position et ses satellites, 25 occurrences dans sql/…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.08",
+     "status": "prise",
+     "q": "Les notes managériales sont-elles une fonctionnalité du produit ? Décision retenue : implémentée mais NON ACTIVÉE en V1 — la table, la finalité écrite, la visibilité choisie avant saisie et la durée de conservation bornée sont livrées, le d…",
+     "date": "2026-07-30"
+    },
+    {
+     "id": "DEC-01.09",
+     "status": "prise",
+     "q": "Quelle durée de rétention s'applique aux versions du registre et aux traces d'arbitrage ? Décision retenue : durée de vie du produit — conservation indéterminée par défaut, assortie d'un mécanisme de purge paramétrable, désactivé par défaut…",
+     "date": "2026-07-31"
+    },
+    {
+     "id": "DEC-01.10",
+     "status": "prise",
+     "q": "Que se passe-t-il lorsqu'une décision atteint son échéance sans arbitre disponible ? Décision retenue : validation automatique de l'option la plus restrictive, ce qui CONFIRME BR-01.29 sans l'amender — la décision est validée d'office, avec…",
+     "date": "2026-07-31"
+    }
+   ]
+  },
+  {
+   "id": "E-02",
+   "title": "Socle d'ingénierie, environnements et observabilité",
+   "release": "R0",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 33,
+    "lines": 1045
+   },
+   "counts": {
+    "a_prendre": 2,
+    "en_analyse": 9
+   },
+   "decisions": [
+    {
+     "id": "DEC-02.1",
+     "status": "en_analyse",
+     "q": "Quel cadre d'exécution cible pour le socle, sachant que le scaffold est un monolithe TypeScript avec accès direct à la base alors que l'étude d'architecture archivée recommandait un service applicatif distinct sur plateforme managée ?"
+    },
+    {
+     "id": "DEC-02.2",
+     "status": "en_analyse",
+     "q": "Quel transport asynchrone ?"
+    },
+    {
+     "id": "DEC-02.3",
+     "status": "a_prendre",
+     "q": "Quel quantum de saisie de la charge, sachant que BR-02.5 retient la demi-journée par défaut et que ce choix contraint E-08, E-11 et E-13 ?"
+    },
+    {
+     "id": "DEC-02.4",
+     "status": "en_analyse",
+     "q": "Quel fuseau de restitution par défaut pour un projet multi-pays, l'ordre de BR-02.4 restant à valider ?"
+    },
+    {
+     "id": "DEC-02.5",
+     "status": "en_analyse",
+     "q": "Quel outillage de migration pour tenir BR-02.15 ?"
+    },
+    {
+     "id": "DEC-02.6",
+     "status": "en_analyse",
+     "q": "Que devient la migration initiale existante ?"
+    },
+    {
+     "id": "DEC-02.7",
+     "status": "en_analyse",
+     "q": "Quel coffre à secrets, quelle rotation et quel chiffrement au repos pour les données restreintes ?"
+    },
+    {
+     "id": "DEC-02.8",
+     "status": "a_prendre",
+     "q": "Quelles durées de rétention effectives, les valeurs de NFR-02.10 n'étant que des propositions techniques ?"
+    },
+    {
+     "id": "DEC-02.9",
+     "status": "en_analyse",
+     "q": "Combien d'environnements partagés et financés par qui ?"
+    },
+    {
+     "id": "DEC-02.10",
+     "status": "en_analyse",
+     "q": "Quel modèle de branche et de livraison ?"
+    },
+    {
+     "id": "DEC-02.11",
+     "status": "en_analyse",
+     "q": "Quelle surface exacte le contrat machine décrit-il, les actions serveur internes au front étant proposées hors description ?"
+    }
+   ]
+  },
+  {
+   "id": "E-03",
+   "title": "Design system onepoint, shell applicatif et accessibilité",
+   "release": "R0",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 30,
+    "lines": 599
+   },
+   "counts": {
+    "en_analyse": 8
+   },
+   "decisions": [
+    {
+     "id": "DEC-03.1",
+     "status": "en_analyse",
+     "q": "Jetons officiels onepoint. Les couleurs, la police et le logo utilisés proviennent d'une inspection du site public, pas de la charte interne. Options : geler les jetons provisoires et migrer ensuite ; attendre la charte avant tout développe…"
+    },
+    {
+     "id": "DEC-03.2",
+     "status": "en_analyse",
+     "q": "Licence de la police et du jeu d'icônes. Options : licence d'entreprise et auto-hébergement ; substitution par une police libre géométrique proche ; jeu d'icônes libre embarqué en SVG. Impact : conformité juridique, poids, résilience hors l…"
+    },
+    {
+     "id": "DEC-03.3",
+     "status": "en_analyse",
+     "q": "Bibliothèque de base des composants. Options : construire sur une bibliothèque sans style éprouvée en accessibilité ; tout écrire. Impact : délai de R0, dette d'accessibilité, coût de maintenance. Tranché par l'architecte front et le référe…"
+    },
+    {
+     "id": "DEC-03.4",
+     "status": "en_analyse",
+     "q": "Thème sombre. Options : hors périmètre avec une structure de jetons prête à l'accueillir ; livré en R2 ; jamais. Impact : doublement des paires de contraste et des états de composant à vérifier. Tranché par le responsable produit."
+    },
+    {
+     "id": "DEC-03.5",
+     "status": "en_analyse",
+     "q": "Fuseau d'affichage hors métropole. Options : fuseau du navigateur ; fuseau du rattachement organisationnel ; choix explicite en préférences avec défaut sur le rattachement. Impact : bornes de période affichées et numérotation de semaine dan…"
+    },
+    {
+     "id": "DEC-03.6",
+     "status": "en_analyse",
+     "q": "Niveau de conformité déclaré. Options : WCAG 2.2 AA sans déclaration publiée ; WCAG 2.2 AA avec déclaration interne ; alignement complémentaire sur le référentiel français avec audit externe. Impact : charge d'audit, calendrier de R0, oblig…"
+    },
+    {
+     "id": "DEC-03.7",
+     "status": "en_analyse",
+     "q": "Densité par défaut et portée de sa mémorisation. Options : densité standard globale ; densité mémorisée par écran ; densité déduite de la hauteur de fenêtre. Impact : cohérence perçue et volume du document de préférences. Tranché par le res…"
+    },
+    {
+     "id": "DEC-03.8",
+     "status": "en_analyse",
+     "q": "Troisième langue. Le français et l'anglais sont acquis ; la nécessité d'une troisième langue pour les implantations hors Europe n'est pas établie. Impact : effort d'extraction inchangé, effort de traduction et de recette proportionnel. Tran…"
+    }
+   ]
+  },
+  {
+   "id": "E-04",
+   "title": "Identité, autorisations, périmètres de visibilité et audit",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 32,
+    "lines": 1053
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 10
+   },
+   "decisions": [
+    {
+     "id": "DEC-04.1",
+     "status": "en_analyse",
+     "q": "Quel fuseau de référence pour les bornes de validité des attributions, périmètres et délégations ?"
+    },
+    {
+     "id": "DEC-04.2",
+     "status": "en_analyse",
+     "q": "Quelle durée maximale pour une délégation de rôle, et le renouvellement est-il possible sans nouvelle approbation ?"
+    },
+    {
+     "id": "DEC-04.3",
+     "status": "en_analyse",
+     "q": "Quelle est l'autorité sur les rôles : le fournisseur d'identité, l'application, ou l'intersection des deux ?"
+    },
+    {
+     "id": "DEC-04.4",
+     "status": "a_prendre",
+     "q": "Quelle rétention par classe de donnée dans le journal d'audit ?"
+    },
+    {
+     "id": "DEC-04.5",
+     "status": "en_analyse",
+     "q": "Quelle est la liste exacte des champs servis en visibilité minimale ?"
+    },
+    {
+     "id": "DEC-04.6",
+     "status": "en_analyse",
+     "q": "Faut-il auditer toute consultation de profil, ou seulement celles touchant une classe sensible ?"
+    },
+    {
+     "id": "DEC-04.7",
+     "status": "en_analyse",
+     "q": "Quels changements exigent exactement la double validation ?"
+    },
+    {
+     "id": "DEC-04.8",
+     "status": "en_analyse",
+     "q": "Un compte de secours hors fournisseur d'identité est-il prévu, et sous quelle garde ?"
+    },
+    {
+     "id": "DEC-04.9",
+     "status": "en_analyse",
+     "q": "L'aperçu « en tant que » est-il autorisé sur des données réelles en production ?"
+    },
+    {
+     "id": "DEC-04.10",
+     "status": "en_analyse",
+     "q": "Quelle visibilité par défaut pour un collaborateur sans rôle particulier ?"
+    },
+    {
+     "id": "DEC-04.11",
+     "status": "en_analyse",
+     "q": "L'extraction « accès à mes données » nomme-t-elle les auteurs des consultations ?"
+    }
+   ]
+  },
+  {
+   "id": "E-05",
+   "title": "Référentiels organisationnels et extensibilité",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 7,
+    "br": 40,
+    "lines": 974
+   },
+   "counts": {
+    "a_prendre": 2,
+    "en_analyse": 8
+   },
+   "decisions": [
+    {
+     "id": "DEC-05.1",
+     "status": "en_analyse",
+     "q": "Liste définitive des axes organisationnels. Options : (a) les cinq axes proposés ici ; (b) un arbre"
+    },
+    {
+     "id": "DEC-05.2",
+     "status": "en_analyse",
+     "q": "Autorité des référentiels d'organisation. Quels axes seront maîtrisés par le SIRH, donc en lecture seule"
+    },
+    {
+     "id": "DEC-05.3",
+     "status": "a_prendre",
+     "q": "Nombre de paliers de l'échelle de maîtrise de compétence. Options : 4 ou 5. Impact : E-07,"
+    },
+    {
+     "id": "DEC-05.4",
+     "status": "en_analyse",
+     "q": "Rôle habilité à créer un champ personnalisé. Options : administrateur fonctionnel seul ; délégation par"
+    },
+    {
+     "id": "DEC-05.5",
+     "status": "en_analyse",
+     "q": "Hiérarchie des valeurs de liste. La conception retenue est structurelle, par parentId et chemin"
+    },
+    {
+     "id": "DEC-05.6",
+     "status": "en_analyse",
+     "q": "Historisation d'un champ personnalisé. Valeurs datées dès R1, ou valeur courante seule puis"
+    },
+    {
+     "id": "DEC-05.7",
+     "status": "en_analyse",
+     "q": "Modération des valeurs créées à la volée. Qui modère, sous quel délai, et que devient l'objet porteur au"
+    },
+    {
+     "id": "DEC-05.8",
+     "status": "en_analyse",
+     "q": "Langues des libellés administrables. Options : français et anglais en R1 ; autres langues selon"
+    },
+    {
+     "id": "DEC-05.9",
+     "status": "a_prendre",
+     "q": "Granularité d'une semaine type. La demi-journée est retenue ; une granularité horaire serait nécessaire"
+    },
+    {
+     "id": "DEC-05.10",
+     "status": "en_analyse",
+     "q": "Fuseau de référence du tenant. Un fuseau unique, ou celui du bureau concerné pour les référentiels"
+    }
+   ]
+  },
+  {
+   "id": "E-06",
+   "title": "Collaborateurs : profil, contrat et historisation RH",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 32,
+    "lines": 661
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 9,
+    "prise_a_clore": 1
+   },
+   "decisions": [
+    {
+     "id": "DEC-06.1",
+     "status": "prise_a_clore",
+     "q": "La part productive ampute-t-elle la capacité affectable, ou ne sert-elle qu'au calcul du taux d'occupation ?"
+    },
+    {
+     "id": "DEC-06.2",
+     "status": "a_prendre",
+     "q": "Le coût journalier est-il importé du SI RH ou saisi dans StaffingMate ?"
+    },
+    {
+     "id": "DEC-06.3",
+     "status": "en_analyse",
+     "q": "La fonctionnalité de notes est-elle activée au lancement ?"
+    },
+    {
+     "id": "DEC-06.4",
+     "status": "en_analyse",
+     "q": "Un collaborateur peut-il être rattaché à plusieurs départements simultanément ?"
+    },
+    {
+     "id": "DEC-06.5",
+     "status": "en_analyse",
+     "q": "Cardinalité et rôle des référents"
+    },
+    {
+     "id": "DEC-06.6",
+     "status": "en_analyse",
+     "q": "Profondeur d'historique RH à reprendre à la migration"
+    },
+    {
+     "id": "DEC-06.7",
+     "status": "en_analyse",
+     "q": "Qui saisit les caractéristiques RH tant que le flux du SI RH n'est pas raccordé ?"
+    },
+    {
+     "id": "DEC-06.8",
+     "status": "en_analyse",
+     "q": "Les formations académiques sont-elles adossées à un référentiel d'établissements ?"
+    },
+    {
+     "id": "DEC-06.9",
+     "status": "en_analyse",
+     "q": "Faut-il une granularité inférieure à la journée pour une date d'effet ?"
+    },
+    {
+     "id": "DEC-06.10",
+     "status": "en_analyse",
+     "q": "Conservation des pièces jointes et du résumé après la sortie d'un collaborateur"
+    },
+    {
+     "id": "DEC-06.11",
+     "status": "en_analyse",
+     "q": "Le type de relation de travail est-il historisé ou considéré comme stable ?"
+    }
+   ]
+  },
+  {
+   "id": "E-07",
+   "title": "Compétences, évaluations et certifications",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 44,
+    "lines": 1473
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 12
+   },
+   "decisions": [
+    {
+     "id": "DEC-07.1",
+     "status": "a_prendre",
+     "q": "Nombre de paliers de l'échelle de maîtrise par défaut"
+    },
+    {
+     "id": "DEC-07.2",
+     "status": "en_analyse",
+     "q": "Règle de consolidation du niveau retenu"
+    },
+    {
+     "id": "DEC-07.3",
+     "status": "en_analyse",
+     "q": "Niveau exploité par la recherche et l'aide à l'affectation"
+    },
+    {
+     "id": "DEC-07.4",
+     "status": "en_analyse",
+     "q": "Durée de la fenêtre de validité d'une évaluation pour la consolidation"
+    },
+    {
+     "id": "DEC-07.5",
+     "status": "en_analyse",
+     "q": "Visibilité d'une aspiration négative"
+    },
+    {
+     "id": "DEC-07.6",
+     "status": "en_analyse",
+     "q": "Échelle et découpage des compétences linguistiques"
+    },
+    {
+     "id": "DEC-07.7",
+     "status": "en_analyse",
+     "q": "Qui peut vérifier une certification, et la preuve est-elle systématiquement exigée"
+    },
+    {
+     "id": "DEC-07.8",
+     "status": "en_analyse",
+     "q": "Les campagnes d'évaluation sont-elles dans le périmètre de la R1"
+    },
+    {
+     "id": "DEC-07.9",
+     "status": "en_analyse",
+     "q": "Fenêtre de réversibilité d'une fusion"
+    },
+    {
+     "id": "DEC-07.10",
+     "status": "en_analyse",
+     "q": "Périmètre du propriétaire métier d'une famille"
+    },
+    {
+     "id": "DEC-07.11",
+     "status": "en_analyse",
+     "q": "Algorithme et seuil de détection des quasi-doublons"
+    },
+    {
+     "id": "DEC-07.12",
+     "status": "en_analyse",
+     "q": "Les compétences mises en œuvre sur une affectation sont-elles saisies ou dérivées"
+    },
+    {
+     "id": "DEC-07.13",
+     "status": "en_analyse",
+     "q": "Le référentiel initial est-il repris d'un existant ou reconstruit"
+    }
+   ]
+  },
+  {
+   "id": "E-08",
+   "title": "Calendriers de travail, absences, capacité et disponibilité",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 44,
+    "lines": 795
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 8,
+    "prise_a_clore": 1
+   },
+   "decisions": [
+    {
+     "id": "DEC-08.1",
+     "status": "en_analyse",
+     "q": "Valeurs par défaut de la première disponibilité : seuil, durée de fenêtre, horizon"
+    },
+    {
+     "id": "DEC-08.2",
+     "status": "en_analyse",
+     "q": "La couche prévisionnelle est-elle servie par défaut sur les écrans de recherche et de staffing ?"
+    },
+    {
+     "id": "DEC-08.3",
+     "status": "prise_a_clore",
+     "q": "Rôle de la part productive : dénominateur seul ou amputation de la capacité affectable"
+    },
+    {
+     "id": "DEC-08.4",
+     "status": "en_analyse",
+     "q": "Origine des absences en R1"
+    },
+    {
+     "id": "DEC-08.5",
+     "status": "a_prendre",
+     "q": "Faut-il descendre sous la demi-journée ?"
+    },
+    {
+     "id": "DEC-08.6",
+     "status": "en_analyse",
+     "q": "Origine du calendrier légal des jours fériés"
+    },
+    {
+     "id": "DEC-08.7",
+     "status": "en_analyse",
+     "q": "Profondeur d'historique et horizon futur de la projection"
+    },
+    {
+     "id": "DEC-08.8",
+     "status": "en_analyse",
+     "q": "Assiette de référence pour comparer deux collaborateurs de rythmes différents"
+    },
+    {
+     "id": "DEC-08.9",
+     "status": "en_analyse",
+     "q": "Qui voit la catégorie réelle d'une absence"
+    },
+    {
+     "id": "DEC-08.10",
+     "status": "en_analyse",
+     "q": "Une absence et une charge peuvent-elles coexister sur le même créneau ?"
+    }
+   ]
+  },
+  {
+   "id": "E-09",
+   "title": "Recherche de collaborateurs, facettes et scoring",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 50,
+    "lines": 721
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 11
+   },
+   "decisions": [
+    {
+     "id": "DEC-09.1",
+     "status": "en_analyse",
+     "q": "Qui fixe les pondérations du modèle de correspondance, et sont-elles ajustables par communauté ou par type de besoin ?"
+    },
+    {
+     "id": "DEC-09.2",
+     "status": "en_analyse",
+     "q": "La compétence attendue par la position satisfaite est-elle une source admissible d'ancienneté d'usage ?"
+    },
+    {
+     "id": "DEC-09.3",
+     "status": "en_analyse",
+     "q": "Profondeur d'historique retenue pour l'ancienneté d'usage"
+    },
+    {
+     "id": "DEC-09.4",
+     "status": "en_analyse",
+     "q": "Seuil de taux d'allocation à partir duquel une journée compte comme pratiquée"
+    },
+    {
+     "id": "DEC-09.5",
+     "status": "en_analyse",
+     "q": "L'appétence déclarée entre-t-elle dans le score ou reste-t-elle une information ?"
+    },
+    {
+     "id": "DEC-09.6",
+     "status": "en_analyse",
+     "q": "Le score est-il activé avant la livraison de E-11 et de son historique d'affectation ?"
+    },
+    {
+     "id": "DEC-09.7",
+     "status": "en_analyse",
+     "q": "Le score global est-il exposé en valeur numérique ou en libellé qualitatif ?"
+    },
+    {
+     "id": "DEC-09.8",
+     "status": "en_analyse",
+     "q": "Les profils écartés par l'éligibilité sont-ils consultables nominativement ?"
+    },
+    {
+     "id": "DEC-09.9",
+     "status": "en_analyse",
+     "q": "Les collaborateurs sortis sont-ils interrogeables, et par qui ?"
+    },
+    {
+     "id": "DEC-09.10",
+     "status": "en_analyse",
+     "q": "Les externes et partenaires apparaissent-ils par défaut dans les résultats ?"
+    },
+    {
+     "id": "DEC-09.11",
+     "status": "en_analyse",
+     "q": "Technologie de la projection de recherche"
+    },
+    {
+     "id": "DEC-09.12",
+     "status": "a_prendre",
+     "q": "Finalité et durée de conservation du journal des recherches"
+    }
+   ]
+  },
+  {
+   "id": "E-10",
+   "title": "Portefeuille et fiche projet",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 59,
+    "lines": 744
+   },
+   "counts": {
+    "a_prendre": 3,
+    "en_analyse": 7
+   },
+   "decisions": [
+    {
+     "id": "DEC-10.1",
+     "status": "en_analyse",
+     "q": "Autorité de création d'un projet après connexion du CRM. Options : (a) la création locale reste ouverte aux rôles habilités et un rapprochement manuel relie le projet local à une opportunité ; (b) la création locale est fermée et tout proje…"
+    },
+    {
+     "id": "DEC-10.2",
+     "status": "a_prendre",
+     "q": "Propriété du référentiel Client. Le Client est-il un objet porté par E-10, un référentiel administré par E-05, ou un objet maîtrisé par le CRM dès R1 ? Options : porté par E-10 en R1 puis maîtrisé en R3 ; administré dans E-05 dès R1. Impact…"
+    },
+    {
+     "id": "DEC-10.3",
+     "status": "en_analyse",
+     "q": "Profondeur hiérarchique retenue. La conception fixe 3 niveaux. Options : 2 niveaux, plus simples à consolider et suffisants si les lots ne se subdivisent pas ; 3 niveaux comme proposé ; profondeur configurable. Impact : BR-10.21, agrégats d…"
+    },
+    {
+     "id": "DEC-10.4",
+     "status": "en_analyse",
+     "q": "Dimension de groupement par défaut de la vue cartes, et changement d'état par geste. Options : statut d'exécution par défaut, sans glisser-déposer en R1 comme proposé ; phase par défaut ; glisser-déposer activable par paramètre avec confirm…"
+    },
+    {
+     "id": "DEC-10.5",
+     "status": "en_analyse",
+     "q": "Valeur par défaut de la tolérance hors fenêtre par phase. Proposition à confirmer : avertissement en phase avant_vente, interdit en phase engage, interdit en phase termine, autorise jamais par défaut. Impact : BR-10.15, volume de conflits d…"
+    },
+    {
+     "id": "DEC-10.6",
+     "status": "a_prendre",
+     "q": "Rétention et purge des instantanés. Combien de temps un instantané est-il conservé, et la purge est-elle automatique ? Options : conservation illimitée avec plafond de 20 par projet comme proposé ; purge des instantanés de plus de 5 ans ; p…"
+    },
+    {
+     "id": "DEC-10.7",
+     "status": "a_prendre",
+     "q": "Nature et autorité du référentiel EtapeCommerciale. Options : référentiel administré localement dans E-05 ; miroir en lecture seule du pipeline du CRM ; étape libre non référencée. La liste des valeurs et leur correspondance avec resultatCo…"
+    },
+    {
+     "id": "DEC-10.8",
+     "status": "en_analyse",
+     "q": "Origine des dates réelles. Sont-elles saisies manuellement, comme le prévoit cet epic, ou déduites de la première et de la dernière affectation réelle ? Options : saisie manuelle seule ; proposition automatique confirmée par le responsable…"
+    },
+    {
+     "id": "DEC-10.9",
+     "status": "en_analyse",
+     "q": "Périmètre de visibilité par défaut du portefeuille. Un Resource Manager voit-il par défaut tous les projets de son périmètre organisationnel, ou seulement ceux dont il est responsable ? Impact : BR-10.50, dimensionnement de NFR-10.1, percep…"
+    },
+    {
+     "id": "DEC-10.10",
+     "status": "en_analyse",
+     "q": "Contenu de l'agrégat d'affectation capturé par un instantané. La proposition retient le nombre de jours par collaborateur, par mois et par couche. Options : granularité hebdomadaire ; agrégat par couche seule sans nominatif ; ajout du taux…"
+    }
+   ]
+  },
+  {
+   "id": "E-11",
+   "title": "Allocations et périodes d'allocation",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 43,
+    "lines": 715
+   },
+   "counts": {
+    "a_prendre": 3,
+    "en_analyse": 8,
+    "prise_a_clore": 2
+   },
+   "decisions": [
+    {
+     "id": "DEC-11.1",
+     "status": "a_prendre",
+     "q": "À quel niveau la charge vendue est-elle portée ?"
+    },
+    {
+     "id": "DEC-11.2",
+     "status": "a_prendre",
+     "q": "Faut-il une granularité horaire en plus de la demi-journée ?"
+    },
+    {
+     "id": "DEC-11.3",
+     "status": "prise_a_clore",
+     "q": "Que fait le système d'une charge déjà posée quand une absence est déclarée après coup ?"
+    },
+    {
+     "id": "DEC-11.4",
+     "status": "en_analyse",
+     "q": "Quel taux est affiché par défaut ?"
+    },
+    {
+     "id": "DEC-11.5",
+     "status": "en_analyse",
+     "q": "Quel plafond de charge par période ?"
+    },
+    {
+     "id": "DEC-11.6",
+     "status": "en_analyse",
+     "q": "Comment répartir matin et après-midi quand le calendrier ne fournit qu'une durée journalière ?"
+    },
+    {
+     "id": "DEC-11.7",
+     "status": "en_analyse",
+     "q": "L'achèvement d'une période est-il manuel, proposé ou automatique ?"
+    },
+    {
+     "id": "DEC-11.8",
+     "status": "a_prendre",
+     "q": "Quelle durée de conservation et quelle fenêtre de restauration pour une période supprimée ?"
+    },
+    {
+     "id": "DEC-11.9",
+     "status": "en_analyse",
+     "q": "Une même paire collaborateur-projet peut-elle porter plusieurs affectations vivantes simultanées ?"
+    },
+    {
+     "id": "DEC-11.10",
+     "status": "en_analyse",
+     "q": "Le rôle sur le projet est-il un référentiel administré ou un texte libre ?"
+    },
+    {
+     "id": "DEC-11.11",
+     "status": "en_analyse",
+     "q": "Quelle fenêtre de modification d'un commentaire par son auteur ?"
+    },
+    {
+     "id": "DEC-11.12",
+     "status": "en_analyse",
+     "q": "Quels modes de charge sont réellement offerts en R1, et lequel par défaut ?"
+    },
+    {
+     "id": "DEC-11.13",
+     "status": "prise_a_clore",
+     "q": "Quelle durée de journée de référence sert à convertir la charge vendue en minutes ?"
+    }
+   ]
+  },
+  {
+   "id": "E-12",
+   "title": "Couches de staffing : demande, prépositionnement, simulé, réel",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 38,
+    "lines": 713
+   },
+   "counts": {
+    "a_prendre": 3,
+    "en_analyse": 9
+   },
+   "decisions": [
+    {
+     "id": "DEC-12.1",
+     "status": "en_analyse",
+     "q": "La confirmation exige-t-elle toujours une approbation, ou seulement dans certains cas ?"
+    },
+    {
+     "id": "DEC-12.2",
+     "status": "en_analyse",
+     "q": "Jusqu'où peut-on défaire un engagement passé ?"
+    },
+    {
+     "id": "DEC-12.3",
+     "status": "en_analyse",
+     "q": "Portée et nombre de scénarios de simulation"
+    },
+    {
+     "id": "DEC-12.4",
+     "status": "a_prendre",
+     "q": "Le collaborateur est-il informé d'un prépositionnement ou d'une simulation le concernant ?"
+    },
+    {
+     "id": "DEC-12.5",
+     "status": "en_analyse",
+     "q": "Valeurs qualifiant l'avancement d'un prépositionnement au-delà des cinq états"
+    },
+    {
+     "id": "DEC-12.6",
+     "status": "a_prendre",
+     "q": "La couche besoin est-elle comptée par défaut dans les lectures de charge prévisionnelle ?"
+    },
+    {
+     "id": "DEC-12.7",
+     "status": "en_analyse",
+     "q": "La clôture est-elle automatique, et à quel délai ?"
+    },
+    {
+     "id": "DEC-12.8",
+     "status": "en_analyse",
+     "q": "Qui détient staffing.forcer et un forçage déclenche-t-il une revue ?"
+    },
+    {
+     "id": "DEC-12.9",
+     "status": "a_prendre",
+     "q": "Durée de conservation du journal des transitions et des conflits assumés"
+    },
+    {
+     "id": "DEC-12.10",
+     "status": "en_analyse",
+     "q": "Qui établit la table « étape commerciale → couche par défaut et autorisation du ferme » ?"
+    },
+    {
+     "id": "DEC-12.11",
+     "status": "en_analyse",
+     "q": "Un besoin partiellement pourvu reste-t-il ouvert, et jusqu'à quand ?"
+    },
+    {
+     "id": "DEC-12.12",
+     "status": "en_analyse",
+     "q": "Un dépassement de couverture — plus de jours affectés que demandés — est-il un avertissement ou un blocage ?"
+    }
+   ]
+  },
+  {
+   "id": "E-13",
+   "title": "Calendriers de staffing : collaborateur, projet et global",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 46,
+    "lines": 781
+   },
+   "counts": {
+    "en_analyse": 12
+   },
+   "decisions": [
+    {
+     "id": "DEC-13.1",
+     "status": "en_analyse",
+     "q": "L'échelle jour est-elle offerte sur le calendrier global, où elle multiplie les colonnes pour une population large ?"
+    },
+    {
+     "id": "DEC-13.2",
+     "status": "en_analyse",
+     "q": "Le glisser-déposer est-il livré en R1, ou reporté au profit des seuls formulaires et équivalents clavier ?"
+    },
+    {
+     "id": "DEC-13.3",
+     "status": "en_analyse",
+     "q": "La frise doit-elle proposer un rafraîchissement automatique périodique, et à quelle fréquence ?"
+    },
+    {
+     "id": "DEC-13.4",
+     "status": "en_analyse",
+     "q": "Quels attributs exactement sont servis pour une ligne en visibilité réduite ?"
+    },
+    {
+     "id": "DEC-13.5",
+     "status": "en_analyse",
+     "q": "L'ordre du libellé de barre est-il « client — projet » ou « projet — client », et à quel niveau se règle-t-il ?"
+    },
+    {
+     "id": "DEC-13.6",
+     "status": "en_analyse",
+     "q": "La piste de disponibilité affiche-t-elle la disponibilité ferme, la disponibilité prévisionnelle, ou les deux au choix ?"
+    },
+    {
+     "id": "DEC-13.7",
+     "status": "en_analyse",
+     "q": "Le calendrier projet groupe-t-il par défaut par collaborateur, ou laisse-t-il une ligne par affectation ?"
+    },
+    {
+     "id": "DEC-13.8",
+     "status": "en_analyse",
+     "q": "Les affectations clôturées sont-elles masquées par défaut, et sur quelle profondeur restent-elles accessibles ?"
+    },
+    {
+     "id": "DEC-13.9",
+     "status": "en_analyse",
+     "q": "L'extraction de la page affichée est-elle offerte depuis le calendrier, et sous quel plafond ?"
+    },
+    {
+     "id": "DEC-13.10",
+     "status": "en_analyse",
+     "q": "Le seuil de largeur en dessous duquel la frise est remplacée par le tableau est-il bien 768 px, ou faut-il l'élever ?"
+    },
+    {
+     "id": "DEC-13.11",
+     "status": "en_analyse",
+     "q": "Le mode compact est-il l'affichage par défaut du calendrier global, où les lignes hautes réduisent la population visible ?"
+    },
+    {
+     "id": "DEC-13.12",
+     "status": "en_analyse",
+     "q": "La mise en évidence croisée des items impliqués dans un conflit reste-t-elle active après retour de l'explorateur de E-14 ?"
+    }
+   ]
+  },
+  {
+   "id": "E-14",
+   "title": "Conflits : détection, explorateur et résolution",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 49,
+    "lines": 751
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 10,
+    "prise_a_clore": 1
+   },
+   "decisions": [
+    {
+     "id": "DEC-14.1",
+     "status": "en_analyse",
+     "q": "Quelle fenêtre d'agrégation pour la surcharge ?"
+    },
+    {
+     "id": "DEC-14.2",
+     "status": "en_analyse",
+     "q": "Quelle valeur de seuil de matérialité ?"
+    },
+    {
+     "id": "DEC-14.3",
+     "status": "en_analyse",
+     "q": "Quelle durée par défaut et quelle durée maximale d'une acceptation ?"
+    },
+    {
+     "id": "DEC-14.4",
+     "status": "en_analyse",
+     "q": "Faut-il un double regard pour accepter un conflit bloquant ?"
+    },
+    {
+     "id": "DEC-14.5",
+     "status": "en_analyse",
+     "q": "Quel seuil d'aggravation rend une acceptation caduque ?"
+    },
+    {
+     "id": "DEC-14.6",
+     "status": "en_analyse",
+     "q": "Quelles couches sont évaluées par défaut ?"
+    },
+    {
+     "id": "DEC-14.7",
+     "status": "en_analyse",
+     "q": "hors_dates_projet est-il un avertissement ou un bloquant, et qui l'arbitre ?"
+    },
+    {
+     "id": "DEC-14.8",
+     "status": "en_analyse",
+     "q": "Quels statuts d'affectation entrent dans la détection de surcharge ?"
+    },
+    {
+     "id": "DEC-14.9",
+     "status": "en_analyse",
+     "q": "Le collaborateur voit-il ses propres conflits ?"
+    },
+    {
+     "id": "DEC-14.10",
+     "status": "a_prendre",
+     "q": "Quelle durée de conservation des conflits résolus et des acceptations ?"
+    },
+    {
+     "id": "DEC-14.11",
+     "status": "en_analyse",
+     "q": "Une résolution en lot doit-elle exister, et à partir de quelle release ?"
+    },
+    {
+     "id": "DEC-14.12",
+     "status": "prise_a_clore",
+     "q": "Que fait le système d'une charge déjà posée quand une absence est déclarée après coup ?"
+    }
+   ]
+  },
+  {
+   "id": "E-15",
+   "title": "Demandes de ressources et aide à l'affectation",
+   "release": "R1",
+   "prio": "P0",
+   "size": {
+    "tasks": 8,
+    "br": 48,
+    "lines": 815
+   },
+   "counts": {
+    "a_prendre": 2,
+    "en_analyse": 10
+   },
+   "decisions": [
+    {
+     "id": "DEC-15.1",
+     "status": "en_analyse",
+     "q": "Le référentiel de priorité comporte-t-il quatre valeurs et quels délais de réponse leur sont attachés ?"
+    },
+    {
+     "id": "DEC-15.2",
+     "status": "en_analyse",
+     "q": "Les règles de routage sont-elles définies au niveau du groupe, du département ou de l'entité ?"
+    },
+    {
+     "id": "DEC-15.3",
+     "status": "en_analyse",
+     "q": "Une demande peut-elle porter des besoins sur plusieurs projets ou sous-projets ?"
+    },
+    {
+     "id": "DEC-15.4",
+     "status": "en_analyse",
+     "q": "L'expression d'intérêt par les collaborateurs est-elle activée, et à quel moment ?"
+    },
+    {
+     "id": "DEC-15.5",
+     "status": "a_prendre",
+     "q": "Le collaborateur est-il informé d'un prépositionnement le concernant ?"
+    },
+    {
+     "id": "DEC-15.6",
+     "status": "en_analyse",
+     "q": "Délai de péremption d'une demande après la fin de son dernier besoin"
+    },
+    {
+     "id": "DEC-15.7",
+     "status": "en_analyse",
+     "q": "Un besoin partiellement pourvu doit-il pouvoir être scindé en deux besoins ?"
+    },
+    {
+     "id": "DEC-15.8",
+     "status": "en_analyse",
+     "q": "Faut-il, à terme, une optimisation globale de la répartition plutôt que la passe unique déterministe retenue ?"
+    },
+    {
+     "id": "DEC-15.9",
+     "status": "en_analyse",
+     "q": "L'aide à la répartition peut-elle produire des affectations simulées, ou seulement des prépositionnements ?"
+    },
+    {
+     "id": "DEC-15.10",
+     "status": "a_prendre",
+     "q": "Durée de conservation du journal des demandes et des commentaires masqués"
+    },
+    {
+     "id": "DEC-15.11",
+     "status": "en_analyse",
+     "q": "Qui peut clôturer une demande par anticipation ?"
+    },
+    {
+     "id": "DEC-15.12",
+     "status": "en_analyse",
+     "q": "Les pièces jointes sont-elles admises sur une demande ou un commentaire ?"
+    }
+   ]
+  },
+  {
+   "id": "E-16",
+   "title": "Workflow d'approbation des changements de staffing",
+   "release": "R1",
+   "prio": "P1",
+   "size": {
+    "tasks": 8,
+    "br": 42,
+    "lines": 748
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 11
+   },
+   "decisions": [
+    {
+     "id": "DEC-16.1",
+     "status": "en_analyse",
+     "q": "Le circuit est-il imposé dans certains cas même quand l'auteur détient le droit direct ?"
+    },
+    {
+     "id": "DEC-16.2",
+     "status": "en_analyse",
+     "q": "Natures de changement au-delà des quatre de R1"
+    },
+    {
+     "id": "DEC-16.3",
+     "status": "en_analyse",
+     "q": "Ordre des deux volets"
+    },
+    {
+     "id": "DEC-16.4",
+     "status": "en_analyse",
+     "q": "Qui approuve le côté collaborateur"
+    },
+    {
+     "id": "DEC-16.5",
+     "status": "en_analyse",
+     "q": "Délai de réponse par défaut et son paramétrage"
+    },
+    {
+     "id": "DEC-16.6",
+     "status": "en_analyse",
+     "q": "Un dossier peut-il porter plusieurs projets ?"
+    },
+    {
+     "id": "DEC-16.7",
+     "status": "en_analyse",
+     "q": "La permission de proposer implique-t-elle celle de simuler ?"
+    },
+    {
+     "id": "DEC-16.8",
+     "status": "en_analyse",
+     "q": "Le collaborateur concerné est-il informé pendant l'attente ?"
+    },
+    {
+     "id": "DEC-16.9",
+     "status": "a_prendre",
+     "q": "Durée de conservation des dossiers, décisions et fils de discussion"
+    },
+    {
+     "id": "DEC-16.10",
+     "status": "en_analyse",
+     "q": "Escalade : destinataire et déclenchement"
+    },
+    {
+     "id": "DEC-16.11",
+     "status": "en_analyse",
+     "q": "Un refus peut-il être contesté ?"
+    },
+    {
+     "id": "DEC-16.12",
+     "status": "en_analyse",
+     "q": "Le forçage d'un contrôle bloquant peut-il être demandé par le circuit ?"
+    }
+   ]
+  },
+  {
+   "id": "E-17",
+   "title": "Vues enregistrées, préférences et notifications",
+   "release": "R2",
+   "prio": "P1",
+   "size": {
+    "tasks": 8,
+    "br": 56,
+    "lines": 715
+   },
+   "counts": {
+    "a_prendre": 2,
+    "en_analyse": 10
+   },
+   "decisions": [
+    {
+     "id": "DEC-17.1",
+     "status": "en_analyse",
+     "q": "Qui peut imposer une vue par défaut, et à quelle maille ?"
+    },
+    {
+     "id": "DEC-17.2",
+     "status": "en_analyse",
+     "q": "Le canal de messagerie d'équipe est-il livré en R2, ou reporté avec les intégrations ?"
+    },
+    {
+     "id": "DEC-17.3",
+     "status": "en_analyse",
+     "q": "Un jeton d'état est-il créé en continu, pour que toute adresse copiée soit fidèle, ou seulement à la demande ?"
+    },
+    {
+     "id": "DEC-17.4",
+     "status": "a_prendre",
+     "q": "Durées de conservation des notifications et du journal de distribution"
+    },
+    {
+     "id": "DEC-17.5",
+     "status": "en_analyse",
+     "q": "Les préférences par écran enregistrées en R1 par E-09, E-10 et les calendriers sont-elles migrées vers le magasin unique, ou réinitialisées ?"
+    },
+    {
+     "id": "DEC-17.6",
+     "status": "a_prendre",
+     "q": "Le collaborateur est-il notifié d'un prépositionnement ou d'une simulation le concernant ?"
+    },
+    {
+     "id": "DEC-17.7",
+     "status": "en_analyse",
+     "q": "Liste définitive des types obligatoires non désactivables"
+    },
+    {
+     "id": "DEC-17.8",
+     "status": "en_analyse",
+     "q": "Une vue d'organisation peut-elle être publiée sans validation préalable ?"
+    },
+    {
+     "id": "DEC-17.9",
+     "status": "en_analyse",
+     "q": "Mode par défaut au premier accès : immédiat ou synthèse ?"
+    },
+    {
+     "id": "DEC-17.10",
+     "status": "en_analyse",
+     "q": "Fuseau retenu pour la synthèse quand le destinataire n'a pas de fuseau d'affichage explicite"
+    },
+    {
+     "id": "DEC-17.11",
+     "status": "en_analyse",
+     "q": "Les vues personnelles d'un compte désactivé sont-elles purgées, conservées ou transférées ?"
+    },
+    {
+     "id": "DEC-17.12",
+     "status": "en_analyse",
+     "q": "Le libellé du client figure-t-il dans un courriel de notification ?"
+    }
+   ]
+  },
+  {
+   "id": "E-18",
+   "title": "Reporting et pilotage",
+   "release": "R2",
+   "prio": "P1",
+   "size": {
+    "tasks": 8,
+    "br": 45,
+    "lines": 761
+   },
+   "counts": {
+    "a_prendre": 3,
+    "en_analyse": 9
+   },
+   "decisions": [
+    {
+     "id": "DEC-18.1",
+     "status": "en_analyse",
+     "q": "Quelle est la source d'autorité du temps réalisé, et à quelle fréquence est-elle reçue ?"
+    },
+    {
+     "id": "DEC-18.2",
+     "status": "a_prendre",
+     "q": "Quel est le seuil d'effectif minimal au-dessous duquel un indicateur n'est pas affiché ?"
+    },
+    {
+     "id": "DEC-18.3",
+     "status": "a_prendre",
+     "q": "La couche besoin est-elle incluse par défaut dans les lectures de charge prévisionnelle ?"
+    },
+    {
+     "id": "DEC-18.4",
+     "status": "en_analyse",
+     "q": "Quelle assiette est publiée par défaut pour le taux d'activité agrégé ?"
+    },
+    {
+     "id": "DEC-18.5",
+     "status": "en_analyse",
+     "q": "Quel seuil de tolérance qualifie un écart planifié-réalisé de conforme ?"
+    },
+    {
+     "id": "DEC-18.6",
+     "status": "en_analyse",
+     "q": "Quels axes de regroupement sont ouverts au lancement, et à quelle profondeur hiérarchique ?"
+    },
+    {
+     "id": "DEC-18.7",
+     "status": "en_analyse",
+     "q": "Le grain jour est-il ouvert aux utilisateurs, ou réservé au calcul interne ?"
+    },
+    {
+     "id": "DEC-18.8",
+     "status": "en_analyse",
+     "q": "Quel est le périmètre par défaut d'un utilisateur ouvrant un rapport ?"
+    },
+    {
+     "id": "DEC-18.9",
+     "status": "en_analyse",
+     "q": "Faut-il livrer en R2 des rapports au-delà des six retenus — âge et couverture des demandes, adoption du produit, qualité des données ?"
+    },
+    {
+     "id": "DEC-18.10",
+     "status": "en_analyse",
+     "q": "Le niveau moyen de compétence est-il publié en position normalisée, ou une échelle commune est-elle imposée au référentiel ?"
+    },
+    {
+     "id": "DEC-18.11",
+     "status": "a_prendre",
+     "q": "Quelles durées de conservation s'appliquent aux instantanés, aux traces d'exécution et au journal des accès nominatifs ?"
+    },
+    {
+     "id": "DEC-18.12",
+     "status": "en_analyse",
+     "q": "Qui est propriétaire métier de chaque indicateur, et par quel circuit une définition est-elle modifiée ?"
+    }
+   ]
+  },
+  {
+   "id": "E-19",
+   "title": "Finance projet et confidentialité des données sensibles",
+   "release": "R2",
+   "prio": "P2",
+   "size": {
+    "tasks": 2,
+    "br": 8,
+    "lines": 260
+   },
+   "counts": {
+    "a_prendre": 4,
+    "en_analyse": 4,
+    "prise_a_clore": 1
+   },
+   "decisions": [
+    {
+     "id": "DEC-19.1",
+     "status": "en_analyse",
+     "q": "Quelle formule exacte pour le taux d'avancement d'un projet ?"
+    },
+    {
+     "id": "DEC-19.2",
+     "status": "en_analyse",
+     "q": "Quelle formule exacte pour la dérive à date ?"
+    },
+    {
+     "id": "DEC-19.3",
+     "status": "en_analyse",
+     "q": "Quelle formule exacte pour la dérive projetée ?"
+    },
+    {
+     "id": "DEC-19.4",
+     "status": "a_prendre",
+     "q": "Comment s'articulent les jours vendus portés au niveau du projet (cet epic) et la charge vendue portée au niveau de l'affectation (E-11, DEC-11.1) ?"
+    },
+    {
+     "id": "DEC-19.5",
+     "status": "en_analyse",
+     "q": "Les données financières d'un projet sont-elles saisies manuellement dans StaffingMate en R2, ou faut-il anticiper l'intégration Salesforce de E-23 (R3) ?"
+    },
+    {
+     "id": "DEC-19.6",
+     "status": "a_prendre",
+     "q": "Selon quelle méthode consolider les indicateurs financiers d'un projet parent avec ceux de ses sous-projets, et dans quelle devise si elles diffèrent ?"
+    },
+    {
+     "id": "DEC-19.7",
+     "status": "a_prendre",
+     "q": "Un collaborateur voit-il son propre coût journalier sans détenir finance.collaborateur.lire_cout ?"
+    },
+    {
+     "id": "DEC-19.8",
+     "status": "prise_a_clore",
+     "q": "Faut-il calculer un taux de marge par affectation à partir du tarif et du coût déjà portés par E-11, et selon quelle formule ?"
+    },
+    {
+     "id": "DEC-19.9",
+     "status": "a_prendre",
+     "q": "Le taux de marge affiché au niveau du projet est-il uniquement la valeur cible, ou StaffingMate doit-il produire une marge réellement mesurée (revenu facturé moins coût) ?"
+    }
+   ]
+  },
+  {
+   "id": "E-20",
+   "title": "IA : langage naturel, similarité et exploitation des CV",
+   "release": "R2",
+   "prio": "P2",
+   "size": {
+    "tasks": 3,
+    "br": 15,
+    "lines": 290
+   },
+   "counts": {
+    "a_prendre": 3,
+    "en_analyse": 7
+   },
+   "decisions": [
+    {
+     "id": "DEC-20.1",
+     "status": "en_analyse",
+     "q": "Mécanisme technique retenu pour la similarité sémantique"
+    },
+    {
+     "id": "DEC-20.2",
+     "status": "en_analyse",
+     "q": "Seuil de confiance minimal et nombre maximal de compétences proches proposées par compétence demandée"
+    },
+    {
+     "id": "DEC-20.3",
+     "status": "a_prendre",
+     "q": "Seuils de performance de l'interprétation en langage naturel et du calcul de similarité, mode d'exécution synchrone ou différé"
+    },
+    {
+     "id": "DEC-20.4",
+     "status": "a_prendre",
+     "q": "Fournisseur et hébergement du modèle de langage sollicité par les mécanismes de cet epic, et nature exacte de la porte d'autorisation d'organisation de BR-20.1 pour ce fournisseur"
+    },
+    {
+     "id": "DEC-20.5",
+     "status": "en_analyse",
+     "q": "Écran de dépôt, formats de fichier acceptés, mode exact de validation humaine et traitement des faux positifs pour l'extraction de compétences depuis un CV"
+    },
+    {
+     "id": "DEC-20.6",
+     "status": "en_analyse",
+     "q": "Génération assistée d'un export de CV ou d'un dossier de compétences à partir d'un modèle fourni par l'organisation : périmètre retenu, format de sortie, déclenchement"
+    },
+    {
+     "id": "DEC-20.7",
+     "status": "en_analyse",
+     "q": "Faut-il, au-delà de la passe unique déterministe déjà livrée par E-15, un mécanisme d'optimisation globale d'une répartition de staffing fondé sur une fonction objectif"
+    },
+    {
+     "id": "DEC-20.8",
+     "status": "en_analyse",
+     "q": "Faut-il exposer un accès agentique aux capacités de StaffingMate, au-delà de l'interface humaine"
+    },
+    {
+     "id": "DEC-20.9",
+     "status": "a_prendre",
+     "q": "Durée de conservation du texte source d'une saisie assistée au-delà de son empreinte, et finalité de cette conservation"
+    },
+    {
+     "id": "DEC-20.10",
+     "status": "en_analyse",
+     "q": "Population et droits habilités à déclencher une extraction de compétences depuis un CV"
+    }
+   ]
+  },
+  {
+   "id": "E-21",
+   "title": "Administration, imports, exports et qualité de données",
+   "release": "R2",
+   "prio": "P1",
+   "size": {
+    "tasks": 2,
+    "br": 5,
+    "lines": 289
+   },
+   "counts": {
+    "a_prendre": 1,
+    "en_analyse": 7
+   },
+   "decisions": [
+    {
+     "id": "DEC-21.1",
+     "status": "en_analyse",
+     "q": "Écrans, format de fichier, taille maximale et mécanisme de reprise sur erreur d'un import de"
+    },
+    {
+     "id": "DEC-21.2",
+     "status": "en_analyse",
+     "q": "Faut-il, à l'import d'une absence qui chevauche une période d'allocation existante (E-08,"
+    },
+    {
+     "id": "DEC-21.3",
+     "status": "en_analyse",
+     "q": "Existence et contenu d'un tableau de bord consolidé de qualité de données : aucune preuve"
+    },
+    {
+     "id": "DEC-21.4",
+     "status": "en_analyse",
+     "q": "Format(s) de fichier d'export, mode de déclenchement (téléchargement direct, envoi par"
+    },
+    {
+     "id": "DEC-21.5",
+     "status": "a_prendre",
+     "q": "Règle d'arrondi des valeurs numériques dans un export : le signal correspondant chez le"
+    },
+    {
+     "id": "DEC-21.6",
+     "status": "en_analyse",
+     "q": "Format et unicité de l'identifiant externe (longueur, caractères autorisés, unicité par type"
+    },
+    {
+     "id": "DEC-21.7",
+     "status": "en_analyse",
+     "q": "Volumétrie et performance d'un import ou d'un export (taille de fichier maximale, nombre de"
+    },
+    {
+     "id": "DEC-21.8",
+     "status": "en_analyse",
+     "q": "Utilité d'un amorçage manuel de données (outil d'initialisation observé chez le concurrent,"
+    }
+   ]
+  },
+  {
+   "id": "E-22",
+   "title": "Sécurité, conformité, performance et exploitation",
+   "release": "R2",
+   "prio": "P0",
+   "size": {
+    "tasks": 4,
+    "br": 8,
+    "lines": 395
+   },
+   "counts": {
+    "a_prendre": 5,
+    "en_analyse": 4,
+    "prise": 2
+   },
+   "decisions": [
+    {
+     "id": "DEC-22.1",
+     "status": "a_prendre",
+     "q": "Quel budget de performance transverse (temps de réponse cible, débit) pour l'application ?"
+    },
+    {
+     "id": "DEC-22.2",
+     "status": "en_analyse",
+     "q": "Quelle disponibilité cible et quelles fenêtres de maintenance ?"
+    },
+    {
+     "id": "DEC-22.3",
+     "status": "prise",
+     "q": "Quel chiffrement au repos et quelle gestion des clés pour les données de personnel ?",
+     "date": "2026-07-31"
+    },
+    {
+     "id": "DEC-22.4",
+     "status": "prise",
+     "q": "Quel outil et quelle politique de rotation pour les secrets en production ?",
+     "date": "2026-07-31"
+    },
+    {
+     "id": "DEC-22.5",
+     "status": "a_prendre",
+     "q": "Quel programme de tests d'intrusion — cadence, périmètre, prestataire ?"
+    },
+    {
+     "id": "DEC-22.6",
+     "status": "a_prendre",
+     "q": "Quelles durées de conservation par catégorie de donnée de personnel ?"
+    },
+    {
+     "id": "DEC-22.7",
+     "status": "en_analyse",
+     "q": "Qui tient le registre des traitements RGPD et sous quelle forme ?"
+    },
+    {
+     "id": "DEC-22.8",
+     "status": "en_analyse",
+     "q": "Quelle qualification précise, au regard du cadre européen sur l'IA, pour les fonctionnalités IA de StaffingMate ?"
+    },
+    {
+     "id": "DEC-22.9",
+     "status": "en_analyse",
+     "q": "Quels en-têtes de durcissement HTTP au-delà de la politique de sécurité de contenu — protection de transport, référencement d'origine, limitation de débit ?"
+    },
+    {
+     "id": "DEC-22.10",
+     "status": "a_prendre",
+     "q": "Quelle durée de conservation et quel seuil d'alerte pour les rapports de violation de sécurité de contenu ?"
+    },
+    {
+     "id": "DEC-22.11",
+     "status": "a_prendre",
+     "q": "Qui approuve et opère la revue périodique de sécurité applicative — violations reçues, cohérence de la surface d'authentification ?"
+    }
+   ]
+  },
+  {
+   "id": "E-23",
+   "title": "Intégrations SI : Salesforce, Workday, Entra ID",
+   "release": "R3",
+   "prio": "P1",
+   "size": {
+    "tasks": 1,
+    "br": 3,
+    "lines": 135
+   },
+   "counts": {
+    "a_prendre": 2,
+    "en_analyse": 6
+   },
+   "decisions": [
+    {
+     "id": "DEC-23.1",
+     "status": "en_analyse",
+     "q": "Mécanisme technique du flux Salesforce (API exposée par StaffingMate, webhook, middleware d'intégration, fréquence de traitement) : non observé depuis le trafic front du produit concurrent, le flux étant décrit comme entièrement côté serveu…"
+    },
+    {
+     "id": "DEC-23.2",
+     "status": "en_analyse",
+     "q": "Seuil de délai séparant a_jour de en_retard pour l'etatSynchronisation d'un projet alimenté par Salesforce : E-10 modélise l'énumération sans seuil chiffré, et aucune fréquence de flux n'est observée pour en déduire un. À arbitrer en atelie…"
+    },
+    {
+     "id": "DEC-23.3",
+     "status": "en_analyse",
+     "q": "Nature réelle de l'échange avec Workday : seul un identifiant est observé côté produit concurrent, sans confirmation qu'il porte sur le collaborateur (RH), sur le projet, ou sur la facturation. Tant que cette nature n'est pas confirmée, auc…"
+    },
+    {
+     "id": "DEC-23.4",
+     "status": "a_prendre",
+     "q": "Besoin d'un attribut de traçabilité dédié (par exemple un lien vers l'enregistrement source) en complément de l'identifiantExterne déjà porté par le Projet (E-10) : observé chez le concurrent comme un lien cliquable généré par le flux, non…"
+    },
+    {
+     "id": "DEC-23.5",
+     "status": "en_analyse",
+     "q": "Le modèle de E-10 porte un seul systemeSource par projet. Le produit concurrent observé montre la coexistence, sur un même enregistrement, d'un identifiant Salesforce et d'un identifiant Workday. Si Workday doit un jour référencer le même p…"
+    },
+    {
+     "id": "DEC-23.6",
+     "status": "en_analyse",
+     "q": "Existence et modalités d'un canal d'écriture sortant de StaffingMate vers Salesforce ou Workday : rien dans l'annexe ne documente un tel canal pour les projets ; le flux confirmé est entrant seul. À confirmer explicitement qu'aucun besoin m…"
+    },
+    {
+     "id": "DEC-23.7",
+     "status": "a_prendre",
+     "q": "Authentification fédérée et provisionnement Entra ID : aucun protocole (OIDC, SAML ou autre), aucun flux de connexion, aucun mécanisme de provisionnement ou de déprovisionnement de compte n'est observé dans l'annexe. Le seul indice disponib…"
+    },
+    {
+     "id": "DEC-23.8",
+     "status": "en_analyse",
+     "q": "Séquencement du remplacement de l'import contrôlé (E-21, R1/R2) par la connexion réelle Salesforce en R3 : bascule nette projet par projet, ou cohabitation transitoire des deux canaux sur un même périmètre ? Non tranché ; à définir avec E-2…"
+    }
+   ]
+  },
+  {
+   "id": "E-24",
+   "title": "Migration, recette, conduite du changement et déploiement",
+   "release": "R3",
+   "prio": "P0",
+   "size": {
+    "tasks": 1,
+    "br": 4,
+    "lines": 218
+   },
+   "counts": {
+    "en_analyse": 8
+   },
+   "decisions": [
+    {
+     "id": "DEC-24.1",
+     "status": "en_analyse",
+     "q": "Quel périmètre et quelles conditions de préparation avant l'entrée en pilote (contenu de Gate.criteresEntree pour pret-pilote) ?"
+    },
+    {
+     "id": "DEC-24.2",
+     "status": "en_analyse",
+     "q": "À quelles conditions mesurables le pilote est-il concluant et la généralisation peut-elle démarrer (contenu de Gate.criteresEntree pour pret-generalisation) ?"
+    },
+    {
+     "id": "DEC-24.3",
+     "status": "en_analyse",
+     "q": "Quelles données préexistantes sont reprises dans StaffingMate, depuis quelle source, selon quelle méthode et avec quel contrôle de qualité ?"
+    },
+    {
+     "id": "DEC-24.4",
+     "status": "en_analyse",
+     "q": "Que fait-on en cas d'incident bloquant pendant ou après la généralisation : retour à l'outil précédent, gel en lecture seule, ou correction en production sans retour arrière ?"
+    },
+    {
+     "id": "DEC-24.5",
+     "status": "en_analyse",
+     "q": "Combien de temps StaffingMate et l'outil actuel restent-ils utilisés en parallèle pendant le pilote ?"
+    },
+    {
+     "id": "DEC-24.6",
+     "status": "en_analyse",
+     "q": "Qui porte, dans le registre de cadrage (E-01 §3.6 Persona), la responsabilité d'arbitrer et de faire franchir les jalons pret-pilote et pret-generalisation ?"
+    },
+    {
+     "id": "DEC-24.7",
+     "status": "en_analyse",
+     "q": "Quelle recette formelle (jeu de tests, jeu de données, environnement, signataire) conditionne le passage de chaque jalon à franchi, au-delà des AC-* automatisés de chaque epic ?"
+    },
+    {
+     "id": "DEC-24.8",
+     "status": "en_analyse",
+     "q": "Quel support, quelle langue et quel volume de formation sont requis avant le pilote puis avant la généralisation, au-delà de l'obligation de principe posée par BR-24.4 ?"
+    }
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "source": "E-12",
+   "target": "E-16",
+   "weight": 77
+  },
+  {
+   "source": "E-11",
+   "target": "E-14",
+   "weight": 58
+  },
+  {
+   "source": "E-12",
+   "target": "E-15",
+   "weight": 40
+  },
+  {
+   "source": "E-09",
+   "target": "E-20",
+   "weight": 39
+  },
+  {
+   "source": "E-12",
+   "target": "E-13",
+   "weight": 39
+  },
+  {
+   "source": "E-11",
+   "target": "E-19",
+   "weight": 36
+  },
+  {
+   "source": "E-01",
+   "target": "E-24",
+   "weight": 31
+  },
+  {
+   "source": "E-03",
+   "target": "E-13",
+   "weight": 31
+  },
+  {
+   "source": "E-04",
+   "target": "E-16",
+   "weight": 31
+  },
+  {
+   "source": "E-11",
+   "target": "E-13",
+   "weight": 31
+  },
+  {
+   "source": "E-12",
+   "target": "E-14",
+   "weight": 28
+  },
+  {
+   "source": "E-04",
+   "target": "E-22",
+   "weight": 27
+  },
+  {
+   "source": "E-05",
+   "target": "E-10",
+   "weight": 27
+  },
+  {
+   "source": "E-09",
+   "target": "E-15",
+   "weight": 27
+  },
+  {
+   "source": "E-04",
+   "target": "E-19",
+   "weight": 25
+  },
+  {
+   "source": "E-08",
+   "target": "E-14",
+   "weight": 25
+  },
+  {
+   "source": "E-08",
+   "target": "E-18",
+   "weight": 25
+  },
+  {
+   "source": "E-11",
+   "target": "E-16",
+   "weight": 25
+  },
+  {
+   "source": "E-13",
+   "target": "E-14",
+   "weight": 25
+  },
+  {
+   "source": "E-03",
+   "target": "E-17",
+   "weight": 23
+  },
+  {
+   "source": "E-02",
+   "target": "E-22",
+   "weight": 22
+  },
+  {
+   "source": "E-10",
+   "target": "E-23",
+   "weight": 21
+  },
+  {
+   "source": "E-04",
+   "target": "E-17",
+   "weight": 20
+  },
+  {
+   "source": "E-05",
+   "target": "E-21",
+   "weight": 20
+  },
+  {
+   "source": "E-06",
+   "target": "E-19",
+   "weight": 20
+  },
+  {
+   "source": "E-07",
+   "target": "E-20",
+   "weight": 19
+  },
+  {
+   "source": "E-08",
+   "target": "E-13",
+   "weight": 19
+  },
+  {
+   "source": "E-04",
+   "target": "E-05",
+   "weight": 18
+  },
+  {
+   "source": "E-08",
+   "target": "E-11",
+   "weight": 17
+  },
+  {
+   "source": "E-15",
+   "target": "E-20",
+   "weight": 17
+  },
+  {
+   "source": "E-10",
+   "target": "E-11",
+   "weight": 15
+  },
+  {
+   "source": "E-11",
+   "target": "E-15",
+   "weight": 15
+  },
+  {
+   "source": "E-12",
+   "target": "E-18",
+   "weight": 15
+  },
+  {
+   "source": "E-05",
+   "target": "E-07",
+   "weight": 14
+  },
+  {
+   "source": "E-10",
+   "target": "E-19",
+   "weight": 14
+  },
+  {
+   "source": "E-05",
+   "target": "E-08",
+   "weight": 13
+  },
+  {
+   "source": "E-05",
+   "target": "E-18",
+   "weight": 12
+  },
+  {
+   "source": "E-09",
+   "target": "E-17",
+   "weight": 12
+  },
+  {
+   "source": "E-10",
+   "target": "E-15",
+   "weight": 12
+  },
+  {
+   "source": "E-06",
+   "target": "E-07",
+   "weight": 11
+  },
+  {
+   "source": "E-07",
+   "target": "E-18",
+   "weight": 11
+  },
+  {
+   "source": "E-10",
+   "target": "E-12",
+   "weight": 11
+  },
+  {
+   "source": "E-21",
+   "target": "E-23",
+   "weight": 11
+  },
+  {
+   "source": "E-05",
+   "target": "E-06",
+   "weight": 10
+  },
+  {
+   "source": "E-08",
+   "target": "E-09",
+   "weight": 10
+  },
+  {
+   "source": "E-11",
+   "target": "E-12",
+   "weight": 10
+  },
+  {
+   "source": "E-11",
+   "target": "E-18",
+   "weight": 10
+  },
+  {
+   "source": "E-23",
+   "target": "E-24",
+   "weight": 10
+  },
+  {
+   "source": "E-06",
+   "target": "E-08",
+   "weight": 9
+  },
+  {
+   "source": "E-06",
+   "target": "E-18",
+   "weight": 9
+  },
+  {
+   "source": "E-09",
+   "target": "E-11",
+   "weight": 9
+  },
+  {
+   "source": "E-09",
+   "target": "E-22",
+   "weight": 9
+  },
+  {
+   "source": "E-10",
+   "target": "E-14",
+   "weight": 9
+  },
+  {
+   "source": "E-12",
+   "target": "E-17",
+   "weight": 9
+  },
+  {
+   "source": "E-14",
+   "target": "E-15",
+   "weight": 9
+  },
+  {
+   "source": "E-15",
+   "target": "E-22",
+   "weight": 9
+  },
+  {
+   "source": "E-20",
+   "target": "E-22",
+   "weight": 9
+  },
+  {
+   "source": "E-04",
+   "target": "E-10",
+   "weight": 8
+  },
+  {
+   "source": "E-06",
+   "target": "E-11",
+   "weight": 8
+  },
+  {
+   "source": "E-07",
+   "target": "E-09",
+   "weight": 8
+  },
+  {
+   "source": "E-08",
+   "target": "E-12",
+   "weight": 8
+  },
+  {
+   "source": "E-13",
+   "target": "E-17",
+   "weight": 8
+  }
+ ],
+ "arbitrages": [
+  {
+   "section": "A-1",
+   "refs": [
+    "E-01",
+    "E-02",
+    "E-04",
+    "E-05",
+    "E-06",
+    "E-07",
+    "E-10",
+    "E-19",
+    "E-20",
+    "E-21",
+    "E-22",
+    "E-23",
+    "E-24"
+   ],
+   "text": "Convention de nommage des attributs et des entités"
+  },
+  {
+   "section": "A-2",
+   "refs": [
+    "E-01",
+    "E-04",
+    "E-13"
+   ],
+   "text": "Fuseau de référence d'une journée métier"
+  },
+  {
+   "section": "A-3",
+   "refs": [
+    "BR-19.8",
+    "DEC-21.5",
+    "E-01",
+    "E-03",
+    "E-11",
+    "E-13",
+    "E-19",
+    "E-21"
+   ],
+   "text": "Règle d'arrondi d'une charge affichée"
+  },
+  {
+   "section": "A-4",
+   "refs": [
+    "E-12",
+    "E-13",
+    "E-15",
+    "E-18",
+    "E-19",
+    "E-20",
+    "E-21",
+    "E-22",
+    "E-23"
+   ],
+   "text": "Le terme « besoin »"
+  },
+  {
+   "section": "A-5",
+   "refs": [
+    "E-08",
+    "E-11",
+    "E-13",
+    "E-17",
+    "E-18",
+    "E-20",
+    "E-22"
+   ],
+   "text": "Nom de l'axe temporel"
+  },
+  {
+   "section": "A-6",
+   "refs": [
+    "BR-19.1",
+    "E-01",
+    "E-03",
+    "E-19",
+    "E-20",
+    "E-21",
+    "E-22",
+    "E-23"
+   ],
+   "text": "Langue des noms de composants, et forme des identifiants"
+  },
+  {
+   "section": "B-5",
+   "refs": [
+    "BR-04.5",
+    "E-04",
+    "E-12",
+    "E-14",
+    "E-15",
+    "E-18",
+    "E-19",
+    "E-20",
+    "E-24"
+   ],
+   "text": "Format des codes de permission — vérifié non aggravé"
+  },
+  {
+   "section": "C-1",
+   "refs": [
+    "BR-08.32",
+    "BR-11.15",
+    "BR-11.31",
+    "BR-14.6",
+    "BR-19.7",
+    "DEC-06.1",
+    "DEC-08.3",
+    "DEC-11.13",
+    "DEC-11.3",
+    "DEC-14.12",
+    "DEC-19.8",
+    "E-11"
+   ],
+   "text": "Décisions déjà tranchées par une règle — à clore"
+  },
+  {
+   "section": "C-2",
+   "refs": [
+    "BR-18.37",
+    "BR-22.3",
+    "BR-22.38",
+    "BR-22.8",
+    "DEC-01.09",
+    "DEC-02.3",
+    "DEC-02.8",
+    "DEC-04.4",
+    "DEC-05.3",
+    "DEC-05.9",
+    "DEC-06.2",
+    "DEC-07.1",
+    "DEC-08.5",
+    "DEC-09.12",
+    "DEC-10.2",
+    "DEC-10.6",
+    "DEC-10.7",
+    "DEC-11.1",
+    "DEC-11.2",
+    "DEC-11.8",
+    "DEC-12.4",
+    "DEC-12.6",
+    "DEC-12.9",
+    "DEC-14.10",
+    "DEC-15.10",
+    "DEC-15.5",
+    "DEC-16.9",
+    "DEC-17.4",
+    "DEC-17.6",
+    "DEC-18.11",
+    "DEC-18.2",
+    "DEC-18.3",
+    "DEC-19.12",
+    "DEC-19.4",
+    "DEC-19.6",
+    "DEC-19.7",
+    "DEC-19.9",
+    "DEC-20.3",
+    "DEC-20.4",
+    "DEC-20.9",
+    "DEC-22.1",
+    "DEC-22.10",
+    "DEC-22.11",
+    "DEC-22.5",
+    "DEC-22.6",
+    "DEC-23.4",
+    "DEC-23.7",
+    "E-19",
+    "E-20",
+    "E-22",
+    "E-23"
+   ],
+   "text": "Décisions en doublon — à fusionner"
+  }
+ ]
+}

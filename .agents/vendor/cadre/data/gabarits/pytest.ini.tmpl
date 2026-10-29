@@ -1,0 +1,25 @@
+# pytest — configuration GENEREE par `cadre init`. Relisez-la : elle vous
+# appartient, et rien ne la regenere dans votre dos.
+#
+# `testpaths` LISTE LES REPERTOIRES QUI PORTAIENT AU MOINS UN BANC au moment de
+# l'initialisation — un `test_*.py` ou un `*_test.py`. Elle ne se met pas a jour
+# toute seule : un repertoire de bancs cree plus tard s'ajoute ici a la main.
+#
+# LA CLE PEUT ETRE ABSENTE, ET C'EST UNE DECISION, PAS UN OUBLI. Sur un projet
+# qui ne porte encore aucun banc, la cle est omise pour LISIBILITE — une cle vide
+# se lit comme une configuration oubliee ; les deux formes sont EQUIVALENTES pour
+# pytest (`rc=5` dans les deux cas, MESURE), aucune ne rend la porte verte.
+#
+# CE QUE CETTE OMISSION NE FAIT PAS, dit ici plutot que decouvert par un lecteur
+# qui l'a prise pour un correctif : elle ne repare RIEN. Une porte de
+# verification qui lance pytest sur un projet sans banc reste rouge, parce que
+# c'est l'appelant qui transforme un code de retour non nul en echec, jamais le
+# contenu de ce fichier. Le remede a « aucun banc » est d'ecrire un banc.
+#
+# Les trois dernieres clefs disent a pytest ce qu'est un banc, et elles restent
+# ALIGNEES sur la decouverte ci-dessus : le meme couple de motifs des deux cotes,
+# sinon un repertoire serait liste ici et son fichier ignore la-bas.
+[pytest]
+{testpaths}python_files = test_*.py *_test.py
+python_classes = *Tests Test*
+python_functions = test_*

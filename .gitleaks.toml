@@ -1,0 +1,39 @@
+# gitleaks config — read automatically by .agents/security/gitleaks-scan.sh
+# (`--config` is passed when this file exists). See README-SECURITY-SCAN-SETUP.md.
+#
+# CLASS-0 IS NON-WAIVABLE, AND THIS FILE IS NOT A WAIVER REGISTER. A real
+# credential is resolved by removing and rotating it, never by adding a line
+# here. What belongs here is the narrow opposite case: a literal that is not a
+# credential at all and never was.
+#
+# SCOPED TO THE EXACT LITERAL, NEVER TO A PATH. The tempting entry is
+# `paths = ['.*test.*']` — and it is the wrong one: it would blind the gate to a
+# genuine key pasted into any test file, which is one of the likelier places for
+# one to land. Each entry below matches one fixture string, so every other
+# secret in the same file still trips the gate.
+
+title = "agentic-builder-kit"
+
+# Without this, supplying a config REPLACES the built-in rule set instead of
+# adding to it — the gate would go quiet on everything it currently catches.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures whose whole purpose is to be a secret that must NOT travel"
+regexes = [
+  # .agents/bin/test_dashboard.py — test_mcp_config_never_surfaces_env_values_or_raw_args.
+  # These two strings are the BAIT in a leak test: the test writes them into a
+  # fake .mcp.json and then asserts they are absent from the rendered payload.
+  # Their names say so out loud. Removing them would delete the test's subject;
+  # rotating them is meaningless, they authenticate nothing.
+  '''NEVERTRAVELS0123456789abcd''',
+  '''ALSONEVERTRAVELS0123456789ab''',
+  # .agents/bin/test_mcp_render.py — test_literal_secret_after_api_key_flag_refuses_value_absent.
+  # Fake AWS-style key (AKIA + ABCDEF1234567890): the test writes it into a fake
+  # MCP config and asserts the renderer withholds it. It authenticates nothing.
+  # Trips only in consumer repos, where the kit files sit untracked in the diff
+  # scan until first commit — upstream never sees it because the file is tracked
+  # and unchanged there.
+  '''AKIAABCDEF1234567890''',
+]

@@ -1,0 +1,257 @@
+.superpowers/
+/.worktrees/
+__pycache__/
+.idea
+/docs/superpowers
+/docs/superpowers/
+
+# .agents/state/local/ is the single throw-away bucket of the kit: generated views
+# (TASKS.md, LEDGER.md — sources of truth are the .json stores), the run log, and
+# the SCA reports. Everything in it is regenerable, so nothing in it is tracked.
+# Regenerate the views with: python .agents/bin/tasks.py render  |  ledger.py render
+/.agents/state/local/
+
+# Canal-A event stream. Pilot decision (2026-07-28): NOT tracked. It was designed
+# as a tracked audit trail, and two reasons overturned that. First, the emitters
+# feed it from every hook, and a hook is a short-lived process, so "one file per
+# writer" (forced by L-00000041) produced 320 files for 323 records — a file per
+# emission, unreviewable in a diff. Second, a hook.deny record carried 1171 bytes
+# of raw shell before the redaction fix landed; git history does not forget, and
+# gitleaks never scans a hook's own append. Regenerable by construction, so
+# nothing is lost. Consequence to keep in mind: the dashboard reader is now the
+# ONLY consumer, and no reviewer will ever see this data in a pull request.
+/.agents/state/events/
+
+# Project identity (T-00000048, V1-a). Per-repo, generated at init by
+# .agents/bin/project_init.py, NEVER committed and NEVER copied. Committing it
+# would make every consumer inherit the kit's own project_id, and the
+# SessionStart nudge — gated on this file's ABSENCE — would be disarmed for
+# them. An identity generates on place in each repo (the kit included); it does
+# not travel. A project.json that arrived via a clone is an inherited identity
+# to delete and re-init.
+/.agents/state/project.json
+
+# Editor/agent backup copies. This lives in the REPO ignore on purpose: the same
+# pattern already sits in one maintainer's global gitignore, which made a stray
+# .bak invisible to them and committable by everyone else, on CI included. An
+# ignore rule that only exists on one machine is not a rule.
+*.bak
+*.orig
+
+# Dépendances npm, où qu'elles soient. La règle existe DÉJÀ dans
+# `.agents/ui-src/.gitignore`, mais celui-ci ne vit que sur `main` : la source
+# du front est `strip:` de la branche template, donc en basculant sur
+# `template/starter-kit` le .gitignore disparaît, `node_modules/` cesse d'être
+# ignoré, et l'arbre devient sale — ce qui fait refuser `sync_template.py
+# --apply`. La règle est donc posée à la RACINE, où elle voyage sur les deux
+# branches. Elle ne masque que les dépendances : les sources restent suivies
+# sur main, où elles sont déjà trackées.
+node_modules/
+
+# Sorties du gate Playwright (T-00000193) : traces, captures et `.last-run.json`
+# régénérés à chaque exécution de `npm run test:e2e`. Posées à la RACINE pour la
+# même raison que `node_modules/` juste au-dessus — un ignore qui ne vit que dans
+# `.agents/ui-src/` disparaît sur `template/starter-kit` et salit l'arbre.
+.agents/ui-src/test-results/
+.agents/ui-src/playwright-report/
+
+# Marqueur d'armement de la porte d'interface (T-00000264, option C). Sa PRÉSENCE
+# force la branche RÉELLE de `scripts/ui-gate.sh` sur un poste local ; en CI c'est
+# GITHUB_ACTIONS=true qui l'arme, jamais ce fichier. L'armement est par POSTE,
+# jamais par git : un marqueur committé forcerait le run Chromium chez tout le
+# monde et sur un clone gelé --at (qui, git-ignoré, dégrade — c'est voulu).
+# `.agents/state/` étant `strip:`-é de la template, rien n'atteint un consommateur.
+#
+# CE MARQUEUR N'EST PLUS LE SEUL CHEMIN VERS LA BRANCHE RÉELLE (T-00000437) : un
+# poste qui a node ET npm est armé par son OUTILLAGE (`armed_by=toolchain`), ce
+# qui supprime le faux vert où `verify.sh` sortait 0 sans jamais jouer la porte.
+# Le marqueur garde un pouvoir propre, et un seul : sur une machine SANS Node
+# mais AVEC un projet UI, il est le seul chemin vers `exit 1` (T-00000283).
+.agents/state/gates/UI_GATE.local
+
+# T-012 — MARQUEUR D'ARMEMENT DU MANDAT D'ECRITURE. Meme regime que UI_GATE.local
+# juste au-dessus, et pour la meme raison : L'ARMEMENT EST PAR POSTE, JAMAIS PAR
+# GIT. Committe, il armerait `kickoff_guard` chez quiconque clone ce depot — CI
+# comprise — alors que le kit se livre DESARME, ce que
+# `.agents/bin/test_kickoff_guard.py::test_disarmed_repo_is_byte_silent` asserte
+# en toutes lettres (« must NEVER be committed »).
+#
+# MESURE DU 2026-09-12 : il a ete committe une fois, et la porte a rougi
+# exactement sur ce banc. Le pilote avait demande que l'orchestrateur puisse
+# armer ; il le peut — par `.agents/bin/kickoff_arm.py`, qui trace au registre
+# avant d'agir — mais l'armement reste LOCAL, comme la decision de poste qu'il
+# est. `.agents/state/` etant `strip:` de la template, rien n'atteignait un
+# adoptant de toute facon : le defaut etait pour CE depot et ses clones.
+.agents/state/gates/KICKOFF_REQUIRED
+#
+# ET SON VOISIN `NIGHT_HEADLESS.allow` RESTE SUIVI — décision pilote du
+# 2026-09-12, prise parce que la revue de clôture a relevé l'asymétrie plutôt
+# que de la laisser passer pour un oubli. Le motif ci-dessus semble s'y
+# appliquer mot pour mot, et pourtant les deux marqueurs ne sont pas de la même
+# nature. `KICKOFF_REQUIRED` arme une garde CONTRE l'agent qui l'écrit, donc son
+# armement est une décision de POSTE. `NIGHT_HEADLESS.allow` est une ALLOWLIST —
+# sa présence AUTORISE, et son contenu est le périmètre d'outils que l'équipe
+# accorde à une nuit sans surveillance. Ce périmètre se discute, se relit et se
+# partage : c'est une décision d'ÉQUIPE, et git est le bon support.
+
+# Empreinte de réutilisation écrite par `scripts/ui-gate.sh` (T-00000437, format
+# étendu par T-00000456). Une ligne : `uigate1 <sha256 du verrou> <clé de
+# plateforme>`, déposée après un `npm ci` réussi pour que le suivant soit SAUTÉ
+# aussi longtemps que NI le verrou NI la plateforme n'ont bougé.
+#
+# LA CLÉ DE PLATEFORME EST LA SECONDE MOITIÉ, et elle n'est pas décorative : le
+# sha256 dit ce qui est DEMANDÉ, jamais ce qui a été INSTALLÉ, et npm choisit ses
+# binaires par `os`/`cpu`/`libc`. Sans elle, un arbre partagé entre deux
+# plateformes (le clone `--at` de verify.sh, mais aussi WSL, un dual-boot, un dev
+# container, un partage réseau) relit le tampon de l'autre comme concordant et
+# saute l'installation avec des binaires étrangers en place.
+#
+# Déjà couverte par la règle `node_modules/` ci-dessus — nommée ici parce qu'un
+# fichier de cache qui survit à un `git revert` (le rollback de ce lot le dit)
+# mérite d'être trouvable. Un tampon d'un format inconnu retombe du côté sûr :
+# il ne se compare pas, il déclenche la réinstallation.
+# .agents/ui-src/node_modules/.ui-gate-lockstamp
+
+# T-00000379 lot E — l'artefact du graphe de specs, DÉRIVÉ des trois stores et
+# rafraîchi par `post-task-done-index.sh` à chaque clôture de tâche. Non suivi
+# ICI parce que le hook commite les stores par pathspec explicite et ne le
+# prendrait jamais : suivi, il resterait sale en permanence ; commité à la main,
+# il vieillirait entre deux clôtures.
+#
+# C'EST UN CHOIX DE CE DÉPÔT, PAS UNE LOI DU KIT. Le contrat
+# (`.agents/ref/SPECS_GRAPH_CONTRACT.md`) ouvre au même chemin une PUBLICATION
+# MANUELLE, qu'un projet adoptant a toutes les raisons de suivre en versionné —
+# il lui suffit de retirer la ligne ci-dessous. Elle est écrite ici, avec son
+# périmètre, plutôt que subie comme une contrainte héritée sans raison.
+/.agents/state/index/SPECS_GRAPH.json
+
+# T-00000677 — LE STORE D'ÉVÉNEMENTS V3 EST DÉSINDEXÉ, AVEC SES DEUX LATÉRAUX WAL.
+# Le paquet V3 (`agentic_v3/` ou `.agents/vendor/agentic_v3/`), dans
+# `db/schema.py`, ouvre chaque connexion sur `PRAGMA journal_mode = WAL`,
+# ce qui dépose `…db-wal` et `…db-shm` à côté de la base pendant qu'elle est
+# ouverte. Ils n'étaient NI SUIVIS NI IGNORÉS : ils apparaissaient en `??`, et les
+# deux gestes que ce dépôt prescrit lui-même — le `git add -A` d'adoption
+# (`docs/usage.html`) et celui de `.agents/bin/sync_template.py` — les balaieraient
+# dans un commit sans que personne l'ait voulu.
+#
+# LE `.db` LUI-MÊME EST DÉSORMAIS DÉSINDEXÉ (T-00000677) : la base VIVANTE vit HORS
+# dépôt sous `state_project()/run/v3_event_store.db` (partition MACHINE), son
+# doublon figé suivi a été retiré, et son historique est versionné par les exports
+# `runs/`. On IGNORE donc le `.db` ici — règle littérale et ancrée — pour qu'un
+# doublon resté dans l'arbre de travail ne soit jamais re-commité par un `git
+# add -A`. `.agents/evals/test_template_hygiene.py` asserte le DÉSUIVI (base non
+# suivie ET ignorée) et les latéraux ignorés.
+#
+# LITTÉRALES ET ANCRÉES, JAMAIS `*.db` : un motif flottant capturerait TOUTE
+# autre base du dépôt — y compris celles dont personne n'a décidé le sort — sans
+# décision et sans trace. Une ligne littérale nomme sa cible et ne peut se
+# tromper que bruyamment.
+/.agents/state/v3_event_store.db
+/.agents/state/v3_event_store.db-wal
+/.agents/state/v3_event_store.db-shm
+
+# T-00000668 — L'INDEX SQLITE EST DÉSINDEXÉ À SON TOUR. `index.db` est un store
+# MACHINE, hors dépôt, sous `state_project()/index/index.db`
+# (`cadre.paths.index_db`, le point unique que `migrate_index_to_db.db_path`
+# consulte) ; il se reconstruit depuis les `SYMBOLS*.md` versionnés
+# (`migrate_index_to_db.py --apply`/`--resync`), et `annotations_log.jsonl` —
+# lui SUIVI — y rejoue les annotations. Un doublon hérité resté dans l'arbre de
+# travail n'est plus lu (NOTE « doublon hérité ») et est IGNORÉ ici, règle
+# littérale et ancrée, pour qu'un `git add -A` ne le re-commite jamais. Il
+# n'ouvre pas en WAL : aucun latéral à nommer. `.agents/evals/test_template_hygiene.py`
+# asserte le DÉSUIVI (non suivi ET ignoré).
+/.agents/state/index/index.db
+
+# macOS Finder metadata — jamais suivi
+.DS_Store
+**/.DS_Store
+
+# Fichiers rc de shell A LA RACINE DU DEPOT — jamais suivis (T-00000520).
+# Un rc de shell est un porteur classique de credential exporte, et il se
+# retrouve a la racine d un depot par accident (copie, redirection, tmpdir).
+# Ancre a la racine par le `/` initial : un `.zshrc` LEGITIME plus profond
+# dans l arbre d un adoptant (dotfiles vendorises, fixture de test) reste
+# suivable. Ce motif EMPECHE la propagation par `git add -A` ; il ne
+# supprime rien et n assainit rien — un fichier deja SUIVI n est pas
+# affecte par .gitignore, et retirer un credential reste un geste explicite.
+/.zshrc
+/.bashrc
+/.bash_profile
+/.profile
+/.envrc
+
+# T-00001105 — PORTEURS DE SECRET ET ENVIRONNEMENT LOCAL, A TOUTE PROFONDEUR.
+# Motifs FLOTTANTS, contrairement aux rc ancres juste au-dessus : un sous-projet
+# de monorepo porte son propre `.env` (`apps/api/.env`). AU MOINS ces quatre
+# familles, releve NON CLOS : la garde `.claude/hooks/protect-paths.sh` refuse
+# d autres porteurs (`id_rsa`, `.key`, `.p12`...), hors de ce lot. `.venv/` n est
+# pas un secret : c est l environnement Python local. Les negations reprennent
+# les suffixes de `is_env_template` (meme fichier de garde) : les gabarits d env
+# restent visibles et suivables. MASQUES AUSSI, et c est voulu : `.env.*` couvre
+# `.env.vault` (dotenv-vault) et `.env.enc`, commites par conception, et `*.pem`
+# un certificat PUBLIC legitime — ceux-la se suivent par `git add -f`. Comme
+# au-dessus, un fichier deja SUIVI n est pas affecte. Ce bloc voyage par la
+# synchro template ; le gabarit de `cadre init` n en porte pas encore les
+# regles (T-00000636). Temoin : `.agents/evals/test_ignores_livres.py`.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.dist
+*.pem
+.venv/
+
+# T-01M52X1W3WPKCWX1DC36NMKJB6 — ETAT ET ARTEFACTS TERRAFORM, A TOUTE PROFONDEUR.
+# Motifs FLOTTANTS, comme le bloc du dessus : l'IaC d'un depot vit sous `infra/`,
+# `terraform/` ou un module. `.terraform/` (providers et modules telecharges),
+# `*.tfstate` et `*.tfstate.*` (l'etat et sa sauvegarde, secrets EN CLAIR), `*.tfplan`
+# (un planfile, secrets en clair aussi), `crash.log`, `crash.*.log` et le verrou
+# local `.terraform.tfstate.lock.info`. `.terraform.lock.hcl` RESTE SUIVI : c'est le
+# verrou des providers, il se commite. `override.tf` et `*_override.tf` ne sont PAS
+# ignores, et c'est voulu (C2 de l'iteration 5 du plan) : Terraform les FUSIONNE dans
+# la configuration ; ignores, ils seraient charges sans jamais etre relus — le runner
+# `tfdeploy.py` les ecarte de toute facon, il ne joue qu'un export de HEAD. Comme
+# au-dessus, un fichier deja SUIVI n est pas affecte. Le gabarit de `cadre init` n en
+# porte pas encore les regles : chez un adoptant `cadre init`, rien ne tient
+# `.terraform/` hors de git avant T-00000636 ; le runner refuse de deployer
+# (`etat_non_ignore`), il ne retire rien de git.
+# Temoin : `.agents/evals/test_ignores_livres.py`.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+.terraform.tfstate.lock.info
+
+# T-00000595 — la SORTIE TRACEE de la garde de branche par defaut. Le MARQUEUR
+# d'armement (PUSH_DEFAUT_PROTEGE) est suivi, lui : il doit survivre a un clone.
+# La sortie, non — elle est ephemere et consommee, et un clone qui en heriterait
+# naitrait avec une derogation deja posee (releve du binome).
+/.agents/state/gates/PUSH_DEFAUT_AUTORISE
+/.agents/state/local/push-defaut-sorties.log
+# T-00000763 — la garde du CODE DU KIT est livrée DÉSARMÉE : son marqueur et ses
+# octrois sont des gestes PAR POSTE du pilote, jamais un état qu'un clone hérite.
+/.agents/state/gates/KIT_CODE_PROTEGE
+/.agents/state/gates/KIT_CODE_AUTORISE
+# T-01M5C1AHZM41P9C3QH6X7PEQY1 — les OCTROIS pilote de la garde des configs
+# lint/format : ephemeres et dates, jamais herites d'un clone. Son MARQUEUR
+# (CONFIG_QUALITE_PROTEGE) est suivi, lui : pose par le pilote, il survit a un clone.
+/.agents/state/gates/CONFIG_QUALITE_AUTORISE
+# T-00000809 — la SORTIE TRACEE d'affirmation-guard : ephemere, consommee une fois
+# et journalisee ; un `git add -A` la suivrait et un clone naitrait avec une revue deja levee.
+/.agents/state/gates/AFFIRMATION_SANS_BINOME
+# ... et son orphelin (affirmation-guard.sh:394-419), repris et HONORE quand le
+# journal local ne le connait pas : suivi par un `git add -A`, il leverait la
+# revue au premier tour de tout clone.
+/.agents/state/gates/AFFIRMATION_SANS_BINOME.en-cours
+# Verrou pip EXTRAIT de ci.yml par core-scripts/verify.sh (jambe conteneur) : il ne
+# survit qu'a une jambe interrompue et portait encore des epingles retirees (T-655).
+/.verify-ci-requirements.txt
+# Rendu d'evaluation critique produit PAR UNE SESSION, jamais par un script du
+# depot (`git grep` sur son nom : zero appelant). Decision pilote du 2026-09-22 :
+# il ne voyage pas. Entree LITTERALE et non un motif `*.html` — docs/usage.html et
+# docs/governance.html sont SUIVIS et doivent le rester (meme raison que l'entree
+# litterale du store V3 : un motif large atteindrait un fichier qu'on veut garder).
+/docs/interne/architecture-vivante.html

@@ -1,0 +1,14 @@
+# Project-scoped Codex configuration.
+# Project config loads only after the repository is trusted.
+
+project_doc_fallback_filenames = [".github/copilot-instructions.md"]
+project_doc_max_bytes = 65536
+
+[features]
+hooks = true
+multi_agent = true
+
+[agents]
+max_threads = 3
+max_depth = 1
+job_max_runtime_seconds = 1800

@@ -1,0 +1,34 @@
+{
+  "$comment": [
+    "LA CHAINE DU SOCLE : l'ordre et les identifiants des noeuds de la chaine de gates que le noyau porte, la donnee que lira check_socle_integrity (T-00000901). Elle est lue par cadre.socle.charger() et par rien d'autre a ce jour.",
+    "",
+    "Reference : la doctrine en vigueur (AGENTS.md, ligne `Pipeline mandatory`), decision pilote S-00003974 puis decision/T-00000899/01. Cette chaine est declaree ICI, dans le noyau, jamais dans un fichier du depot adoptant HORS de cette copie du noyau (la copie de src/cadre que la template vendore chez un adoptant est la sienne ; son integrite releve de check_socle_integrity, T-00000901) : aucune couche de configuration ne la lit ni ne la surcharge, et ce fichier N'EST PAS une couche de config.",
+    "",
+    "Les identifiants sont ASCII minuscules et deviennent un vocabulaire de contrat : ne pas les renommer sans decision. L'ORDRE des noeuds est celui de la chaine. `agents` liste les defs d'agents qui peuvent tenir le noeud (titulaire, repli, escalade ou variante : la doctrine dit lesquelles, ce fichier ne le dit pas). `condition` nomme ce qui rend un noeud conditionnel ; sans condition, aucune condition n'est DECLAREE ici : la doctrine en rend d'autres conditionnels (language-detector 'skipped when the language is known', .claude/agents/orchestrator.md:130-131 ; security-code-review 'skip for docs-only tasks', .claude/agents/orchestrator.md:139), a trancher par T-00000901 avant d'en faire une obligation.",
+    "",
+    "Ce fichier ne dit PAS quels noeuds sont bloquants : build-index et indexer sont consultatifs dans la doctrine, et le caractere bloquant d'un gate est une decision de T-00000901 et de T-00000878.",
+    "",
+    "Hors noeuds : la passe de correction des constats (une passe de dev, pas un gate) et la branche LECON_CANDIDATE (une branche, pas un maillon).",
+    "",
+    "voie_directe_depuis : la voie directe (tasks.py direct) joue la chaine a partir de ce noeud INCLUS jusqu'au bout, sans planner, plan-critic ni gate humain. language-detector, qui precede dev, est donc HORS de cette voie, alors que la doctrine le joue avant le dev d'une tache directe quand le langage n'est pas connu (.claude/agents/orchestrator.md:130) : ecart signale a A."
+  ],
+  "version_format": 1,
+  "chaine": [
+    {"id": "language-detector", "nature": "agent", "agents": ["language-detector"]},
+    {"id": "planner", "nature": "agent", "agents": ["planner", "planner-sonnet"]},
+    {"id": "plan-critic", "nature": "agent", "agents": ["plan-critic", "plan-critic-sonnet-max"]},
+    {"id": "gate-humain", "nature": "humain"},
+    {"id": "dev", "nature": "agent", "agents": ["dev-mono", "dev-multi", "frontend-fidelity", "terraform-deployer"]},
+    {"id": "design-review", "nature": "agent", "agents": ["design-review"], "condition": "tache-ecran"},
+    {"id": "exec-critic", "nature": "agent", "agents": ["exec-critic"]},
+    {"id": "securite", "nature": "agent", "agents": ["security-code-review"]},
+    {"id": "securite-dependances", "nature": "agent", "agents": ["security-orchestrator"], "condition": "manifeste-de-dependances-modifie"},
+    {"id": "build-index", "nature": "deterministe"},
+    {"id": "documenter", "nature": "agent", "agents": ["documenter"]},
+    {"id": "indexer", "nature": "agent", "agents": ["indexer"], "condition": "structure-modifiee"},
+    {"id": "revue-cloture", "nature": "agent", "agents": ["critic-opus", "critic-fable", "critic-sonnet-max"]},
+    {"id": "porte", "nature": "deterministe"},
+    {"id": "done", "nature": "deterministe"}
+  ],
+  "voie_directe_depuis": "dev"
+}

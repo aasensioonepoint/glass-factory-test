@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!-- CADRE dashboard — shell.
+     Carries NO data and NO inline script: the served document is this file with
+     one <script type="module" src="/assets/app.js"> injected by the build, which
+     is exactly what `script-src 'self'` allows and nothing more. Everything
+     visible comes from /api/snapshot, fetched with the session token in an
+     Authorization header. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>GLASS · dashboard</title>
+  <script type="module" crossorigin src="/assets/app.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/app.css">
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

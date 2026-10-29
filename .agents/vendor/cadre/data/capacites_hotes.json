@@ -1,0 +1,563 @@
+{
+  "$comment": [
+    "TABLE DES CAPACITES PAR HOTE — la donnee que lira check_host_capabilities (refus d'activer un hote qui ne peut pas ancrer le socle). Elle n'est lue par aucun code a ce jour.",
+    "",
+    "Elle CONSOLIDE les statuts que le depot a deja traces : aucun hote n'a ete lance et aucune mesure reseau n'a ete jouee pour la remplir. Une capacite n'est jamais affirmee plus forte que sa preuve : chaque cellule porte sa SOURCE (chemin:ligne, valable au sha du releve), et une cellule sans preuve est marquee non-mesure, jamais remplie par defaut.",
+    "",
+    "Les niveaux et la regle de classement sont definis par docs/contrat/CONTRAT-v0.md § 3.10, qui designe CE fichier comme source unique. Les surfaces niveau-hote:enforce et niveau-hote:assiste restent `reserve` au verrou : la table est ecrite, rien ne la lit encore.",
+    "",
+    "LISTE DE CAPACITES BORNEE : celles que le depot a deja relevees hote par hote et qui conditionnent l'ancrage du socle. Ce n'est pas l'inventaire de ce que chaque hote sait faire ; une capacite absente d'ici n'est ni mesuree ni niee.",
+    "",
+    "activable : l'hote appartient a la liste fermee HOTES (src/cadre/config.py:83) ; ce n'est PAS le verdict d'ancrage du socle, qui reste non tranche (ancrage_du_socle)."
+  ],
+  "version_format": 1,
+  "releve": {
+    "sha": "b39d5a5a",
+    "date": "2026-10-08",
+    "methode": "consolidation en lecture seule des statuts traces au depot ; chaque numero de ligne vaut a ce sha"
+  },
+  "statuts": {
+    "mesure": "observe et trace au depot (banc, releve date) ; la portee dit si l'hote lance a produit l'effet ou seulement le jumeau",
+    "herite": "trace HERITE par le depot : la cellule reprend la branche ou le registre d'une cellule d'un autre hote, sans mesure propre a celui-ci ; une cellule heritee ne vaut jamais plus que la cellule dont elle herite",
+    "suppose": "affirme par le depot par inference (canal eprouve par le jumeau, graphies jamais mesurees) ; ne vaut jamais mesure",
+    "inerte-mesure": "mesure, et la mesure dit que la capacite ne mord pas sur cet hote",
+    "non-mesure": "cable ou documente ; la capacite elle-meme n'a aucune mesure tracee — une mesure voisine, s'il y en a une, est dans la note",
+    "absent": "le kit ne cable pas la capacite sur cet hote (releve du depot)"
+  },
+  "portees": {
+    "bout-en-bout": "l'hote lance a produit l'effet : refus honore, trace ecrite, contexte rendu au modele",
+    "jumeau": "l'implementation du hook, sur une charge synthetique a la forme de l'hote, rend la sortie que l'hote documente ; l'hote lui-meme n'a pas ete lance"
+  },
+  "niveaux": {
+    "enforce": "l'hote peut REFUSER mecaniquement : son refus d'avant-outil est mesure de bout en bout",
+    "assiste": "l'hote est guide par la doctrine sans refus mesure : les gardes y sont cablees, leur morsure n'est pas prouvee"
+  },
+  "regle_de_classement": {
+    "capacite": "refus_effectif_pre_outil",
+    "enforce_si": {
+      "statut": "mesure",
+      "portee": "bout-en-bout"
+    },
+    "sinon": "assiste",
+    "texte": "Un hote est enforce si et seulement si sa capacite refus_effectif_pre_outil est `mesure` de portee `bout-en-bout`. Tout autre cas le classe assiste : herite, suppose, inerte-mesure, non-mesure, absent, ou mesure sur le jumeau seul. Un hote dont la garde bloquante n'est que supposee est assiste, jamais enforce.",
+    "source": "docs/contrat/CONTRAT-v0.md § 3.10"
+  },
+  "ancrage_du_socle": {
+    "etat": "non-tranche",
+    "note": "La spec refuse l'activation d'un hote qui ne peut pas ancrer TOUS les gates du socle (docs/PROMPT-refonte-packaging-cadre.md:538-552) ; le contrat reserve une mention « mode assiste » a l'initialisation (CONTRAT-v0.md § 3.8). Lire assiste comme « activable avec la mention » ou comme « non ancrable, activation refusee » est une decision du pilote, a prendre avant d'ecrire check_host_capabilities ; checks.manifest.json:216 suppose deja un hote assiste active avec avertissement bloquant, :242 annonce une mesure sur banc que cette table n'est pas."
+  },
+  "capacites": {
+    "fichier_hooks_lu": {
+      "evenement": null,
+      "objet": "l'hote lit le registre de hooks que le kit lui cable",
+      "decide_le_niveau": false
+    },
+    "canal_refus_pre_outil": {
+      "evenement": "hook:PreToolUse",
+      "objet": "la forme de refus emise par les gardes d'avant-outil est celle que l'hote lit (sortie d'erreur et code 2, ou enveloppe permissionDecision deny et code 0)",
+      "decide_le_niveau": false
+    },
+    "refus_effectif_pre_outil": {
+      "evenement": "hook:PreToolUse",
+      "objet": "l'hote lance a refuse un appel d'outil sur le verdict d'une garde d'avant-outil",
+      "decide_le_niveau": true
+    },
+    "garde_edition_correspondance": {
+      "evenement": "hook:PreToolUse",
+      "objet": "le matcher des gardes d'edition (chemins proteges, kickoff, gitleaks --content) correspond aux noms d'outils d'edition de l'hote",
+      "decide_le_niveau": false
+    },
+    "post_edition": {
+      "evenement": "hook:PostToolUse",
+      "objet": "le scan post-edition (semgrep-scan.sh --hook --event=post) recoit le chemin edite",
+      "decide_le_niveau": false
+    },
+    "fin_de_tour": {
+      "evenement": "hook:Stop",
+      "objet": "les gardes de fin de tour (SAST --event=stop, gitleaks, SCA, index) tournent a la fin du tour",
+      "decide_le_niveau": false
+    },
+    "trace_binome": {
+      "evenement": "hook:SubagentStop",
+      "objet": "la trace du critique de cloture, lue par BINOME_REQUIRED, est ecrite par l'hote",
+      "decide_le_niveau": false
+    },
+    "trace_critique_plan": {
+      "evenement": "hook:SubagentStop",
+      "objet": "la trace du critique de plan, lue par PLAN_CHAIN_REQUIRED, est ecrite par l'hote",
+      "decide_le_niveau": false
+    },
+    "contexte_session": {
+      "evenement": "hook:SessionStart",
+      "objet": "le board et le ledger injectes au demarrage atteignent le modele",
+      "decide_le_niveau": false
+    },
+    "sous_agents_decouverts": {
+      "evenement": null,
+      "objet": "les definitions d'agents du kit sont decouvertes et lancees par l'hote",
+      "decide_le_niveau": false
+    },
+    "skills_decouvertes": {
+      "evenement": null,
+      "objet": "les skills du kit sont decouvertes nativement, et non seulement atteintes par chemin depuis la doctrine",
+      "decide_le_niveau": false
+    },
+    "isolation_worktree": {
+      "evenement": null,
+      "objet": "les devs paralleles tournent chacun dans un worktree git",
+      "decide_le_niveau": false
+    },
+    "permissions_declaratives": {
+      "evenement": null,
+      "objet": "un refus de chemins declaratif de l'hote double les hooks",
+      "decide_le_niveau": false
+    }
+  },
+  "hotes": {
+    "claude": {
+      "nom": "Claude Code",
+      "activable": true,
+      "registre_natif": ".claude/settings.json",
+      "niveau": "enforce",
+      "raison_du_niveau": "refus par sortie d'erreur et code 2, le seul canal mesure de bout en bout",
+      "capacites": {
+        "fichier_hooks_lu": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["README-OTHER-HOSTS.md:81", ".claude/hooks/session-start.sh:258-266"],
+          "note": "traces SubagentStop ecrites par l'hote ; 72 injections de hook, tous depots (releve du 2026-09-29)"
+        },
+        "canal_refus_pre_outil": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["docs/contrat/CONTRAT-v0.md:117-118", "docs/tasks/T-00000476-plan.md:11", ".agents/bin/kickoff_guard.py:865-885"]
+        },
+        "refus_effectif_pre_outil": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["docs/contrat/CONTRAT-v0.md:117-118", ".agents/skills/guardrails/SKILL.md:11"],
+          "note": "chemins proteges : 1 MEASURED (Claude, protect-paths.sh + permissions.deny)"
+        },
+        "garde_edition_correspondance": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": [".claude/settings.json:5", ".agents/skills/guardrails/SKILL.md:11", "docs/tasks/T-00000476-plan.md:11"],
+          "note": "matcher Edit|Write ; graphie tool_input.file_path mesuree"
+        },
+        "post_edition": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:57-58", ".agents/security/semgrep-scan.sh:43-44", "docs/tasks/T-00000476-plan.md:11"]
+        },
+        "fin_de_tour": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:57-58", ".agents/security/semgrep-scan.sh:43-44", "docs/tasks/T-00000476-plan.md:11"]
+        },
+        "trace_binome": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["README-OTHER-HOSTS.md:81"],
+          "note": "mesure sur le compte de l'equipe du kit"
+        },
+        "trace_critique_plan": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["README-OTHER-HOSTS.md:81"],
+          "note": "mesure sur le compte de l'equipe du kit ; disponibilite de plan-critic chez un adoptant supposee"
+        },
+        "contexte_session": {
+          "statut": "non-mesure",
+          "source": [".claude/hooks/session-start.sh:258-266"],
+          "note": "seuil de l'hote mesure (~10 000 caracteres, releve du 2026-09-29), au-dela apercu de 2 ko ; livraison du board et du ledger sous le budget de 9 400 octets deduite, non mesuree"
+        },
+        "sous_agents_decouverts": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["README-OTHER-HOSTS.md:81", "AGENTS.md:38"],
+          "note": "au moins les defs des critiques : leur trace SubagentStop est ecrite par l'hote ; le roster entier n'est pas recompte"
+        },
+        "skills_decouvertes": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:55"],
+          "note": "documente : .claude/skills/ seul (9 pointeurs) ; les skills de .agents/skills/ sont atteintes par chemin"
+        },
+        "isolation_worktree": {
+          "statut": "mesure",
+          "portee": "bout-en-bout",
+          "source": ["AGENTS.md:38"]
+        },
+        "permissions_declaratives": {
+          "statut": "non-mesure",
+          "source": [".claude/settings.json:288", "docs/tasks/T-00000791-releve.md:54", "docs/tasks/T-00000699-plan.md:71", "docs/tasks/T-00000699-plan.md:45"],
+          "note": "cable : 30 deny dont 25 Edit(...) ; seule la presence des entrees est verifiee, le refus par l'hote lance n'est jamais trace ; une regle Write(path) n'est jamais consultee"
+        }
+      }
+    },
+    "codex": {
+      "nom": "Codex",
+      "activable": true,
+      "registre_natif": ".codex/hooks.json",
+      "niveau": "assiste",
+      "raison_du_niveau": "enveloppe de refus mesuree sur le jumeau seul ; refus par l'hote lance non mesure ; hooks de projet ignores tant qu'ils ne sont pas approuves par /hooks",
+      "mesure_manquante": "un refus d'avant-outil honore par Codex lance, hooks approuves, avec un temoin capable de rougir",
+      "capacites": {
+        "fichier_hooks_lu": {
+          "statut": "non-mesure",
+          "source": [".codex/hooks.json:2", ".codex/config.toml:8", "README-OTHER-HOSTS.md:103", "docs/tasks/T-00000791-releve.md:43"],
+          "note": "cable ; hooks de projet ignores jusqu'a approbation par /hooks, confiance liee au hash du fichier"
+        },
+        "canal_refus_pre_outil": {
+          "statut": "mesure",
+          "portee": "jumeau",
+          "source": ["docs/tasks/T-00000476-plan.md:12", ".agents/bin/kickoff_guard.py:865-885", ".codex/hooks/test_guard_hooks.py:66", "docs/tasks/T-00000791-releve.md:45"],
+          "note": "enveloppe permissionDecision deny et code 0 mesuree sur le jumeau ; la doc de l'hote en donne un exemple identique"
+        },
+        "refus_effectif_pre_outil": {
+          "statut": "non-mesure",
+          "source": ["docs/contrat/CONTRAT-v0.md:117-118", "docs/tasks/T-00000476-plan.md:12"],
+          "note": "le contrat ne reconnait qu'a Claude Code un canal mesure de bout en bout"
+        },
+        "garde_edition_correspondance": {
+          "statut": "non-mesure",
+          "source": [".agents/skills/guardrails/SKILL.md:11", "docs/tasks/T-00000476-plan.md:12", "docs/tasks/T-00000791-releve.md:46"],
+          "note": "cable Edit|Write|apply_patch ; graphie toolInput et apply_patch eprouves sur le jumeau, correspondance a l'hote non mesuree"
+        },
+        "post_edition": {
+          "statut": "mesure",
+          "portee": "jumeau",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:59-60", ".agents/security/semgrep-scan.sh:43-44", "docs/tasks/T-00000476-plan.md:12"]
+        },
+        "fin_de_tour": {
+          "statut": "mesure",
+          "portee": "jumeau",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:59-60", ".agents/security/semgrep-scan.sh:43-44", "docs/tasks/T-00000476-plan.md:12"]
+        },
+        "trace_binome": {
+          "statut": "non-mesure",
+          "source": ["README-OTHER-HOSTS.md:82"],
+          "note": "cable ; emission par l'hote non mesuree"
+        },
+        "trace_critique_plan": {
+          "statut": "non-mesure",
+          "source": ["README-OTHER-HOSTS.md:82"],
+          "note": "cable ; emission par l'hote non mesuree"
+        },
+        "contexte_session": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:52"],
+          "note": "cable et documente"
+        },
+        "sous_agents_decouverts": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:35"],
+          "note": "defs TOML cablees et documentees"
+        },
+        "skills_decouvertes": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:55"],
+          "note": "documente : .agents/skills/"
+        },
+        "isolation_worktree": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:38", "docs/tasks/T-00000791-releve.md:42"]
+        },
+        "permissions_declaratives": {
+          "statut": "absent",
+          "source": ["docs/tasks/T-00000791-releve.md:54"],
+          "note": "pas de .codex/rules/ ; la doc n'y prevoit que des regles de commandes, experimentales"
+        }
+      }
+    },
+    "gemini": {
+      "nom": "Gemini CLI",
+      "activable": true,
+      "registre_natif": ".agents/hooks.json",
+      "niveau": "assiste",
+      "raison_du_niveau": "garde bloquante supposee : canal eprouve par le jumeau, noms d'outils d'edition jamais etablis",
+      "mesure_manquante": "lecture de .agents/hooks.json par l'hote lance, puis un refus d'avant-outil honore",
+      "note": "le meme registre sert Antigravity : un poste Antigravity s'active par --host gemini ; rien ne distingue aujourd'hui les deux postes a l'activation",
+      "capacites": {
+        "fichier_hooks_lu": {
+          "statut": "suppose",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:63-64", "docs/tasks/T-00000791-releve.md:43", "docs/tasks/T-00000791-releve.md:66-72"],
+          "note": "la doc consultee ne lit les hooks que dans settings.json -> hooks : deduction de doc, non mesuree"
+        },
+        "canal_refus_pre_outil": {
+          "statut": "suppose",
+          "source": ["docs/tasks/T-00000476-plan.md:14", ".agents/bin/kickoff_guard.py:865-885", "docs/tasks/T-00000791-releve.md:45"],
+          "note": "canal eprouve par le jumeau ; la doc decrit decision/reason, pas permissionDecision"
+        },
+        "refus_effectif_pre_outil": {
+          "statut": "suppose",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:63-64", "GEMINI.md:54", "docs/contrat/CONTRAT-v0.md:117-118", "docs/tasks/T-00000791-releve.md:45"]
+        },
+        "garde_edition_correspondance": {
+          "statut": "suppose",
+          "source": ["GEMINI.md:54", ".agents/evals/test_gemini_hook_matchers.py:39-47", "docs/tasks/T-00000791-releve.md:46"],
+          "note": "aucun nom d'outil d'edition etabli pour cet hote ; la doc nomme write_file et replace, que le matcher ne vise pas"
+        },
+        "post_edition": {
+          "statut": "suppose",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:63-64", ".agents/security/semgrep-scan.sh:46-47", "docs/tasks/T-00000476-plan.md:14"]
+        },
+        "fin_de_tour": {
+          "statut": "suppose",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:63-64", "docs/tasks/T-00000791-releve.md:49"],
+          "note": "la doc n'a pas d'evenement Stop ; l'equivalent documente est AfterAgent"
+        },
+        "trace_binome": {
+          "statut": "non-mesure",
+          "source": ["README-OTHER-HOSTS.md:85", "docs/tasks/T-00000791-releve.md:50"],
+          "note": "cable ; SubagentStop absent de la doc"
+        },
+        "trace_critique_plan": {
+          "statut": "absent",
+          "source": ["README-OTHER-HOSTS.md:85", "docs/tasks/T-00000791-releve.md:51"]
+        },
+        "contexte_session": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:52"],
+          "note": "SessionStart documente ; fichier de hooks suppose lu"
+        },
+        "sous_agents_decouverts": {
+          "statut": "non-mesure",
+          "source": ["GEMINI.md:14", "docs/tasks/T-00000791-releve.md:35"],
+          "note": "chargees par le loader de gemini-cli 0.57.0 sur les defs du jour (31 alors) ; le roster compte 35 depuis seo-specialist (T-01M5BZC1Y0T36EHTZY9AKZ650F) et reverse-engineer (T-01M5HEJYSJEYA8K3834FZVT60N) ; ni eux, ni terraform-deployer (T-01M52X1W3WPKCWX1DC36NMKJB6), ni load-tester (T-01M4JC50S6CTJ5HJ697929E6N8) ne sont rejoues sur le loader ; lancement d'une def non mesure ; la stable courante n'est pas mesuree"
+        },
+        "skills_decouvertes": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:89", "docs/tasks/T-00000791-releve.md:55"],
+          "note": "documente : .agents/skills/, alias prioritaire"
+        },
+        "isolation_worktree": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:38", "docs/tasks/T-00000791-releve.md:42"]
+        },
+        "permissions_declaratives": {
+          "statut": "absent",
+          "source": ["docs/tasks/T-00000791-releve.md:54"],
+          "note": "pas de .gemini/policies/ ; la doc declare les politiques de workspace desactivees"
+        }
+      }
+    },
+    "copilot": {
+      "nom": "GitHub Copilot",
+      "activable": true,
+      "registre_natif": ".github/hooks/agent-guardrails.json",
+      "niveau": "assiste",
+      "raison_du_niveau": "canal de refus herite de la cellule Codex ; rendu de l'enveloppe et refus par l'hote non mesures",
+      "mesure_manquante": "forme d'enveloppe lue par l'hote (imbriquee ou racine), puis un refus d'avant-outil honore",
+      "capacites": {
+        "fichier_hooks_lu": {
+          "statut": "non-mesure",
+          "source": [".github/hooks/agent-guardrails.json:2-3", "README-OTHER-HOSTS.md:105", "docs/tasks/T-00000791-releve.md:43"],
+          "note": "cable et documente ; le cloud agent ne lit les fichiers que sur la branche par defaut"
+        },
+        "canal_refus_pre_outil": {
+          "statut": "herite",
+          "source": ["docs/tasks/T-00000476-plan.md:13", ".agents/bin/kickoff_guard.py:865-885", "docs/tasks/T-00000791-releve.md:45"],
+          "note": "meme branche enveloppe que la cellule Codex ; la doc decrit permissionDecision a la racine, le kit emet la forme imbriquee"
+        },
+        "refus_effectif_pre_outil": {
+          "statut": "non-mesure",
+          "source": ["docs/contrat/CONTRAT-v0.md:117-118", "docs/tasks/T-00000476-plan.md:13"]
+        },
+        "garde_edition_correspondance": {
+          "statut": "non-mesure",
+          "source": [".agents/skills/guardrails/SKILL.md:11", "docs/tasks/T-00000791-releve.md:46"],
+          "note": "cable sans matcher : toutes les charges passent par la garde"
+        },
+        "post_edition": {
+          "statut": "herite",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:61-62", ".agents/security/semgrep-scan.sh:44-46", "docs/tasks/T-00000476-plan.md:13"]
+        },
+        "fin_de_tour": {
+          "statut": "herite",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:61-62", ".agents/security/semgrep-scan.sh:44-46", "docs/tasks/T-00000476-plan.md:13"],
+          "note": "agentStop tient lieu de Stop"
+        },
+        "trace_binome": {
+          "statut": "non-mesure",
+          "source": ["README-OTHER-HOSTS.md:84"],
+          "note": "cable ; emission par l'hote non mesuree"
+        },
+        "trace_critique_plan": {
+          "statut": "absent",
+          "source": ["README-OTHER-HOSTS.md:84", "docs/tasks/T-00000791-releve.md:51"]
+        },
+        "contexte_session": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:52"],
+          "note": "cable et documente"
+        },
+        "sous_agents_decouverts": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:35"],
+          "note": "defs .agent.md cablees et documentees"
+        },
+        "skills_decouvertes": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:55"],
+          "note": "documente : .github/skills, .claude/skills, .agents/skills"
+        },
+        "isolation_worktree": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:38", "docs/tasks/T-00000791-releve.md:42"]
+        },
+        "permissions_declaratives": {
+          "statut": "absent",
+          "source": ["docs/tasks/T-00000791-releve.md:54"],
+          "note": "rien de cable ; la doc de permissions de l'hote n'a pas ete relevee"
+        }
+      }
+    },
+    "kimi": {
+      "nom": "Kimi Code",
+      "activable": true,
+      "registre_natif": ".kimi-code/hooks.json",
+      "niveau": "assiste",
+      "raison_du_niveau": "hote non tiere : declenchement des hooks et honneur d'AGENTS_HOOK_HOST=kimi supposes",
+      "mesure_manquante": "lecture de .kimi-code/hooks.json par l'hote lance, puis un refus d'avant-outil honore",
+      "capacites": {
+        "fichier_hooks_lu": {
+          "statut": "suppose",
+          "source": ["AGENTS.md:91", "docs/tasks/T-00000791-releve.md:43", "docs/tasks/T-00000791-releve.md:66-72"],
+          "note": "la doc consultee ne lit les hooks que dans ~/.kimi-code/config.toml : deduction de doc, non mesuree"
+        },
+        "canal_refus_pre_outil": {
+          "statut": "suppose",
+          "source": ["docs/contrat/CONTRAT-v0.md:119-122", "docs/tasks/T-00000791-releve.md:45", ".codex/hooks/_common.py:59-68", ".agents/bin/kickoff_guard.py:876-882", ".agents/bin/kickoff_guard.py:963-971"],
+          "note": "canal MIXTE : protect_paths, audit_gate et safe_bash (module partage .codex/hooks/) emettent l'enveloppe deny a code 0 ; kickoff_guard, hors ENVELOPE_HOSTS, emet les deux canaux et le code 2 ; lecture par l'hote non mesuree"
+        },
+        "refus_effectif_pre_outil": {
+          "statut": "suppose",
+          "source": ["AGENTS.md:91", "docs/contrat/CONTRAT-v0.md:119-122"]
+        },
+        "garde_edition_correspondance": {
+          "statut": "non-mesure",
+          "source": [".agents/skills/guardrails/SKILL.md:11", "docs/tasks/T-00000791-releve.md:46"],
+          "note": "cable ; la doc nomme Write et Edit, qui correspondent si le fichier est lu"
+        },
+        "post_edition": {
+          "statut": "suppose",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:67-68", ".agents/security/semgrep-scan.sh:46-47", "docs/tasks/T-00000476-plan.md:16"]
+        },
+        "fin_de_tour": {
+          "statut": "suppose",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:67-68", "docs/tasks/T-00000791-releve.md:49"]
+        },
+        "trace_binome": {
+          "statut": "non-mesure",
+          "source": ["README-OTHER-HOSTS.md:83"],
+          "note": "cable ; emission par l'hote non mesuree"
+        },
+        "trace_critique_plan": {
+          "statut": "absent",
+          "source": ["README-OTHER-HOSTS.md:83", "docs/tasks/T-00000791-releve.md:51"]
+        },
+        "contexte_session": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:52"],
+          "note": "SessionStart documente ; fichier de hooks suppose lu"
+        },
+        "sous_agents_decouverts": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:35", "docs/tasks/T-00000791-releve.md:36"],
+          "note": "defs cablees ; 9 sur 31 divergent du canon, dont les 3 critiques de cloture"
+        },
+        "skills_decouvertes": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:91", "docs/tasks/T-00000791-releve.md:55"],
+          "note": "non mesuree au depot ; documentee"
+        },
+        "isolation_worktree": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:38", "docs/tasks/T-00000791-releve.md:42"]
+        },
+        "permissions_declaratives": {
+          "statut": "absent",
+          "source": ["docs/tasks/T-00000791-releve.md:54"]
+        }
+      }
+    },
+    "antigravity": {
+      "nom": "Antigravity",
+      "activable": false,
+      "herite_de": "gemini",
+      "registre_natif": ".agents/hooks.json",
+      "niveau": "assiste",
+      "raison_du_niveau": "aucun refus d'avant-outil mesure ; garde d'edition sans correspondance d'outil selon la doc ; post-edition inerte-mesure",
+      "activation": "hors de la liste fermee des hotes (src/cadre/config.py:83) : herite du registre Gemini et s'active par --host gemini (docs/PROMPT-refonte-packaging-cadre.md:493)",
+      "mesure_manquante": "acceptation du registre par l'hote au chargement, puis un refus d'avant-outil honore sur un outil d'edition de l'hote",
+      "capacites": {
+        "fichier_hooks_lu": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:90", "README-OTHER-HOSTS.md:85", "docs/tasks/T-00000791-releve.md:43"],
+          "note": "registre partage avec gemini ; la doc annonce le rejet au chargement d'une configuration qui ne peut jamais tourner, sous un schema different"
+        },
+        "canal_refus_pre_outil": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:45"],
+          "note": "meme enveloppe que gemini ; la doc lit decision, code de sortie non documente"
+        },
+        "refus_effectif_pre_outil": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:45", "docs/tasks/T-00000791-releve.md:73-80"]
+        },
+        "garde_edition_correspondance": {
+          "statut": "herite",
+          "source": [".agents/skills/guardrails/SKILL.md:11", ".agents/evals/test_gemini_hook_matchers.py:39-47", "docs/tasks/T-00000791-releve.md:46", "docs/tasks/T-00000791-releve.md:73-80"],
+          "note": "le depot la trace HERITEE du registre Gemini ; la doc nomme write_to_file et replace_file_content, que le matcher ne vise pas : inerte par deduction, non mesure"
+        },
+        "post_edition": {
+          "statut": "inerte-mesure",
+          "source": [".agents/evals/test_semgrep_hook_registration.py:65-66", ".agents/security/semgrep-scan.sh:47-49", "GEMINI.md:54", "docs/tasks/T-00000476-plan.md:15"],
+          "note": "charge PostToolUse sans chemin, version de l'hote non tracee ; la doc courante documente toolCall : a re-mesurer, une doc ne corrige pas une mesure (docs/tasks/T-00000791-releve.md:48)"
+        },
+        "fin_de_tour": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000476-plan.md:15", ".agents/security/semgrep-scan.sh:48-49"],
+          "note": "que l'hote declenche Stop n'est pas mesure"
+        },
+        "trace_binome": {
+          "statut": "non-mesure",
+          "source": ["README-OTHER-HOSTS.md:85", "docs/tasks/T-00000791-releve.md:50"],
+          "note": "cable par heritage ; SubagentStop hors des evenements documentes"
+        },
+        "trace_critique_plan": {
+          "statut": "absent",
+          "source": ["README-OTHER-HOSTS.md:85", "docs/tasks/T-00000791-releve.md:51"]
+        },
+        "contexte_session": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:52"],
+          "note": "SessionStart hors des evenements documentes"
+        },
+        "sous_agents_decouverts": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:35"],
+          "note": "la doc decouvre .agents/agents/, absent du depot : aucune def decouverte, par deduction"
+        },
+        "skills_decouvertes": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:90", "docs/tasks/T-00000791-releve.md:55"],
+          "note": "le depot dit .agents/skills/ non supporte, la doc consultee dit le contraire : contradiction ouverte"
+        },
+        "isolation_worktree": {
+          "statut": "non-mesure",
+          "source": ["AGENTS.md:38", "docs/tasks/T-00000791-releve.md:42"]
+        },
+        "permissions_declaratives": {
+          "statut": "non-mesure",
+          "source": ["docs/tasks/T-00000791-releve.md:54"],
+          "note": ".gemini/settings.json porte quatre cles que la doc ne decrit pas"
+        }
+      }
+    }
+  },
+  "angles_morts": [
+    "Gemini CLI a ete remplace par Antigravity CLI pour une partie des comptes : la ligne qui s'applique a un poste depend du palier du compte (docs/tasks/T-00000791-releve.md:260-264).",
+    "Les statuts `suppose` de Gemini CLI et de Kimi Code sont ceux que le depot a traces ; le releve de leur doc deduit que leurs registres ne seraient pas lus du tout (docs/tasks/T-00000791-releve.md:66-72). Une mesure le tranchera, pas cette table."
+  ]
+}

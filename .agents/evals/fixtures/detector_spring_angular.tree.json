@@ -1,0 +1,153 @@
+{
+  "sources": [
+    {
+      "id": "pom-web",
+      "url": "https://start.spring.io/pom.xml?type=maven-project&language=java&javaVersion=25&dependencies=web",
+      "fetched": "2026-10-22",
+      "sha256": "a7e7cacb296072ef1412029fd57019a8fbdbf7c7c721810d3401a5ebe2c9d7a3"
+    },
+    {
+      "id": "pom-bare",
+      "url": "https://start.spring.io/pom.xml?type=maven-project&language=java&javaVersion=25",
+      "fetched": "2026-10-22",
+      "sha256": "be07080c22229e92514bb0d3dad09d9028adf3289e86335842369e2dafde84c3"
+    },
+    {
+      "id": "gradle-kts",
+      "url": "https://start.spring.io/starter.zip?type=gradle-project-kotlin&language=java&javaVersion=25&dependencies=web&baseDir=demo",
+      "entry": "demo/build.gradle.kts",
+      "fetched": "2026-10-22",
+      "sha256": "3384bac8d3a2ad1357ebe466e19a9970746d0accab45813ca0ccd1e87f79a199"
+    }
+  ],
+  "variants": {
+    "base": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc</artifactId>\n\t\t</dependency>\n\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc-test</artifactId>\n\t\t\t<scope>test</scope>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "backend/mvnw": "#!/bin/sh\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^22.2.4\",\"@angular/build\":\"^22.2.4\"},\"packageManager\":\"npm@11.0.0\"}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular/build:unit-test\",\"options\":{}}}}}}\n",
+      "frontend/package-lock.json": "{\"name\":\"fixture\",\"lockfileVersion\":3}\n"
+    },
+    "gradle": {
+      "backend/build.gradle.kts":"plugins {\n\tjava\n\tid(\"org.springframework.boot\") version \"4.1.1\"\n\tid(\"io.spring.dependency-management\") version \"1.1.7\"\n}\n\ngroup = \"com.example\"\nversion = \"0.0.1-SNAPSHOT\"\n\njava {\n\ttoolchain {\n\t\tlanguageVersion = JavaLanguageVersion.of(25)\n\t}\n}\n\nrepositories {\n\tmavenCentral()\n}\n\ndependencies {\n\timplementation(\"org.springframework.boot:spring-boot-starter-webmvc\")\n\ttestImplementation(\"org.springframework.boot:spring-boot-starter-webmvc-test\")\n\ttestRuntimeOnly(\"org.junit.platform:junit-platform-launcher\")\n}\n\ntasks.withType<Test> {\n\tuseJUnitPlatform()\n}\n",
+      "backend/gradlew": "#!/bin/sh\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^22.2.4\",\"@angular/build\":\"^22.2.4\"},\"packageManager\":\"npm@11.0.0\"}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular/build:unit-test\",\"options\":{}}}}}}\n",
+      "frontend/package-lock.json": "{\"name\":\"fixture\",\"lockfileVersion\":3}\n"
+    },
+    "starter-test-runner-karma": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter</artifactId>\n\t\t</dependency>\n\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-test</artifactId>\n\t\t\t<scope>test</scope>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^22.2.4\",\"@angular/build\":\"^22.2.4\"},\"packageManager\":\"npm@11.0.0\"}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular/build:unit-test\",\"options\":{\"runner\":\"karma\"}}}}}}\n",
+      "frontend/package-lock.json": "{\"name\":\"fixture\",\"lockfileVersion\":3}\n"
+    },
+    "sans-runner": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc</artifactId>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^22.2.4\",\"@angular/build\":\"^22.2.4\"},\"packageManager\":\"npm@11.0.0\"}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular/build:unit-test\",\"options\":{}}}}}}\n",
+      "frontend/package-lock.json": "{\"name\":\"fixture\",\"lockfileVersion\":3}\n"
+    },
+    "karma-sans-lock": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc</artifactId>\n\t\t</dependency>\n\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc-test</artifactId>\n\t\t\t<scope>test</scope>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^22.2.4\",\"@angular/build\":\"^22.2.4\"}}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular/build:karma\"}}}}}\n"
+    },
+    "angular20-sans-runner": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc</artifactId>\n\t\t</dependency>\n\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc-test</artifactId>\n\t\t\t<scope>test</scope>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^20.3.41\",\"@angular/build\":\"^20.3.41\"},\"packageManager\":\"npm@11.0.0\"}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular/build:unit-test\",\"options\":{}}}}}}\n",
+      "frontend/package-lock.json": "{\"name\":\"fixture\",\"lockfileVersion\":3}\n"
+    },
+    "angularjs": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc</artifactId>\n\t\t</dependency>\n\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc-test</artifactId>\n\t\t\t<scope>test</scope>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "frontend/package.json": "{\"dependencies\":{\"angular\":\"^1.8.3\"}}\n"
+    },
+    "angular19": {
+      "backend/pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n\t<modelVersion>4.0.0</modelVersion>\n\t<parent>\n\t\t<groupId>org.springframework.boot</groupId>\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\n\t\t<version>4.1.1</version>\n\t\t<relativePath/> <!-- lookup parent from repository -->\n\t</parent>\n\t<groupId>com.example</groupId>\n\t<artifactId>demo</artifactId>\n\t<version>0.0.1-SNAPSHOT</version>\n\t<name/>\n\t<description/>\n\t<url/>\n\t<licenses>\n\t\t<license/>\n\t</licenses>\n\t<developers>\n\t\t<developer/>\n\t</developers>\n\t<scm>\n\t\t<connection/>\n\t\t<developerConnection/>\n\t\t<tag/>\n\t\t<url/>\n\t</scm>\n\t<properties>\n\t\t<java.version>25</java.version>\n\t</properties>\n\t<dependencies>\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc</artifactId>\n\t\t</dependency>\n\n\t\t<dependency>\n\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t<artifactId>spring-boot-starter-webmvc-test</artifactId>\n\t\t\t<scope>test</scope>\n\t\t</dependency>\n\t</dependencies>\n\n\t<build>\n\t\t<plugins>\n\t\t\t<plugin>\n\t\t\t\t<groupId>org.springframework.boot</groupId>\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\n\t\t\t</plugin>\n\t\t</plugins>\n\t</build>\n\n</project>\n",
+      "frontend/package.json": "{\"dependencies\":{\"@angular/core\":\"^19.2.0\",\"@angular-devkit/build-angular\":\"^19.2.0\"}}\n",
+      "frontend/angular.json": "{\"projects\":{\"app\":{\"architect\":{\"test\":{\"builder\":\"@angular-devkit/build-angular:karma\"}}}}}\n"
+    }
+  },
+  "expect": {
+    "base": {
+      "backend": [
+        "maven",
+        "junit"
+      ],
+      "frontend": [
+        "npm",
+        "vitest"
+      ]
+    },
+    "gradle": {
+      "backend": [
+        "gradle",
+        "junit"
+      ],
+      "frontend": [
+        "npm",
+        "vitest"
+      ]
+    },
+    "starter-test-runner-karma": {
+      "backend": [
+        "maven",
+        "junit"
+      ],
+      "frontend": [
+        "npm",
+        "karma"
+      ]
+    },
+    "sans-runner": {
+      "backend": [
+        "maven",
+        "unknown"
+      ],
+      "frontend": [
+        "npm",
+        "vitest"
+      ]
+    },
+    "karma-sans-lock": {
+      "backend": [
+        "maven",
+        "junit"
+      ],
+      "frontend": [
+        "unknown",
+        "karma"
+      ]
+    },
+    "angular20-sans-runner": {
+      "backend": [
+        "maven",
+        "junit"
+      ],
+      "frontend": [
+        "npm",
+        "unknown"
+      ]
+    },
+    "angularjs": {
+      "backend": [
+        "maven",
+        "junit"
+      ],
+      "frontend": [
+        "unknown",
+        "unknown"
+      ]
+    },
+    "angular19": {
+      "backend": [
+        "maven",
+        "junit"
+      ],
+      "frontend": [
+        "unknown",
+        "karma"
+      ]
+    }
+  }
+}

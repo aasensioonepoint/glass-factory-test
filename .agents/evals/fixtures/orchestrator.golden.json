@@ -1,0 +1,20 @@
+{
+  "_schema": {
+    "purpose": "Frozen, LLM-free contract for the `orchestrator` agent across all 5 hosts (Claude / Codex / Gemini / Copilot / Kimi). test_golden_transcripts.py recomposes these invariants from the LIVE agent definitions and asserts (a) each host still matches this golden and (b) all hosts agree (multi-host parity). No model is ever called: this is deterministic drift detection over the agent source-of-truth files.",
+    "invariants": {
+      "emits_forecast": "the routing output ends with a FORECAST block (token estimate per pipeline agent)",
+      "read_only_no_edit": "the orchestrator never edits/writes code — it routes only",
+      "owns_approval_gate": "whether THIS agent is the one that requests human approval and awaits the user OK; the orchestrator must NOT own the gate (planner does)",
+      "routes_language_detection": "routing puts language detection first when code is involved"
+    },
+    "detection": "booleans are derived by host-agnostic keyword probes in test_golden_transcripts.py::extract_invariants; parity means all 5 host defs yield an identical invariant dict."
+  },
+  "agent": "orchestrator",
+  "hosts": ["claude", "codex", "gemini", "copilot", "kimi"],
+  "invariants": {
+    "emits_forecast": true,
+    "read_only_no_edit": true,
+    "owns_approval_gate": false,
+    "routes_language_detection": true
+  }
+}

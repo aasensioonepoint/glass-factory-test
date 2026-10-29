@@ -1,0 +1,41 @@
+# CIBLE DE PLAN — ARMÉE PAR DÉFAUT chez l'adoptant : sa seule PRÉSENCE l'arme.
+# `*` = toute tâche du board, avec ou sans chantier.
+# Ce que la présence arme : un `done`, un `start` qui porte déjà une trace
+# `plan approuvé`, ou un verdict `plan-critic` enregistré par `specs.py add`
+# sont refusés si une étape du plan ne porte aucune cible — `cible: « <nom> »`
+# (un nom de docs/PROMPT-projet.md), `angle mort: <question au pilote>` ou
+# `décision pilote: <id d'une décision tracée>`.
+# `*` arme aussi les ARÊTES de plan (`ARÊTE:`) et les épopées, sur tout le
+# board. L'emprunt de cible au slot `running` exige que le plan du slot NOMME
+# la tâche. Un `done` nu exige EXACTEMENT `--sans-binome` + `--sans-cible` : le
+# binôme mord d'abord, la cible ensuite.
+# Une tâche DIRECTE (`tasks.py direct`, voie du kit pour les petites tâches) SANS
+# plan approuvé passe le `done` sans `--sans-cible` ; un plan résolu reste toujours
+# contrôlé.
+# Écart nommé : les définitions d'agents disent de cette garde « hors chantier :
+# rien ne change » ; sous `*` c'est faux, une tâche SANS chantier est armée aussi.
+# Sorties tracées : `--sans-cible "<pourquoi>"` (start, done, specs.py add) et
+# `--sans-dependances "<pourquoi>"` (contrôle des ARÊTES) ; la raison reste
+# VISIBLE au board. Quand les utiliser : la cible ne s'applique pas à la tâche,
+# motif écrit.
+# Désarmer = retirer ce fichier, geste du pilote du projet.
+#
+# Statut par hôte et par garde, relevé 2026-10-02 (table complète et datée :
+# README-OTHER-HOSTS.md, section couverture par hôte) — la cible ne lit que le
+# board, SPECS et le plan, jamais une trace d'hôte :
+#   MESURÉ : Claude Code.
+#   CÂBLÉ : tout hôte qui exécute `tasks.py` et `specs.py` (le même code).
+#   NON CÂBLÉ : aucun hôte.
+#   SUPPOSÉ : rien de propre à l'hôte ; seule la disponibilité de `plan-critic`
+#   (model: claude-opus-5-5) chez l'adoptant l'est, pour la chaîne de plan.
+#
+# Protection : ce fichier (graine dans le dépôt du kit, marqueur chez
+# l'adoptant) est protégé PAR SON NOM — Edit/Write et redirection shell sont
+# refusés ; `cp`, `sed -i`, `tee`, `python3 -c` NE le sont PAS. Couverture
+# partielle, comme les autres marqueurs : la protection empêche l'OUBLI, pas la
+# triche (mesuré sur 3 familles de hooks par charges synthétiques ; câblé sur
+# Kimi Code, GitHub Copilot, Antigravity ; émission hôte NON mesurée).
+# Canaux actuels : copie de la branche template ou d'un checkout du kit ;
+# `cadre init` (nom réservé) ne sème rien.
+spec=docs/PROMPT-projet.md
+chantier=*

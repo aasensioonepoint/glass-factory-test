@@ -1,0 +1,166 @@
+# Normalize line endings: repo stores LF; working tree keeps LF (bash/python hooks need it).
+* text=auto eol=lf
+
+# The per-project index store (T-00000106) — DÉSINDEXÉ by T-00000668. It is
+# MACHINE state now, outside the repository under `state_project()/index/index.db`
+# (`cadre.paths.index_db`), rebuilt from the versioned `SYMBOLS*.md` files; the
+# old in-repo path is git-ignored and a file left there is a legacy duplicate that
+# nothing reads any more.
+#
+# WHY THIS `binary` LINE STAYS despite the desindexation — the same reasoning as
+# the V3 store below: a pre-T-00000668 clone still carries the physical doublon
+# (untracked and ignored after the pull). If that file were ever force-added,
+# `binary` (`-text -diff -merge`) keeps the wildcard `* text=auto eol=lf` above —
+# which it MUST therefore follow — from running eol conversion over a SQLite file
+# and corrupting it on checkout. It costs nothing while the file is ignored.
+.agents/state/index/index.db binary
+
+# The annotations journal (T-00000668, critic-opus F5) — TRACKED, append-only, one
+# self-contained JSON record per line, and since the store left the repository it
+# is the ONE versioned carrier of authored annotations: every machine appends to
+# it (`symbols.py annotate`/`retire`, `--apply`/`--resync`), so two branches that
+# each annotate collided on a content conflict at merge (measured). `merge=union`
+# keeps both sides' lines. BOUND, written rather than discovered: on a SAME key,
+# it is the ORDER OF THE LINES AFTER THE MERGE that decides — the replay keeps the
+# last one (`replay_log`). Measured (git 2.55): `git pull --no-rebase` (merge)
+# puts YOUR lines first — upstream wins; `git pull --rebase` replays yours last —
+# yours win. `--resync` NAMES every stored value the journal's last line replaced
+# (`NOTE: replaced by the journal's last value: …`), so the side that won is
+# never silent. Witnesses: `test_index_machine.py` T17 (merge), T17b (both pulls).
+/.agents/state/index/annotations_log.jsonl merge=union
+
+# L'INDEX FUSIONNE (T-01M5X9143QVEGWMBYANB6MB4TD ; décisions pilote S-01M5DEVZ4VW02KZJKDAGK8VEPQ et
+# S-01M5BT3XB1Q1XWEDDQZ5SDP72Z). Sans pilote, deux branches qui reconstruisent l'index conflictent sur CHAQUE fichier
+# d'index (27 chemins UU mesurés : les en-têtes `built @ <sha>` y suffisent). `merge=cadre-index` lance
+# `fusion_enregistrement.py --index` : « nous » gardé ; `INDEX_DELTA.json` prend `max_sym_id` = max(base, nous, eux),
+# un id alloué d'un seul côté n'est donc jamais réattribué à un autre symbole ; les `:: but` des `SYMBOLS*.md` et les
+# cellules Role/Owner de `CODEBASE_INDEX.md` que « eux » a écrits sont reportés sur la même clé à identité égale,
+# sinon la fusion texte de git pour CE fichier (jamais une perte muette).
+# BORNES : installé par `fusion_enregistrement.py --installer` (geste du pilote, avec les clés du board), sinon ces
+# lignes nomment un pilote non configuré et git garde sa fusion texte, EN SILENCE ; l'index est à RECONSTRUIRE après la
+# fusion (`build_index.py --if-stale`) ; les ids alloués des deux côtés se recouvrent, ce que le pilote DIT sur stderr
+# (relocaliser par NOM) ; rebase : « nous » est l'amont ; rien côté serveur (une PR GitHub ignore un pilote local).
+# « 0 conflit » vaut pour les conflits de CONTENU : un shard supprimé d'un côté et modifié de l'autre, ou renommé,
+# conflicte encore (git n'appelle pas le pilote). `.githooks/post-merge` n'alerte que pour le board. Ni
+# `annotations_log.jsonl` (union, ci-dessus) ni `index.db` (binary). Témoin : `.agents/bin/test_fusion_index.py`.
+/.agents/state/index/SYMBOLS*.md merge=cadre-index
+/.agents/state/index/CODEBASE_INDEX.md merge=cadre-index
+/.agents/state/index/INDEX_BODIES.json merge=cadre-index
+/.agents/state/index/INDEX_DELTA.json merge=cadre-index
+
+# The V3 event store — DÉSINDEXÉ by T-00000677. It was TRACKED until then (the
+# earlier note asserting "untracked" was the L-00000111 failure mode — a doc
+# claiming a guarantee the code did not hold — corrected by T-00000376). T-00000677
+# reversed the premise: `events_ledger` IS re-derivable now, from the versioned run
+# exports under `runs/` (`reconstruire_depuis_exports`), so the history has a second
+# home and the tracked frozen doublon was removed (`git rm --cached`). The LIVE base
+# lives OUTSIDE the repo under `state_project()/run/v3_event_store.db` (machine
+# state); the durable, versioned V3 surface is now `runs/` (JSONL, text, merge=union).
+#
+# WHY THIS `binary` LINE STAYS despite the desindexation: a pre-desindexation clone
+# still carries the physical doublon UNTRACKED and git-ignored (a fresh clone does
+# not). This attribute is a belt-and-suspenders guard — if that file were ever
+# force-added, `binary` (`-text -diff -merge`) stops the wildcard `* text=auto eol=lf`
+# above from running eol conversion over a SQLite file and corrupting it on checkout.
+# It costs nothing while the file is ignored, and prevents a silent corruption if it
+# is not. Readable diffs stay available on demand, per clone:
+#   git config diff.sqlite3.textconv "sqlite3 \"$1\" .dump"
+.agents/state/v3_event_store.db binary
+
+
+# Explicit LF for the CI-critical scripts: they run on ubuntu-latest and break
+# on CRLF (bad interpreter / shebang, pytest import quirks). Belt-and-braces
+# over the wildcard above so a mis-set core.autocrlf on a dev box can't leak CRLF.
+*.sh text eol=lf
+*.py text eol=lf
+
+# Windows-native scripts keep CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Append-only event streams (dashboard observability, decision L-00000032).
+# INERT SINCE 2026-07-28: the pilot moved /.agents/state/events/ into .gitignore
+# (see that file for the measured reasons), so git never merges these paths and
+# this directive can never fire. Kept, not deleted, for one reason: if the stream
+# is ever tracked again the union-merge property is required, and re-deriving why
+# costs more than these three lines. Do not read its presence as "these files are
+# tracked" — .gitignore is the authority.
+/.agents/state/events/*.jsonl merge=union
+
+# T-00000650 — exports « run par auteur » (`runs/<auteur>/<copie>/<AAAA-MM>.jsonl`).
+# MESURÉ par T-00001068 (`agentic_v3/tests/test_run_export_fusion.py`,
+# également sous `.agents/vendor/agentic_v3/tests/` après déplacement) : le NOMMAGE
+# MONO-ÉCRIVAIN (une copie par partition, clé = chemin de la racine) sépare les
+# worktrees — chacun écrit dans son propre dossier de copie (un fichier par mois et par
+# auteur), et la fusion n'en touche aucun autre (W2, W3). `merge=union` est PORTEUR pour
+# une MÊME copie sur deux branches (le clone qui change de branche) : sans lui, conflit
+# (W1, bras de contrôle) ; un JSONL à un enregistrement autonome par ligne l'autorise
+# (« état partagé fusionnable », propriété 5).
+# BORNES : union ne signale JAMAIS un conflit — une même ligne (même ULID) divergente
+# sur deux branches passe en DOUBLE ; la reconstruction garde la première dans l'ordre
+# (ULID, auteur/copie) — sur une MÊME copie la clé est à égalité et c'est l'ordre du
+# fichier qui décide (tri stable) : la ligne que union place en premier — et écarte
+# l'autre, mais la COMPTE (`divergentes`, ses ULID nommés) et l'ANNONCE sur stderr, sans
+# la réparer (comme la passe de ré-export `re_exporter_frappees`, W4). Après fusion,
+# l'ouverture du store au chemin par défaut sonde puis synchronise les lignes valides
+# manquantes dans la base vivante ; sans écart, elle n'écrit rien. Avant le premier
+# import dans une base non vide, une sauvegarde SQLite datée est achevée hors dépôt ;
+# son échec interdit l'import. Dans le kit, TOUTE base non vide reste inhibée quelle
+# que soit sa partition, sauf marqueur `autorise-<partition>` placé par le pilote dans
+# `<partition>/run/v3-auto-sync/` ; base inhibée ou `AGENTS_V3_AUTO_SYNC=0`
+# (qui coupe l'import et conserve la sonde historique) : l'écart est ANNONCÉ à l'ouverture,
+# c'est-à-dire annoncé à chaque construction du store au chemin par défaut — verbes de tasks.py qui
+# écrivent le board, replay-sync, python -m agentic_v3 status, dashboard-summary et sync-spec ;
+# tasks.py list ne le construit pas ; runs/ ≤ 64 MiB, au-delà une ligne « NON sonde » —,
+# avec le geste encadré S-00002370 (décidé pour la seule partition du kit ;
+# toute autre partition : décision du pilote d'abord) ;
+# un principal SALE sur le fichier qu'une branche modifie refuse la fusion, union ou
+# non ; la fusion côté serveur (PR GitHub) n'est PAS mesurée.
+runs/**/*.jsonl merge=union
+
+# T-00001011 — le journal SPECS en JSONL (forme S-01M4KKQ0XD9MFD63AVX0KDGHR2, nom
+# S-01M4KR9W2NSCD5E4T18MW2BESN) : une ligne d'en-tête `{"format":1,"store":"specs"}`,
+# puis UNE entrée autonome par ligne, AJOUTÉE seulement, par `specs.py`. INERTE jusqu'à
+# la bascule (`specs.py migrate --apply`, tâche T-01M4KKMY43ZKCW1YD2Y8JX9MKH) : le
+# fichier n'existe pas encore. Posée MAINTENANT parce que git lit l'attribut côté
+# RECEVEUR : un receveur sans cette ligne conflicte (mesuré, git 2.55). JAMAIS sur
+# `SPECS.json` : l'union du monolithe indenté fusionne deux ajouts en JSON INVALIDE à
+# rc 0 (mesuré) — une corruption muette.
+# BORNES, écrites plutôt que découvertes (git 2.55) : union ne refuse RIEN — une ligne
+# SUPPRIMÉE d'un côté disparaît en silence (cas 7), une ligne RÉÉCRITE d'un seul côté
+# arrive réécrite, sans doublon qui trahirait le geste (cas 2) : contre les deux, seul
+# l'écrivain en ajout seul tient. Une même ligne réécrite des DEUX côtés arrive en
+# double, et deux lignes divergentes d'un même id sont REFUSÉES au chargement, par leur
+# id et leurs deux lignes (cas 3/8) ; une ligne identique en double n'est qu'une entrée
+# (cas 5). L'ordre du fichier dépend du sens de la fusion : `specs.py` le neutralise en
+# rangeant par `sort_key` au chargement. Témoin : `test_specs.py` W2.
+/.agents/state/specs/SPECS.jsonl merge=union
+
+# T-01M4JN4ZSWAX5MGSGQNPPYZG68 — les magasins « un fichier par enregistrement » (board : `tasks/`, `epics/` ;
+# ledger : `entries/`) fusionnés PAR CHAMP par le pilote `cadre-enregistrement` (`.agents/bin/fusion_enregistrement.py`) :
+# un champ changé d'un seul côté est pris ; le même champ changé des deux côtés est un conflit ; `record.updated` → la
+# date la plus récente ; `sync_operations` → union à trois voies ; une tombe contre un enregistrement modifié
+# conflicte. Un conflit VOULU : les champs du groupe couplé `depends_on` / `depends_motif` changés chacun d'un côté
+# (le couple `state` / `parallel_group` est retiré, T-01M5F728B4CS1ZDZTH9YWJ0AZ1). Un ajout/ajout n'est jugé qu'entre
+# deux imports d'un même ticket Jira (`base_import_jira`, T-01M5GZ4VBPCJD3S2NPWQTB3XGP) ; ailleurs, repli texte.
+# INSTALLATION, geste du PILOTE, une fois par clone, depuis un terminal : `python3 .agents/bin/fusion_enregistrement.py
+# --installer` (hors de la branche par défaut : `--depuis <ref>`), puis `--verifier`. Il sonde git — git ≥ 2.44 requis,
+# par trois sondes de capacité, aucun autre plancher —, copie le pilote sous `<git-common-dir>/cadre/` et écrit quatre
+# clés de config LOCALE (deux pour ce pilote, puis deux pour `merge=cadre-index`, bloc de l'index plus haut).
+# BORNES : sans `--installer`, ces lignes nomment un pilote non configuré et git garde sa fusion texte, EN SILENCE ;
+# ces trois lignes, le pilote et son banc VOYAGENT chez l'adoptant (`sync_template.py`) et y restent INERTES tant que
+# son pilote n'a pas lancé `--installer`. Jamais sur l'archive (`board/archive/`, dont le conflit EST la protection),
+# ni sur `tombes.jsonl`, `TASKS.json`, `sync_outbox/`. Rien côté serveur (une PR GitHub ignore un pilote local).
+# Inerte pour le ledger jusqu'à sa bascule en dossier. Un conflit, ou une entrée que le pilote ne sait pas juger,
+# rend la fusion texte de git (`git merge-file --diff-algorithm=histogram`) à une borne mesurée près (au plus 0,5 % des
+# conflits aléatoires mesurés diffèrent par la découpe des blocs de marqueurs) ; pilote absent ou cassé ⇒ fusion texte
+# de git : marqueurs si les lignes se touchent, sinon fusion propre. Seul git 2.55 est mesuré. Témoins : `.agents/bin/test_fusion_enregistrement.py`.
+# PROPOSITION ET ALERTE (T-01M5DBEZMXN95Y31363NXXJ30F) : le setup PROPOSE `--installer` (opt-in, python ≥ 3.11) ;
+# `.githooks/post-merge` et `.githooks/post-commit` ALERTENT sur stderr (jamais un refus, toujours rc 0) quand une
+# fusion a touché un de ces chemins sans pilote valide. Bornes, écrites en tête de `.githooks/post-merge` : sans
+# `core.hooksPath` → `.githooks`, aucune alerte ; rebase (sans -r), cherry-pick, revert, stash : non signalés ; worktree d'un autre
+# arbre : silence ; Windows non mesuré. Témoin : `.githooks/post-merge.test.sh`.
+/.agents/state/board/tasks/*.json merge=cadre-enregistrement
+/.agents/state/board/epics/*.json merge=cadre-enregistrement
+/.agents/state/memory/entries/*.json merge=cadre-enregistrement

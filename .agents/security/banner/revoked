@@ -1,0 +1,6 @@
+# Jetons de retrait de la bannière RÉVOQUÉS (T-00001228, S-00004530).
+# Une ligne `id=<valeur>` par jeton, recopiée telle quelle depuis le jeton :
+#   grep '^id=' "$HOME/.config/cadre/banner/off"
+# Le hook compare la ligne ENTIÈRE (grep -qxF -- "id=$id") : ni préfixe, ni
+# commentaire, ni espace autour. L'id est dans les octets SIGNÉS, il ne se
+# change pas sans casser la signature. Pilote seul, à la main, puis commit.

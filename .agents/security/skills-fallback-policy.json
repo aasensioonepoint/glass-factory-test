@@ -1,0 +1,17 @@
+{
+  "_comment": "TRAVELLING POLICY for the skills-resolver GitHub fallback (.agents/bin/skills_github_fallback.py). Same family and travel mechanism as sca-policy.json: shipped with the kit, editable by each adopting project. Keys are CLOSED — an unknown key or an out-of-set value makes the tool print POLICY INVALID (rc 3), never a silent default.",
+  "_keys": {
+    "install_mode": "confirm | auto. confirm (kit default) ARMS the machine gate: install refuses (rc 5) unless --confirmed-by <pilote> is passed, and the resolver stops after search/show and lists the exact install command for the pilote; auto (opt-in per adopting project) vendors validated skills before the human gate without a confirmation.",
+    "top": "skills kept and installed per stack. Hard bound is 2 — a higher value is POLICY INVALID.",
+    "licences": "closed SPDX allow-set. A null/NOASSERTION spdx_id never matches.",
+    "min_stars": "star floor before a candidate is ranked.",
+    "max_age_months": "reject a repo whose pushed_at is older than this.",
+    "max_size_kib": "reject a SKILL.md larger than this."
+  },
+  "install_mode": "confirm",
+  "top": 2,
+  "licences": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "CC-BY-4.0", "CC0-1.0"],
+  "min_stars": 10,
+  "max_age_months": 18,
+  "max_size_kib": 64
+}

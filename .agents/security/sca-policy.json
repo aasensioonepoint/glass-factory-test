@@ -1,0 +1,41 @@
+{
+  "_comment": "Policy governing unattended security updates, read by security-orchestrator Phase 3. Silent = no developer interaction, NOT no trace: every auto-action lands in .agents/state/local/sca-reports/audit-log.jsonl. never_auto values below are EXAMPLES — adapt to the real project. Tune per project; in doubt, tighten.",
+
+  "waivers_file": ".agents/security/sca-waivers.json",
+
+  "auto_apply": {
+    "enabled": true,
+    "max_semver_jump": "minor",
+    "finding_classes": ["known_cve"],
+    "min_severity": "high",
+    "require_fixed_version": true,
+    "require_tests_pass": true,
+    "test_commands": ["npm test", "mvn -q verify", "./gradlew test"]
+  },
+
+  "never_auto": [
+    "_comment: packages listed here are ALWAYS escalated even for a patch bump — EXAMPLES, adapt to the frameworks that structure the real project",
+    "spring-boot-starter-parent",
+    "@angular/core",
+    "react-native"
+  ],
+
+  "always_escalate": [
+    "_comment: iac_misconfig (trivy config — Dockerfile/Terraform/K8s/Helm) is always escalated — an infra misconfig fix is structural (editing the Dockerfile/Terraform/manifest itself), never a version-bump auto-patch",
+    "_comment: image_cve (trivy image — OS and language packages baked into a built image) is always escalated for the same structural reason, one step further: nothing in this repo declares the vulnerable package. The fix is a BASE IMAGE bump (a new FROM digest in the Dockerfile) or an upstream release we do not own — never a manifest version-bump auto-patch. Auto-fixing is not merely undesirable here, it is impossible: there is no version to raise. Note that auto_apply.finding_classes is known_cve only, so this entry states the rule rather than adding a second gate.",
+    "major_version_bump",
+    "supply_chain_flag",
+    "no_fix_published",
+    "package_missing_from_internal_mirror",
+    "tests_failed_after_fix",
+    "iac_misconfig",
+    "image_cve"
+  ],
+
+  "watch": {
+    "commit_to": "branch",
+    "branch_pattern": "security/auto-patch-{date}",
+    "notify": true,
+    "notify_digest_path": ".agents/state/local/sca-reports/last-watch-digest.md"
+  }
+}

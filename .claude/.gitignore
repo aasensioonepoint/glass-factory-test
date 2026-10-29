@@ -1,0 +1,7 @@
+settings.local.json
+backups/
+hooks/protected-paths.local
+# Écrits par Claude Code sur le poste, jamais par l'équipe : les worktrees d'agents
+# (copies entières du dépôt) et le verrou des tâches planifiées (T-01M5BPQPXPEMJFAY52VMVGF4AQ).
+/worktrees/
+/scheduled_tasks.lock

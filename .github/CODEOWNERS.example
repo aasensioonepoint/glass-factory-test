@@ -1,0 +1,45 @@
+# CODEOWNERS — EXAMPLE, INERT BY ITS NAME.
+#
+# THIS FILE IS CALLED `CODEOWNERS.example` AND THAT IS THE WHOLE SAFETY MECHANISM.
+# GitHub activates a file named exactly `CODEOWNERS` (in `.github/`, the repo root
+# or `docs/`) THE MOMENT IT LANDS ON THE DEFAULT BRANCH — no setting, no
+# confirmation. A kit that shipped the live name would silently make review
+# assignments on every adopting repository, on behalf of teams that do not exist.
+# Rename it yourself, deliberately, or not at all.
+#
+# EVERY HANDLE BELOW IS A PLACEHOLDER. There is no real user or team here: an
+# unresolvable owner is INERT (GitHub simply assigns nobody), a real one you did
+# not mean to name is a person getting review requests.
+#
+# WHAT IT IS WORTH WITHOUT THE RULESET: nothing enforceable. CODEOWNERS alone
+# REQUESTS reviews; it BLOCKS a merge only when a ruleset (or branch protection)
+# carries `require_code_owner_review`. The model in this directory ships that flag
+# FALSE on purpose — turning it on without owners who can actually review is how a
+# repository locks itself out. Decide the two together.
+#
+# Syntax note that costs an hour when missed: the LAST matching pattern wins, not
+# the most specific one. Order from general to specific.
+
+# Everything, unless a later line overrides it.
+*                               @ORG/TEAM
+
+# The pipeline's own contract surfaces. A change here changes how every agent on
+# every host behaves, so it is the one place a second pair of eyes pays for itself.
+/AGENTS.md                      @ORG/TEAM
+/CLAUDE.md                      @ORG/TEAM
+/.claude/agents/                @ORG/TEAM
+/.codex/agents/                 @ORG/TEAM
+/.gemini/agents/                @ORG/TEAM
+/.github/agents/                @ORG/TEAM
+/.kimi-code/agents/             @ORG/TEAM
+
+# The deterministic guards. These REFUSE things; loosening one is not a detail.
+/.claude/hooks/                 @ORG/TEAM
+/.codex/hooks/                  @ORG/TEAM
+/.githooks/                     @ORG/TEAM
+/.agents/security/              @ORG/TEAM
+
+# CI and the rules about the rules.
+/.github/workflows/             @ORG/TEAM
+/.github/rulesets/              @ORG/TEAM
+/.github/CODEOWNERS             @ORG/TEAM

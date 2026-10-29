@@ -1,0 +1,640 @@
+# .agents/security/semgrep.yml — offline SAST ruleset (class-1 input for
+# security-code-review, run via `.agents/security/semgrep-scan.sh`).
+#
+# Deliberately small and OFFLINE: no network, no registry pull needed — a
+# handful of REAL sinks across common languages (SQL/command injection,
+# insecure deserialization, weak crypto, path traversal, SSRF) so the scan
+# still has signal with zero connectivity. This is scaffolding, not full
+# coverage. For the complete community ruleset (many more languages/CWEs),
+# point SEMGREP_CONFIG at the official registry instead (needs network):
+#
+#   SEMGREP_CONFIG=p/security-audit bash .agents/security/semgrep-scan.sh
+#
+# ---- COVERAGE TABLE (T-00000317) -------------------------------------------
+# One row per language, symmetric to sca-scan.sh's per-ecosystem status table:
+# a language is either COVERED (>=1 real rule below) or its absence is DECLARED
+# with a reason — never a silent gap (L-00000187: where you cannot enumerate,
+# bound; here the languages CAN be enumerated, so they are). This table is
+# PINNED to the ruleset by semgrep-scan.test.sh arm (af): every `cover: <lang>
+# rules` row must correspond to a `languages:` key below and vice-versa, read
+# with the SAME `languages:` extraction the blindness detector uses in
+# semgrep-scan.sh — so the table and the rules cannot silently drift. The rows
+# live in `cover:` COMMENTS, never in a `languages:` key, so this table is
+# itself invisible to that extraction (N4).
+#
+#   cover: python      rules     (5)
+#   cover: javascript  rules     (3, shared with typescript)
+#   cover: typescript  rules     (5: 3 shared with javascript + 2 Angular)
+#   cover: java        rules     (2)
+#   cover: yaml        rules     (3, GitHub Actions workflows)
+#   cover: bash        rules     (3)
+#   cover: go          rules     (3)
+#   cover: ruby        rules     (3)
+#   cover: php         rules     (3)
+#   cover: csharp      rules     (2)
+#   cover: rust        rules     (2; parser validated at semgrep 1.175.0 — dev probe green, 0 parse errors. Rust rules require semgrep >= 1.175.0, the measured maturity floor.)
+#   cover: c/c++       absent    (semgrep's C/C++ parser is GA, but no canonical single-sink rule is modelled here yet — T-00000317; the runtime gate NAMES a c/c++ file present-in-perimeter-without-rule instead)
+#
+rules:
+  - id: python-sql-injection-string-format
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Possible SQL injection: query built with string formatting/interpolation
+      instead of a parameterized query/bound placeholder.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $CURSOR.execute($QUERY % (...))
+          - pattern: $CURSOR.execute($QUERY.format(...))
+          - pattern: $CURSOR.execute(f"...")
+
+  - id: python-command-injection-shell-true
+    languages: [python]
+    severity: ERROR
+    message: >-
+      subprocess call with shell=True (or os.system): possible OS command
+      injection if any part of the command is externally influenced.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.$FUNC(..., shell=True, ...)
+          - pattern: os.system(...)
+
+  - id: python-insecure-deserialization-pickle
+    languages: [python]
+    severity: ERROR
+    message: >-
+      pickle.loads()/pickle.load() on data that may originate from an
+      untrusted source: arbitrary code execution risk. Prefer json or a safe
+      serializer for anything crossing a trust boundary.
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+    patterns:
+      - pattern-either:
+          - pattern: pickle.loads(...)
+          - pattern: pickle.load(...)
+
+  - id: python-weak-crypto-md5-sha1
+    languages: [python]
+    severity: WARNING
+    message: >-
+      MD5/SHA1 used where a security-sensitive hash is implied (password,
+      token, signature). Both are broken for security use — prefer sha256+,
+      or a password hash (bcrypt/argon2/scrypt) for credentials.
+    metadata:
+      category: security
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+    patterns:
+      - pattern-either:
+          - pattern: hashlib.md5(...)
+          - pattern: hashlib.sha1(...)
+
+  - id: python-ssrf-requests-dynamic-url
+    languages: [python]
+    severity: ERROR
+    message: >-
+      HTTP request built from a non-literal URL passed straight to
+      requests/urllib: verify the target is validated/allow-listed —
+      otherwise a classic SSRF sink.
+    metadata:
+      category: security
+      cwe: "CWE-918: Server-Side Request Forgery (SSRF)"
+    patterns:
+      - pattern-either:
+          - pattern: requests.get($URL, ...)
+          - pattern: requests.post($URL, ...)
+          - pattern: urllib.request.urlopen($URL)
+      - metavariable-pattern:
+          metavariable: $URL
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: javascript-sql-injection-string-build
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      SQL query built from a template literal / string concatenation instead
+      of a parameterized query — possible SQL injection.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+    patterns:
+      - pattern-either:
+          - pattern: $DB.query(`...${$X}...`)
+          - pattern: $DB.query("..." + $X + "...")
+
+  - id: javascript-command-injection-child-process
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      child_process.exec()/execSync() with a non-literal command: possible OS
+      command injection. Prefer execFile()/spawn() with an argument array.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+    patterns:
+      - pattern-either:
+          - pattern: child_process.exec($CMD, ...)
+          - pattern: child_process.execSync($CMD, ...)
+
+  - id: javascript-weak-crypto-md5
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      MD5 used via crypto.createHash("md5") for a security-sensitive purpose —
+      broken for security use, prefer sha256+ or a password hash for
+      credentials.
+    metadata:
+      category: security
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+    patterns:
+      - pattern: crypto.createHash("md5")
+
+  # Angular (T-01M5DFN4GRJMVQ4QZ1D88D6TXG, lot C). typescript ONLY: a .js file
+  # is never read by these two. Both are ERROR, so the post-edit hook BLOCKS a
+  # .ts edit that introduces one; semgrep-scan.test.sh arm (aj) pins the
+  # severity, (ak) the trap/clean pair and (hng) the hook. A string LITERAL never
+  # carries user input, so it never fires (closing review M3/F7); the escape
+  # hatch for a reviewed dynamic value is `// nosemgrep: <rule id>` on the line.
+  - id: angular-bypass-security-trust
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      DomSanitizer.bypassSecurityTrust*() (dotted or indexed call) switches
+      Angular's built-in XSS sanitization OFF for a non-literal value. Sanitize
+      it instead, or prove the value can never carry user input; once that is
+      proven and reviewed, mark the line `// nosemgrep:
+      angular-bypass-security-trust` (a string literal never fires).
+    metadata:
+      category: security
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: $S.$M($V, ...)
+              - metavariable-regex:
+                  metavariable: $M
+                  regex: ^bypassSecurityTrust(Html|Style|Script|Url|ResourceUrl)$
+          - patterns:
+              - pattern: $S[$K]($V, ...)
+              - metavariable-regex:
+                  metavariable: $K
+                  regex: ^["'`]bypassSecurityTrust(Html|Style|Script|Url|ResourceUrl)["'`]$
+      - metavariable-pattern:
+          metavariable: $V
+          patterns:
+            - pattern-not: '"..."'
+
+  - id: angular-dom-innerhtml-dynamic
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      innerHTML/outerHTML (assigned, or set through Renderer2.setProperty) or
+      insertAdjacentHTML() fed a non-literal value bypasses Angular's template
+      sanitization: possible DOM XSS. Bind through the template ([innerHTML] is
+      sanitized), pass the value through
+      sanitizer.sanitize(SecurityContext.HTML, v), or build the nodes with
+      textContent. A reviewed exception is marked `// nosemgrep:
+      angular-dom-innerhtml-dynamic` on the line; a literal or a `const` bound
+      to one never fires.
+    metadata:
+      category: security
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $EL.innerHTML = $V
+          - pattern: $EL.outerHTML = $V
+          - pattern: $R.setProperty($EL, "innerHTML", $V)
+          - pattern: $R.setProperty($EL, "outerHTML", $V)
+          - pattern: $EL.insertAdjacentHTML($P, $V)
+      - pattern-not-inside: |
+          const $V = "...";
+          ...
+      - metavariable-pattern:
+          metavariable: $V
+          patterns:
+            - pattern-not: '"..."'
+            - pattern-not: $X.sanitize(SecurityContext.HTML, ...)
+
+  - id: java-path-traversal-file-user-input
+    languages: [java]
+    severity: ERROR
+    message: >-
+      java.io.File/Paths built directly from an externally-controlled value:
+      verify the path is canonicalized and confined to an allowed base
+      directory — otherwise a path traversal sink.
+    metadata:
+      category: security
+      cwe: "CWE-22: Improper Limitation of a Pathname to a Restricted Directory (Path Traversal)"
+    patterns:
+      - pattern-either:
+          - pattern: new File($BASE, $USERINPUT)
+          - pattern: Paths.get($USERINPUT)
+
+  - id: java-weak-crypto-des-md5
+    languages: [java]
+    severity: WARNING
+    message: >-
+      DES/MD5 used for a security-sensitive purpose — both are broken; prefer
+      AES-GCM and SHA-256+ (or a password hash for credentials).
+    metadata:
+      category: security
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+    patterns:
+      - pattern-either:
+          - pattern: Cipher.getInstance("DES")
+          - pattern: MessageDigest.getInstance("MD5")
+
+  # --- GitHub Actions workflow rules (T-00000262) ----------------------------
+  # Three YAML rules scoped to `.github/workflows/` so they never auto-fire on
+  # our own rule/test files. They cover the residual NOT already caught by
+  # core-scripts/check-workflow-pins.sh (SHA pinning, root permissions, pip hashes).
+  # R1 (ERROR) covers TWO carriers — a `run:` shell block and a github-script
+  # `script:` input — because both take the same untrusted-expression injection;
+  # the `env:` indirection that is the recommended fix must NEVER redden, which
+  # is why the match is anchored on the `run:`/`script:` key, not a file-wide
+  # regex (an expression under `env:` is not under a run/script key).
+  - id: github-actions-expression-injection-untrusted
+    languages: [yaml]
+    severity: ERROR
+    paths:
+      include:
+        - ".github/workflows/"
+    message: >-
+      Untrusted GitHub Actions expression (github.event.*) interpolated straight
+      into a run: shell block or a github-script `script:` input. An attacker who
+      controls the PR title/body/branch/comment can inject shell or JavaScript.
+      Bind the value to an `env:` variable and reference "$VAR" instead — never
+      interpolate github.event.* directly into executable text.
+    metadata:
+      category: security
+      cwe: "CWE-94: Improper Control of Generation of Code (Code Injection)"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              run: $CMD
+          - pattern: |
+              script: $CMD
+      - metavariable-regex:
+          # semgrep anchors metavariable-regex at the START of the value
+          # (re.match, not search), so the leading `.*` is REQUIRED — the
+          # scalar begins with `echo "..."`, not with the expression.
+          metavariable: $CMD
+          regex: '.*\$\{\{[^}]*github\.event\.'
+
+  - id: github-actions-pull-request-target-checkout
+    languages: [yaml]
+    severity: WARNING
+    paths:
+      include:
+        - ".github/workflows/"
+    message: >-
+      Workflow triggered by pull_request_target or workflow_run: these run with
+      the base repository's write token and secrets. If the job also checks out
+      and executes PR-controlled code it runs untrusted code with elevated
+      privilege. Do not check out/execute PR code under these triggers, or
+      isolate it without access to secrets.
+    metadata:
+      category: security
+      cwe: "CWE-269: Improper Privilege Management"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              pull_request_target: ...
+          - pattern: |
+              workflow_run: ...
+          - pattern: |
+              on: pull_request_target
+          - pattern: |
+              on: workflow_run
+
+  - id: github-actions-job-level-write-permissions
+    languages: [yaml]
+    severity: WARNING
+    paths:
+      include:
+        - ".github/workflows/"
+    message: >-
+      A job grants itself write permissions (permissions: write-all, or a
+      write scope at JOB level). core-scripts/check-workflow-pins.sh only inspects
+      the TOP-LEVEL permissions block; scope each job to least privilege and
+      elevate a single scope only where it is actually used.
+    metadata:
+      category: security
+      cwe: "CWE-269: Improper Privilege Management"
+    patterns:
+      - pattern-inside: |
+          jobs: ...
+      - pattern-either:
+          - pattern: |
+              permissions: write-all
+          - pattern: |
+              permissions:
+                $SCOPE: write
+
+  # ---- SHELL (T-00000370) ----------------------------------------------------
+  # The founding incident of T-00000370 was a CWE-88 argument injection found by
+  # HAND, in shell, on a diff where this gate reported "0 cible inspectée sur 14"
+  # — because the ruleset declared java/javascript/typescript/python/yaml and NO
+  # shell, while safe_bash, audit_gate, protect-paths, gitleaks-scan, sca-scan,
+  # semgrep-scan, verify.sh and the Claude hooks are all SHELL.
+  #
+  # These rules are an OPTIMISATION, not the fix. The fix is that the gate now
+  # NAMES what it did not scan. Read the scope line, not the rule count — and in
+  # particular semgrep's bash parser only PARTIALLY parses 10 of this repo's 50
+  # shell scripts (gitleaks-scan.sh and verify.sh among them); those files are
+  # SUBTRACTED from the scope figure and named, never counted as covered.
+  - id: shell-eval-on-interpolated-value
+    languages: [bash]
+    severity: ERROR
+    message: >-
+      `eval` on an interpolated value: any shell metacharacter in the value is
+      executed. Use an array and run the command directly, or validate the value
+      against a closed allow-list first.
+    metadata:
+      category: security
+      cwe: "CWE-78: Improper Neutralization of Special Elements used in an OS Command"
+      owasp: "A03:2021 - Injection"
+    pattern-either:
+      - pattern: eval $...ARGS
+      - pattern: eval "$...ARGS"
+
+  - id: shell-c-flag-with-interpolation
+    languages: [bash]
+    severity: ERROR
+    message: >-
+      A shell is invoked with `-c` on a string built by interpolation. The value
+      is re-parsed by that shell, so a metacharacter inside it becomes syntax.
+      Pass the value as a positional argument ("$0"/"$1") instead of splicing it
+      into the script text.
+    metadata:
+      category: security
+      cwe: "CWE-78: Improper Neutralization of Special Elements used in an OS Command"
+      owasp: "A03:2021 - Injection"
+    pattern-either:
+      - pattern: bash -c "...$...X..."
+      - pattern: sh -c "...$...X..."
+
+  - id: shell-curl-piped-to-shell
+    languages: [bash]
+    severity: ERROR
+    message: >-
+      Remote content piped straight into a shell: whatever the endpoint returns
+      is executed, so a TLS, DNS or upstream compromise becomes code execution.
+      Download to a file, verify a pinned checksum or signature, then run it.
+    metadata:
+      category: security
+      cwe: "CWE-494: Download of Code Without Integrity Check"
+      owasp: "A08:2021 - Software and Data Integrity Failures"
+    pattern-either:
+      - pattern: curl ... | bash ...
+      - pattern: curl ... | sh ...
+      - pattern: wget ... | bash ...
+      - pattern: wget ... | sh ...
+
+  # ---- GO (T-00000317) -------------------------------------------------------
+  - id: go-sql-injection-sprintf
+    languages: [go]
+    severity: ERROR
+    message: >-
+      SQL query assembled with fmt.Sprintf and handed straight to
+      Query/QueryRow/Exec: any interpolated value becomes query syntax. Use
+      placeholders ($1/?) with the driver's argument list instead.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $DB.Query(fmt.Sprintf(...), ...)
+          - pattern: $DB.QueryRow(fmt.Sprintf(...), ...)
+          - pattern: $DB.Exec(fmt.Sprintf(...), ...)
+
+  - id: go-command-injection-exec-shell
+    languages: [go]
+    severity: ERROR
+    message: >-
+      exec.Command invoking a shell with -c on a non-literal argument: the value
+      is re-parsed by the shell, so a metacharacter in it becomes command syntax.
+      Run the target binary directly with an argument slice, never via sh -c.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: exec.Command("sh", "-c", $X)
+          - pattern: exec.Command("bash", "-c", $X)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: go-ssrf-http-dynamic-url
+    languages: [go]
+    severity: ERROR
+    message: >-
+      HTTP request built from a non-literal URL passed straight to
+      http.Get/http.Post: verify the target is validated/allow-listed —
+      otherwise a classic SSRF sink.
+    metadata:
+      category: security
+      cwe: "CWE-918: Server-Side Request Forgery (SSRF)"
+    patterns:
+      - pattern-either:
+          - pattern: http.Get($URL)
+          - pattern: http.Post($URL, ...)
+      - metavariable-pattern:
+          metavariable: $URL
+          patterns:
+            - pattern-not: "\"...\""
+
+  # ---- RUBY (T-00000317) -----------------------------------------------------
+  - id: ruby-command-injection-interpolation
+    languages: [ruby]
+    severity: ERROR
+    message: >-
+      OS command built with string interpolation and passed to
+      system/exec/Kernel.system: any interpolated value becomes shell syntax.
+      Pass the command and its arguments as a separate array of strings instead.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: system("...#{$X}...")
+          - pattern: exec("...#{$X}...")
+          - pattern: Kernel.system("...#{$X}...")
+
+  - id: ruby-insecure-deserialization
+    languages: [ruby]
+    severity: ERROR
+    message: >-
+      Marshal.load / YAML.load on a non-literal value: both can instantiate
+      arbitrary objects, so untrusted input becomes code execution. Prefer
+      YAML.safe_load (or JSON) for anything crossing a trust boundary.
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+    patterns:
+      - pattern-either:
+          - pattern: Marshal.load($X)
+          - pattern: YAML.load($X)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: ruby-sql-injection-interpolation
+    languages: [ruby]
+    severity: ERROR
+    message: >-
+      SQL fragment built with string interpolation in a where/execute call:
+      any interpolated value becomes query syntax. Use a parameterized form
+      (where("col = ?", value)) instead.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $M.where("...#{$X}...")
+          - pattern: $M.execute("...#{$X}...")
+
+  # ---- PHP (T-00000317) ------------------------------------------------------
+  - id: php-command-injection-concat
+    languages: [php]
+    severity: ERROR
+    message: >-
+      OS command built by concatenation and passed to
+      exec/system/shell_exec/passthru: any concatenated value becomes shell
+      syntax. Use escapeshellarg on each argument, or avoid the shell entirely.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: exec($X . $Y)
+          - pattern: system($X . $Y)
+          - pattern: shell_exec($X . $Y)
+          - pattern: passthru($X . $Y)
+
+  - id: php-insecure-unserialize
+    languages: [php]
+    severity: ERROR
+    message: >-
+      unserialize() on a non-literal value: a crafted payload can instantiate
+      arbitrary objects and trigger magic methods (object injection). Use
+      json_decode for untrusted data, or pass allowed_classes => false.
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+    patterns:
+      - pattern: unserialize($X)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: php-sql-injection-concat
+    languages: [php]
+    severity: ERROR
+    message: >-
+      SQL query built by concatenation and passed to a query() call: any
+      concatenated value becomes query syntax. Use a prepared statement with
+      bound parameters instead.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $DB->query($A . $B)
+          - pattern: mysqli_query($C, $A . $B)
+
+  # ---- C# (T-00000317) -------------------------------------------------------
+  - id: csharp-sql-injection-sqlcommand
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      SqlCommand text built by concatenation or an interpolated string ($"..."):
+      any embedded value becomes query syntax. Use command parameters
+      (cmd.Parameters.Add / AddWithValue) with placeholders instead.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: new SqlCommand($A + $B, ...)
+          - pattern: new SqlCommand($"...", ...)
+
+  - id: csharp-insecure-binaryformatter
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      BinaryFormatter.Deserialize is insecure by design — a crafted stream can
+      execute arbitrary code, and the type is obsoleted for exactly this reason.
+      Use a safe serializer (System.Text.Json / DataContractSerializer) instead.
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+    patterns:
+      - pattern-either:
+          - pattern: new BinaryFormatter().Deserialize(...)
+          - pattern: (new BinaryFormatter()).Deserialize(...)
+
+  # ---- RUST (T-00000317) -----------------------------------------------------
+  # Rust support is conditional on a maturity probe MEASURED at dev time
+  # (S2/C1): a positive .rs fixture at a known sink reddened on semgrep 1.175.0
+  # with zero parse errors, so REAL rules ship. The maturity floor and the probe
+  # result are recorded in the coverage table above.
+  - id: rust-command-injection-sh-c
+    languages: [rust]
+    severity: ERROR
+    message: >-
+      Command invoking a shell with -c on a non-literal argument: the value is
+      re-parsed by the shell, so a metacharacter in it becomes command syntax.
+      Run the target binary directly with .arg() values, never via sh -c.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: Command::new("sh").arg("-c").arg($X)
+          - pattern: Command::new("bash").arg("-c").arg($X)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: rust-sql-injection-format
+    languages: [rust]
+    severity: ERROR
+    message: >-
+      SQL query assembled with format! and handed to a query/execute call: any
+      interpolated value becomes query syntax. Use bound parameters (sqlx query
+      macros or placeholder + bind) instead.
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $CONN.query(&format!("...", ...), ...)
+          - pattern: $CONN.execute(&format!("...", ...), ...)
+          - pattern: sqlx::query(&format!("...", ...))

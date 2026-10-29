@@ -1,0 +1,11 @@
+# Gemini CLI Ignore Rules
+.git/
+node_modules/
+dist/
+build/
+.superpowers/
+.claude/backups/
+.gemini/backups/
+.codex/backups/
+__pycache__/
+.agents/state/local/

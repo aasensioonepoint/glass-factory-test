@@ -1,0 +1,18 @@
+{
+  "_schema": {
+    "purpose": "Data fixture for the opt-in nightly behavioural eval (.github/workflows/eval-nightly.yml), NOT invoked with an LLM by the free CI path — test_plan_critic_contract.py asserts well-formedness only (constraint L-002, zero LLM calls on the free path). This fixture fails if the severity rubric's relaxed floor starts waving design flaws through: a cheap-to-fix omission with runtime consequence must remain blocking. The plan's sole defect is a one-line omission — it edits the plan-critic verdict vocabulary in three of the four host defs and never touches .gemini/agents/plan-critic.md — yet shipping it leaves a live cross-host contract divergence, so effort-to-fix must not demote it to a concern.",
+    "defect": {
+      "id": 1,
+      "row": "blast-radius",
+      "why": "the plan enumerates .claude, .codex and .github plan-critic defs but omits .gemini/agents/plan-critic.md, so the fourth host keeps the old verdict vocabulary — a one-line fix with runtime consequence (cross-host contract divergence), therefore blocking under the T-016 severity rubric"
+    },
+    "defect_marker": "the plan text names the .claude, .codex and .github plan-critic defs and never names a .gemini surface — the omission IS the defect"
+  },
+  "plan": "PLAN: admit a not-applicable row verdict in the plan-critic checklist\n\n## Context\nThe 7-row checklist forces a verdict on rows that can be structurally inapplicable (a docs-only plan has no callers to enumerate), which pushes critics into filing a hollow PASS. This plan adds one further row-verdict value, N-A, to the closed-vocabulary line of the plan-critic contract, and updates the contract test that pins that vocabulary.\n\n## Steps\n1. Update the closed-vocabulary line in .claude/agents/plan-critic.md to admit the extra row-verdict value (row verdicts only; the top-level VERDICT set is unchanged)\n2. Update the closed-vocabulary line in .codex/agents/plan-critic.toml identically (ASCII variant of the same sentence)\n3. Update the closed-vocabulary line in .github/agents/plan-critic.agent.md identically\n4. Update .agents/evals/test_plan_critic_contract.py so the vocabulary probe pins the new row-verdict set instead of the old one, keeping the top-level VERDICT assertion untouched\n\nFORECAST-REFINE: dev-multi ~11k (4 files, all text edits)\n\n## Tests\n- .agents/evals/test_plan_critic_contract.py::test_verdict_vocabulary_is_closed re-pinned to the new row-verdict set and re-run\n- .agents/evals/test_plan_critic_contract.py::test_mandatory_enumeration_present_on_all_hosts re-run unchanged, to prove the 7 rows survived the edit\n\n## Rollback\nRevert the commit. Every step is a text edit under version control; no state file is written, no waiver register entry is added and no data migration runs, so a code revert alone restores the prior contract.\n",
+  "expected": {
+    "verdict": "NO_GO",
+    "min_blocking": 1,
+    "rows_that_must_fail": ["blast-radius"],
+    "severity_must_not_be_demoted_for_cheap_fix": true
+  }
+}
