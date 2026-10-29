@@ -7,9 +7,12 @@
 // `error`). Sortir dans le même tick laisse un node.exe orphelin qui garde :3000/:5173
 // (constat C8, mesuré). Ailleurs, `kill("SIGTERM")` puis attente de la sortie de l'enfant.
 import { spawn } from "node:child_process";
+import path from "node:path";
 
 const WORKSPACES = ["api", "web"];
 const isWin = process.platform === "win32";
+// Chemin absolu : aucune résolution par PATH (un taskkill.exe planté dans le cwd ou le PATH).
+const TASKKILL = path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "taskkill.exe");
 const npmCli = process.env.npm_execpath;
 
 if (!npmCli) {
@@ -42,7 +45,7 @@ function stopChild(child) {
       pendingKills -= 1;
       maybeExit();
     };
-    const killer = spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" });
+    const killer = spawn(TASKKILL, ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" });
     killer.on("exit", settle);
     killer.on("error", settle);
   } else {
