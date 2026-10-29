@@ -30,7 +30,7 @@ const PERSONAS: Record<RoleDemo, { nom: string; login: string }> = {
 const CHEVAUX = ['Comète Fictive', 'Brume de Test', 'Éclair Démo', 'Sable Factice', 'Orage Simulé', 'Nuage Modèle'];
 
 /** Local calendar date `YYYY-MM-DD`, `days` away from `ref`. */
-function jour(ref: Date, days = 0): string {
+export function jour(ref: Date, days = 0): string {
   const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() + days);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
@@ -72,7 +72,12 @@ export async function seed(client: PGlite, now: Date = new Date()): Promise<bool
     const acteur = {} as Record<RoleDemo, Id>;
     for (const role of ROLES_DEMO) {
       const { nom, login } = PERSONAS[role];
-      const roleId = await ins(tx, 'INSERT INTO role (libelle) VALUES ($1)', [role]);
+      // A role may pre-exist without any account: reuse it rather than crash on UNIQUE.
+      const roleId = await ins(
+        tx,
+        'INSERT INTO role (libelle) VALUES ($1) ON CONFLICT (libelle) DO UPDATE SET libelle = EXCLUDED.libelle',
+        [role],
+      );
       const acteurId = await ins(
         tx,
         "INSERT INTO acteur (nom, type_acteur, roles_metier) VALUES ($1, 'personne', ARRAY[$2]::text[])",
@@ -160,8 +165,14 @@ export async function seed(client: PGlite, now: Date = new Date()): Promise<bool
     }
 
     // Planned administrations (statut valide, date_reelle NULL: planned, not done).
-    // "En retard" is computed (D9): the one of yesterday is overdue.
-    const todayLater = new Date(Math.min(now.getTime() + 3_600_000, instant(now, 1, 0).getTime() - 60_000));
+    // "En retard" is computed (D9): the one of yesterday is overdue. Today's one stays
+    // later the same day: not before 20:00, at least 1 h ahead, never past 23:59:59.999.
+    const todayLater = new Date(
+      Math.max(
+        instant(now, 0, 20).getTime(),
+        Math.min(now.getTime() + 3_600_000, instant(now, 1, 0).getTime() - 1),
+      ),
+    );
     const plans: Array<[Id, Id, number, Date]> = [
       [c5, p2, 2, instant(now, -1, 9)],
       [c1, p7, 7, todayLater],
@@ -207,4 +218,13 @@ export async function seed(client: PGlite, now: Date = new Date()): Promise<bool
     }
     return true;
   });
+}
+
+/**
+ * Day (`YYYY-MM-DD`) the demo data is anchored on: the date of the seeded 'Lot 1'.
+ * Null when no demo data exists. The seed runs once, so this day goes stale.
+ */
+export async function jourDesDonnees(client: PGlite): Promise<string | null> {
+  const res = await client.query<{ d: string | null }>("SELECT min(date)::text AS d FROM lot WHERE libelle = 'Lot 1'");
+  return res.rows[0]?.d ?? null;
 }
